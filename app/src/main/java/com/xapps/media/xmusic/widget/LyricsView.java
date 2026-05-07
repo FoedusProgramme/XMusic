@@ -380,7 +380,7 @@ public class LyricsView extends ScrollingView2 {
                 if (scrollAnimator != null) scrollAnimator.cancel();
                 isLineCentered = false;
                 allowAutoScroll = false;
-                refreshBlurStates(); // Clear blurs during manual movement
+                refreshBlurStates();
             }
             handler.removeCallbacksAndMessages(null);
         } else if (e.getActionMasked() == MotionEvent.ACTION_UP || e.getActionMasked() == MotionEvent.ACTION_CANCEL) {

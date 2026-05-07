@@ -43,20 +43,16 @@ public class SongSorter {
                 Object val1 = map1.get(criteria.key);
                 Object val2 = map2.get(criteria.key);
 
-                if (val1 == null || val2 == null) return 0;
+                if (val1 == val2) return 0;
+                if (val1 == null) return 1;
+                if (val2 == null) return -1;
 
                 int result;
 
                 if (val1 instanceof Number && val2 instanceof Number) {
                     result = Double.compare(((Number) val1).doubleValue(), ((Number) val2).doubleValue());
                 } else if (criteria == SortBy.DURATION) {
-                    try {
-                        long d1 = Long.parseLong(String.valueOf(val1));
-                        long d2 = Long.parseLong(String.valueOf(val2));
-                        result = Long.compare(d1, d2);
-                    } catch (Exception e) {
-                        result = 0;
-                    }
+                    result = compareLongs(val1, val2);
                 } else {
                     result = val1.toString().compareToIgnoreCase(val2.toString());
                 }
@@ -70,5 +66,15 @@ public class SongSorter {
                 }
             });
         });
+    }
+
+    private static int compareLongs(Object v1, Object v2) {
+        try {
+            long l1 = Long.parseLong(String.valueOf(v1));
+            long l2 = Long.parseLong(String.valueOf(v2));
+            return Long.compare(l1, l2);
+        } catch (NumberFormatException e) {
+            return String.valueOf(v1).compareTo(String.valueOf(v2));
+        }
     }
 }
