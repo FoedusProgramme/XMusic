@@ -410,7 +410,7 @@ public class XLyricsLineView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (staticLayout == null || clusters.isEmpty()) return;
+        if (staticLayout == null || clusters.isEmpty() || lyricLine == null) return;
 
         long now = android.os.SystemClock.uptimeMillis();
         if (lastFrameTime == 0) lastFrameTime = now;

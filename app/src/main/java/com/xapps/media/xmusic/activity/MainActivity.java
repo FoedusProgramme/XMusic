@@ -257,18 +257,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {   
                 if (mediaController.getPlaybackState() != Player.STATE_IDLE) {
                     String songPath = RuntimeData.songsMap.get(mediaController.getCurrentMediaItemIndex()).get("path").toString();
-                    LyricsExtractor.extract(songPath, lyrics -> {
-                        if (lyrics != null) {
-                            LyricsParser.parse(lyrics, result -> {
-                                binding.xlyricsView.post(() -> {
-                                    binding.xlyricsView.setLyrics(result.lines);
-                                    binding.xlyricsView.setListener(MainActivity.this);
-                                });
-                            });
-                        } else {
-                            
-                        }
-                    });
+                    loadLyrics(songPath);
                 }
                 if (mediaItem != null) {
                     int position = mediaController.getCurrentMediaItemIndex();
@@ -385,18 +374,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             PlayerService.areMediaItemsEmpty = false;
             mediaController.prepare();
             String songPath = RuntimeData.songsMap.get(mediaController.getCurrentMediaItemIndex()).get("path").toString();
-            LyricsExtractor.extract(songPath, lyrics -> {
-                        if (lyrics != null) {
-                            LyricsParser.parse(lyrics, result -> {
-                                binding.xlyricsView.post(() -> {
-                                    binding.xlyricsView.setLyrics(result.lines);
-                                    binding.xlyricsView.setListener(MainActivity.this);
-                                });
-                            });
-                        } else {
-                            
-                        }
-                    });
+            loadLyrics(songPath);
         } else {
             mediaController.seekTo(position, 0);
         }
@@ -497,15 +475,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                 updateColors();
                 if (mediaController.getPlaybackState() == Player.STATE_READY) {
                     String songPath = RuntimeData.songsMap.get(mediaController.getCurrentMediaItemIndex()).get("path").toString();
-                    LyricsExtractor.extract(songPath, lyrics -> {
-                        if (lyrics != null) {
-                            LyricsParser.parse(lyrics, result -> {
-                                binding.xlyricsView.setLyrics(result.lines);
-                                binding.xlyricsView.setListener(MainActivity.this);
-                            });
-                        } else {
-                        }
-                    });
+                    loadLyrics(songPath);
                 }
                 binding.bottomNavigation.postDelayed(() -> {
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -524,16 +494,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             syncPlayerUI(mediaController.getCurrentMediaItemIndex());
             updateColors();
             String songPath = RuntimeData.songsMap.get(mediaController.getCurrentMediaItemIndex()).get("path").toString();
-            LyricsExtractor.extract(songPath, lyrics -> {
-                if (lyrics != null) {
-                    LyricsParser.parse(lyrics, result -> {
-                        binding.xlyricsView.setLyrics(result.lines);
-                        binding.xlyricsView.setListener(MainActivity.this);
-                    });
-                } else {
-                            
-                }
-            });
+            loadLyrics(songPath);
             updateAdapters(mediaController.getMediaItemCount() > 0? mediaController.getCurrentMediaItemIndex() : -1, mediaController.isPlaying());
             binding.bottomNavigation.postDelayed(() -> {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -1211,6 +1172,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             binding.toggleView.setShapeColor(iop);
             binding.toggleView.setIconColor(ip);
             binding.xlyricsView.setLyricColor(ios);
+			binding.placeholderLyricsText.setTextColor(ios);
             
             binding.nextButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
             binding.favoriteButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
@@ -1344,5 +1306,30 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             mediaController.seekTo(ms);
         }
     }
+	
+	private void loadLyrics(String path) {
+		LyricsExtractor.extract(path, lyrics -> {
+            if (lyrics != null && !lyrics.isEmpty()) {
+                LyricsParser.parse(lyrics, result -> {
+                    binding.xlyricsView.post(() -> {
+                        binding.xlyricsView.setLyrics(result.lines);
+                        binding.xlyricsView.setListener(MainActivity.this);
+						
+						MaterialFadeThrough mft = new MaterialFadeThrough();
+						mft.setDuration(300);
+						TransitionManager.beginDelayedTransition(binding.frame);
+						binding.lyricsPlaceholder.setVisibility(View.GONE);
+						binding.xlyricsView.setVisibility(View.VISIBLE);
+                    });
+                });
+            } else {
+                MaterialFadeThrough mft = new MaterialFadeThrough();
+				mft.setDuration(300);
+				TransitionManager.beginDelayedTransition(binding.frame);
+				binding.xlyricsView.setVisibility(View.GONE);
+				binding.lyricsPlaceholder.setVisibility(View.VISIBLE);
+            }
+        });
+	}
     
 }
