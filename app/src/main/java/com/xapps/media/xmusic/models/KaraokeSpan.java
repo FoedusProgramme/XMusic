@@ -96,7 +96,7 @@ public class KaraokeSpan extends ReplacementSpan {
             paint.setShader(shader);
             paint.setAlpha(0);
 
-            float rawRadius = 12f + 23f * (float) Math.sin(Math.PI * clamped);
+            float rawRadius = 0f + 16f * (float) Math.sin(Math.PI * clamped);
             float snappedRadius = Math.round(rawRadius / 2f) * 2f;
             int alphaBits = Math.min(255, Math.max(0, (int) (glowAlpha * 255)));
             int snappedAlpha = (alphaBits / 10) * 10;

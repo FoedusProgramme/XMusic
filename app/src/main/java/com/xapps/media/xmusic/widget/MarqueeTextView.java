@@ -2,6 +2,7 @@ package com.xapps.media.xmusic.widget;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import androidx.appcompat.widget.AppCompatTextView;
@@ -29,8 +30,14 @@ public class MarqueeTextView extends AppCompatTextView {
         setSelected(true);
         setFocusable(true);
         setFocusableInTouchMode(true);
+
+        setIncludeFontPadding(false);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            setFallbackLineSpacing(false);
+        }
     }
-    
+
     public void resetMarquee() {
         marqueeEnabled = false;
         setSelected(false);
@@ -60,4 +67,3 @@ public class MarqueeTextView extends AppCompatTextView {
         return marqueeEnabled && super.isFocused();
     }
 }
-

@@ -218,6 +218,7 @@ public abstract class BasePrefsFragment extends BaseFragment {
                 DataManager.setStableColors(value);
             break;
             default :
+			    DataManager.sp.edit().putBoolean(item.id, value).apply();
             break;
         }
     }

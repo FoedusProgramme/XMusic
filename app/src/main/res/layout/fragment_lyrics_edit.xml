@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinator"
+	android:background="?colorSurface"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:paddingHorizontal="8dp"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:fitsSystemWindows="true"
+        android:background="@android:color/transparent"
+        app:liftOnScrollColor="@android:color/transparent"
+        android:id="@+id/appbar">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:layout_height="?attr/collapsingToolbarLayoutLargeSize"
+            android:layout_width="match_parent"
+            android:id="@+id/collapsingtoolbar"
+            app:contentScrim="@android:color/transparent"
+            android:background="@null"
+            app:expandedTitleTextAppearance="@style/ExpandedAppBarTextStyle"
+            app:expandedTitleSpacing="0dp"
+            app:collapsedTitleTextAppearance="@style/CollapsedAppBarTextStyle"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:layout_height="?attr/actionBarSize"
+                android:layout_width="match_parent"
+                app:title="Now Playing"
+                app:navigationIcon="@drawable/ic_arrow_back"
+                android:theme="@style/ThemeOverlay.Material3.Toolbar.CircleNavigationButton"
+                app:layout_collapseMode="pin"
+                android:id="@+id/toolbar" />
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/nested_scroll_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:transitionGroup="true" >
+
+            <LinearLayout
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:orientation="vertical" >
+
+                <LinearLayout
+                    android:id="@+id/box"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="@drawable/checkable_background_single">
+
+                    <TextView
+                        android:id="@+id/main_line"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="32sp"
+                        android:text="This is the main Line" 
+                        android:textColor="?colorOnSurface" />
+                
+                    <TextView
+                        android:id="@+id/romaji_line"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:text="This is the romaji Line" 
+                        android:textColor="?colorOutline" />
+
+                </LinearLayout>
+
+                <LinearLayout 
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="@drawable/checkable_background_single">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:text="Optical" 
+                        android:textColor="?colorOutline" />
+
+                    <com.google.android.material.slider.Slider 
+                        android:id="@+id/optical_slider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" 
+                        android:layout_marginHorizontal="8dp" />
+                
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:text="Width" 
+                        android:textColor="?colorOutline" />
+
+                    <com.google.android.material.slider.Slider 
+                        android:id="@+id/width_slider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" 
+                        android:layout_marginHorizontal="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:text="Weight" 
+                        android:textColor="?colorOutline" />
+
+                    <com.google.android.material.slider.Slider 
+                        android:id="@+id/weight_slider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" 
+                        android:layout_marginHorizontal="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:text="Grade" 
+                        android:textColor="?colorOutline" />
+
+                    <com.google.android.material.slider.Slider 
+                        android:id="@+id/grade_slider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" 
+                        android:layout_marginHorizontal="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:text="Roundness" 
+                        android:textColor="?colorOutline" />
+
+                    <com.google.android.material.slider.Slider 
+                        android:id="@+id/roundness_slider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" 
+                        android:layout_marginHorizontal="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:text="Slant" 
+                        android:textColor="?colorOutline" />
+
+                    <com.google.android.material.slider.Slider 
+                        android:id="@+id/slant_slider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" 
+                        android:layout_marginHorizontal="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/reset_button"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingVertical="16dp"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:text="Reset to default"
+                        android:layout_margin="8dp"
+                        android:layout_gravity="center_horizontal" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+    </com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

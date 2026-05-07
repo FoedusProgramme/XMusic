@@ -134,4 +134,19 @@ public class DataManager {
     public static boolean isBlurOn() {
         return sp.getBoolean("blur_effect", false);
     }
+
+    public static String getFontConfig() {
+		return sp.getString("font_config", new StringBuilder()
+            .append("'wdth' ").append(100).append(", ")
+            .append("'wght' ").append(500).append(", ")
+            .append("'opsz' ").append(18).append(", ")
+            .append("'GRAD' ").append(0).append(", ")
+            .append("'ROND' ").append(0).append(", ")
+            .append("'slnt' ").append(0)
+        .toString());
+	}
+
+    public static void setFontConfig(String config) {
+		sp.edit().putString("font_config", config).apply();
+	}
 }

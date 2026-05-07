@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import com.google.android.material.transition.MaterialContainerTransform;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.BuildConfig;
@@ -85,6 +86,9 @@ public class AboutFragment extends BaseFragment {
         binding.secondItem.setOnClickListener(v -> {
             activity.showInfoDialog("Release types", R.drawable.ic_info_outline, "XMusic has 3 different Build Flavors : Alpha, Beta, and Stable.\n\n• Alpha : Experimental builds with unfinished features.\nExpect bugs, crashes, and frequent changes.\n\n• Beta : Mostly stable with new features still being tested.\nMinor bugs and performance issues may occur.\n\n• Stable : Almost fully tested and optimized for daily use.\nBest performance and reliability.", "Got it");
         });
+		binding.fourthItem.setOnClickListener(v -> {
+			openFragment(new UsedLibsFragment());
+		});
         binding.appLogo.setOnClickListener(v -> {
             //activity.HideBNV(true);
             //openLimbo();
@@ -98,6 +102,16 @@ public class AboutFragment extends BaseFragment {
         .setReorderingAllowed(true)
         .addSharedElement(binding.appLogo, "shared_app_icon")
         .replace(R.id.settings_frag, new LimboFragment())
+        .addToBackStack(null)
+        .commit();
+    }
+
+    private void openFragment(Fragment f) {
+        requireActivity()
+        .getSupportFragmentManager()
+        .beginTransaction()
+        .setReorderingAllowed(true)
+        .replace(R.id.settings_frag, f)
         .addToBackStack(null)
         .commit();
     }

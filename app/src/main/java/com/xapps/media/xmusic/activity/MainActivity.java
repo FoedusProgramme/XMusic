@@ -124,7 +124,7 @@ import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function2;
 
-public class MainActivity extends AppCompatActivity implements ServiceCallback, PlaybackControlListener {
+public class MainActivity extends BaseActivity implements ServiceCallback, PlaybackControlListener {
 
     private MusicListFragment musicListFragment;
     private SearchFragment searchFragment;
@@ -205,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
 	    super.onResume();
         isResuming = true;
         if (mediaController != null) {
-            if (mediaController.getMediaItemCount() > 0) binding.lyricsView.onProgress((int) mediaController.getCurrentPosition());
+            if (mediaController.getMediaItemCount() > 0) binding.xlyricsView.onProgress((int) mediaController.getCurrentPosition());
             updateProgress(mediaController.getCurrentPosition());
             syncPlayerUI(mediaController.getCurrentMediaItemIndex());
             binding.getRoot().post(() -> updateColors());
@@ -260,10 +260,9 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
                     LyricsExtractor.extract(songPath, lyrics -> {
                         if (lyrics != null) {
                             LyricsParser.parse(lyrics, result -> {
-                                binding.lyricsView.post(() -> {
-                                    binding.lyricsView.setLyrics(result.lines);
-                                    binding.lyricsView.configureSyncedLyrics(result.isSynced, ResourcesCompat.getFont(context, R.font.product_sans_regular), Gravity.START, 30f);
-                                    binding.lyricsView.setOnSeekListener(MainActivity.this);
+                                binding.xlyricsView.post(() -> {
+                                    binding.xlyricsView.setLyrics(result.lines);
+                                    binding.xlyricsView.setListener(MainActivity.this);
                                 });
                             });
                         } else {
@@ -372,7 +371,7 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
         binding.songSeekbar.setProgressDrawable(progressDrawable);
         binding.miniPlayerBottomSheet.setBackground(ContextCompat.getDrawable(this, R.drawable.rounded_corners_bottom_sheet));
 		bottomSheetColor = MaterialColorUtils.colorSurfaceContainer;
-        binding.extendableLayout.setPadding(XUtils.convertToPx(this, 16f), 0, XUtils.convertToPx(this, 16f), navBarHeight);
+        binding.extendableLayout.setPadding(0, 0, 0, navBarHeight);
         XUtils.setMargins(binding.coversPager, 0, XUtils.getStatusBarHeight(this)*5, 0, 0);
         bsbHeight = bottomSheetBehavior.getPeekHeight();
         loadSettings();
@@ -389,10 +388,9 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
             LyricsExtractor.extract(songPath, lyrics -> {
                         if (lyrics != null) {
                             LyricsParser.parse(lyrics, result -> {
-                                binding.lyricsView.post(() -> {
-                                    binding.lyricsView.setLyrics(result.lines);
-                                    binding.lyricsView.configureSyncedLyrics(result.isSynced, ResourcesCompat.getFont(context, R.font.product_sans_regular), Gravity.START, 30f);
-                                    binding.lyricsView.setOnSeekListener(MainActivity.this);
+                                binding.xlyricsView.post(() -> {
+                                    binding.xlyricsView.setLyrics(result.lines);
+                                    binding.xlyricsView.setListener(MainActivity.this);
                                 });
                             });
                         } else {
@@ -502,9 +500,8 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
                     LyricsExtractor.extract(songPath, lyrics -> {
                         if (lyrics != null) {
                             LyricsParser.parse(lyrics, result -> {
-                                binding.lyricsView.setLyrics(result.lines);
-                                binding.lyricsView.configureSyncedLyrics(result.isSynced, ResourcesCompat.getFont(context, R.font.product_sans_regular), Gravity.START, 17f);
-                                binding.lyricsView.setOnSeekListener(MainActivity.this);
+                                binding.xlyricsView.setLyrics(result.lines);
+                                binding.xlyricsView.setListener(MainActivity.this);
                             });
                         } else {
                         }
@@ -530,9 +527,8 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
             LyricsExtractor.extract(songPath, lyrics -> {
                 if (lyrics != null) {
                     LyricsParser.parse(lyrics, result -> {
-                        binding.lyricsView.setLyrics(result.lines);
-                        binding.lyricsView.configureSyncedLyrics(result.isSynced, ResourcesCompat.getFont(context, R.font.product_sans_regular), Gravity.START, 17f);
-                        binding.lyricsView.setOnSeekListener(MainActivity.this);
+                        binding.xlyricsView.setLyrics(result.lines);
+                        binding.xlyricsView.setListener(MainActivity.this);
                     });
                 } else {
                             
@@ -611,9 +607,6 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
             }
         });
         
-        /*binding.miniPlayerBottomSheet.setOnTouchListener((v, event) -> {
-            return true;
-        });*/
         binding.songSeekbar.setOnClickListener(v -> {
             
         });
@@ -628,8 +621,12 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
             setSong(index, false);
         };
 
-        binding.nextButton.setOnClickListener(navClick);
-        binding.previousButton.setOnClickListener(navClick);
+        binding.nextButton.setOnClickListener(v -> {
+            mediaController.seekToNext();
+        });
+        binding.previousButton.setOnClickListener(v -> {
+            mediaController.seekToPrevious();
+        });
 
         binding.songSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -831,8 +828,8 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
             @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
             @Override
             public void handleOnBackProgressed(BackEventCompat backEvent) {
-                binding.lyricsView.setScaleY(1f - 0.1f*backEvent.getProgress());
-                binding.lyricsView.setScaleX(1f - 0.1f*backEvent.getProgress());
+                binding.xlyricsView.setScaleY(1f - 0.1f*backEvent.getProgress());
+                binding.xlyricsView.setScaleX(1f - 0.1f*backEvent.getProgress());
             }
 
             @Override
@@ -840,12 +837,12 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
                 binding.lyricsContainer.animate().alpha(0f).setDuration(150).withEndAction(() -> {
                     binding.lyricsContainer.setVisibility(View.GONE);
                     binding.lyricsContainer.setAlpha(1f);
-                    binding.lyricsView.setTranslationY(0f);
-                    binding.lyricsView.setScaleY(1f);
-                    binding.lyricsView.setScaleX(1f);
+                    binding.xlyricsView.setTranslationY(0f);
+                    binding.xlyricsView.setScaleY(1f);
+                    binding.xlyricsView.setScaleX(1f);
                     
                 }).start();
-                binding.lyricsView.animate().translationY(300f).setDuration(140).start();
+                binding.xlyricsView.animate().translationY(300f).setDuration(140).start();
                 bottomSheetBehavior.setDraggable(true);
                 innerBottomSheetBehavior.setDraggable(true);
                 callback3.setEnabled(false);
@@ -857,8 +854,8 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
             @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
             @Override
             public void handleOnBackCancelled() {
-                binding.lyricsView.animate().alpha(1f).setDuration(100).start();
-                binding.lyricsView.animate().scaleY(1f).scaleX(1f).setDuration(100).start();
+                binding.xlyricsView.animate().alpha(1f).setDuration(100).start();
+                binding.xlyricsView.animate().scaleY(1f).scaleX(1f).setDuration(100).start();
             }
         };
         getOnBackPressedDispatcher().addCallback(this, callback3);
@@ -1213,7 +1210,7 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
             
             binding.toggleView.setShapeColor(iop);
             binding.toggleView.setIconColor(ip);
-            binding.lyricsView.setLyricColor(ios);
+            binding.xlyricsView.setLyricColor(ios);
             
             binding.nextButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
             binding.favoriteButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
@@ -1280,7 +1277,9 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
                 updateColors();
             } else if (callbackType == ServiceCallback.CALLBACK_PROGRESS_UPDATE && seekbarFree) {
                 updateProgress(RuntimeData.currentProgress);
-                if (mediaController != null) binding.lyricsView.onProgress((int) RuntimeData.currentProgress);
+                if (mediaController != null) {
+                    binding.xlyricsView.onProgress((int) RuntimeData.currentProgress);
+                }
             } else if (callbackType == ServiceCallback.CALLBACK_VUMETER_UPDATE && mediaController != null) {
                 updateVumeters(PlayerService.isPlaying);
             }
@@ -1334,7 +1333,9 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
         isOledTheme = XUtils.isDarkMode(this) && DataManager.isOledThemeEnabled();
         if (isOledTheme) binding.mesh.setVisibility(View.GONE);
         isBlurOn = DataManager.isBlurOn();
-        if (!isBlurOn) binding.fragmentsContainer.setRenderEffect(null);
+        if (XUtils.areBlursOrDynamicColorsSupported() && !isBlurOn) binding.fragmentsContainer.setRenderEffect(null);
+		binding.xlyricsView.updateActiveStates();
+		binding.mesh.setVisibility(DataManager.sp.getBoolean("enable_lyrics_gradient", false)? View.VISIBLE : View.GONE);
     }
     
     @Override

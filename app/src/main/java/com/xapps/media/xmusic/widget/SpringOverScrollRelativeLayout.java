@@ -99,6 +99,11 @@ public class SpringOverScrollRelativeLayout extends RelativeLayout implements Ne
                 }
                 consumed[1] = (int) (oldOffset - verticalOffset);
                 if (scrollTarget != null) scrollTarget.setTranslationY(verticalOffset);
+            } else if ((verticalOffset > 0 && dy < 0) || (verticalOffset < 0 && dy > 0)) {
+                if (type == ViewCompat.TYPE_TOUCH) {
+                    applyOverScroll(-dy);
+                }
+                consumed[1] = dy;
             }
         }
 
@@ -130,7 +135,7 @@ public class SpringOverScrollRelativeLayout extends RelativeLayout implements Ne
 
     @Override
     public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int axes, int type) {
-        if (springAnim.isRunning()) {
+        if (type == ViewCompat.TYPE_TOUCH && springAnim.isRunning()) {
             springAnim.cancel();
         }
         return (axes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
@@ -146,7 +151,7 @@ public class SpringOverScrollRelativeLayout extends RelativeLayout implements Ne
     public void onStopNestedScroll(@NonNull View target, int type) {
         parentHelper.onStopNestedScroll(target, type);
         stopNestedScroll(type);
-        if (verticalOffset != 0) {
+        if (verticalOffset != 0 && !springAnim.isRunning()) {
             springAnim.setStartVelocity(0);
             springAnim.setStartValue(verticalOffset);
             springAnim.animateToFinalPosition(0f);

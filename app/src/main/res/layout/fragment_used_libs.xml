@@ -30,7 +30,7 @@
             <com.google.android.material.appbar.MaterialToolbar
                 android:layout_height="?attr/actionBarSize"
                 android:layout_width="match_parent"
-                app:title="Now Playing"
+                app:title="Open Source Licenses"
                 app:navigationIcon="@drawable/ic_arrow_back"
                 android:theme="@style/ThemeOverlay.Material3.Toolbar.CircleNavigationButton"
                 app:layout_collapseMode="pin"

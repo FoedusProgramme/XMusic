@@ -1,6 +1,5 @@
-plugins {
-    id 'com.android.application'
-}
+apply plugin: 'com.android.application'
+apply plugin: 'com.mikepenz.aboutlibraries.plugin.android'
 
 android {
     namespace "com.xapps.media.xmusic"
@@ -10,8 +9,8 @@ android {
         applicationId "com.xapps.media.xmusic"
         minSdk 26
         targetSdk 36
-        versionCode 30
-        versionName "0.3 Alpha"
+        versionCode 31
+        versionName "0.31 Alpha"
 
         def localProps = new Properties()
         def localPropsFile = rootProject.file("local.properties")
@@ -160,6 +159,7 @@ dependencies {
     implementation "com.github.Adonai:jaudiotagger:2.3.14"
     implementation "com.airbnb.android:lottie:6.7.1"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0"
+	implementation "com.mikepenz:aboutlibraries-core:13.0.0"
 
     implementation(name: "fastscroller", ext: "aar")
     implementation(name: "roundedimageview", ext: "aar")

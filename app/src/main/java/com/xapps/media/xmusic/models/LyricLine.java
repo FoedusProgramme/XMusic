@@ -9,11 +9,13 @@ public class LyricLine {
     public int endTime;
     public Spannable line;
     public final List<LyricWord> words;
+	public boolean isLinkedBg;
     
     public int vocalType = 1; 
     public boolean isBackground = false; 
     public boolean isRomaji = false;
     public boolean isSimpleLRC;
+    public boolean isWaitingDots = false;
 
     public LyricLine(int time, Spannable line, List<LyricWord> words) {
         this.time = time;

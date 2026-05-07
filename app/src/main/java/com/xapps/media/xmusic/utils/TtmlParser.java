@@ -72,15 +72,25 @@ public class TtmlParser {
         return lyricLines;
     }
 
-    private static List<LyricLine> processParagraph(
-            Element p, String mainVocalistId, String divAgentId) {
+    private static List<LyricLine> processParagraph(Element p, String mainVocalistId, String divAgentId) {
         List<LyricLine> results = new ArrayList<>();
         String lineAgent = p.getAttributeNS(NS_TTM, "agent");
         if (lineAgent == null || lineAgent.isEmpty()) lineAgent = divAgentId;
-        int vocalType =
-                (lineAgent != null && !lineAgent.isEmpty() && !lineAgent.equals(mainVocalistId))
-                        ? 2
-                        : 1;
+        int vocalType = (lineAgent != null && !lineAgent.isEmpty() && !lineAgent.equals(mainVocalistId)) ? 2 : 1;
+
+        int pStart = (int) parseTimestamp(p.getAttribute("begin"));
+        int pEnd = (int) parseTimestamp(p.getAttribute("end"));
+
+        String role = p.getAttributeNS(NS_TTM, "role");
+        if ("x-instrumental".equals(role) || "instrumental".equalsIgnoreCase(lineAgent)) {
+            if (pEnd - pStart >= 5000) {
+                LyricLine breakLine = new LyricLine(pStart, new SpannableString(""), new ArrayList<>());
+                breakLine.endTime = pEnd;
+                breakLine.isWaitingDots = true;
+                results.add(breakLine);
+            }
+            return results;
+        }
 
         List<Element> mainSpans = new ArrayList<>();
         List<Element> bgSpans = new ArrayList<>();
@@ -100,67 +110,67 @@ public class TtmlParser {
             }
         }
 
-        if (!mainSpans.isEmpty()) {
-            int start = (int) parseTimestamp(p.getAttribute("begin"));
-            results.add(assembleLine(mainSpans, start, vocalType, false));
+        boolean hasMain = !mainSpans.isEmpty();
+
+        if (hasMain) {
+            results.add(assembleLine(mainSpans, pStart, pEnd, vocalType, false, false));
         }
 
         if (!bgSpans.isEmpty()) {
-            int start = (int) parseTimestamp(bgSpans.get(0).getAttribute("begin"));
-            results.add(assembleLine(bgSpans, start, vocalType, true));
+            int bgStart = (int) parseTimestamp(bgSpans.get(0).getAttribute("begin"));
+            results.add(assembleLine(bgSpans, bgStart, pEnd, vocalType, true, hasMain));
         }
 
         return results;
     }
 
-    private static LyricLine assembleLine(
-        List<Element> spans, int lineStart, int vocalType, boolean isBg) {
-    List<LyricWord> words = new ArrayList<>();
-    StringBuilder fullLineText = new StringBuilder();
-    int cursor = 0;
+    private static LyricLine assembleLine(List<Element> spans, int lineStart, int lineEnd, int vocalType, boolean isBg, boolean isLinkedBg) {
+        List<LyricWord> words = new ArrayList<>();
+        StringBuilder fullLineText = new StringBuilder();
+        int cursor = 0;
 
-    for (int i = 0; i < spans.size(); i++) {
-        Element span = spans.get(i);
-        String text = span.getTextContent();
-        if (isBg) text = text.replace("(", "").replace(")", "");
-        if (text.isEmpty()) continue;
+        for (int i = 0; i < spans.size(); i++) {
+            Element span = spans.get(i);
+            String text = span.getTextContent();
+            if (isBg) text = text.replace("(", "").replace(")", "");
+            if (text.isEmpty()) continue;
 
-        int start = (int) parseTimestamp(span.getAttribute("begin"));
-        
-        int end;
-        if (i < spans.size() - 1) {
-            end = (int) parseTimestamp(spans.get(i + 1).getAttribute("begin"));
-        } else {
-            String endAttr = span.getAttribute("end");
-            if (!endAttr.isEmpty()) {
-                end = (int) parseTimestamp(endAttr);
+            int start = (int) parseTimestamp(span.getAttribute("begin"));
+            
+            int end;
+            if (i < spans.size() - 1) {
+                end = (int) parseTimestamp(spans.get(i + 1).getAttribute("begin"));
             } else {
-                end = start + 300; 
+                String endAttr = span.getAttribute("end");
+                if (!endAttr.isEmpty()) {
+                    end = (int) parseTimestamp(endAttr);
+                } else {
+                    end = lineEnd > 0 ? lineEnd : start + 500; 
+                }
+            }
+
+            LyricWord word = new LyricWord(cursor);
+            LyricSyllable syllable = new LyricSyllable(start, text, 0);
+            syllable.endTime = end;
+            word.syllables.add(syllable);
+            words.add(word);
+
+            fullLineText.append(text);
+            cursor += text.length();
+
+            if (i < spans.size() - 1 && !text.endsWith(" ")) {
+                fullLineText.append(" ");
+                cursor++;
             }
         }
 
-        LyricWord word = new LyricWord(cursor);
-        LyricSyllable syllable = new LyricSyllable(start, text, 0);
-        syllable.endTime = end;
-        word.syllables.add(syllable);
-        words.add(word);
-
-        fullLineText.append(text);
-        cursor += text.length();
-
-        if (i < spans.size() - 1 && !text.endsWith(" ")) {
-            fullLineText.append(" ");
-            cursor++;
-        }
+        LyricLine lyricLine = new LyricLine(lineStart, new SpannableString(fullLineText.toString()), words);
+        lyricLine.vocalType = vocalType;
+        lyricLine.isBackground = isBg;
+        lyricLine.isLinkedBg = isLinkedBg;
+        lyricLine.endTime = lineEnd > 0 ? lineEnd : (words.isEmpty() ? lineStart : words.get(words.size() - 1).syllables.get(0).endTime);
+        return lyricLine;
     }
-
-    LyricLine lyricLine =
-            new LyricLine(lineStart, new SpannableString(fullLineText.toString()), words);
-    lyricLine.vocalType = vocalType;
-    lyricLine.isBackground = isBg;
-    return lyricLine;
-}
-
 
     private static void findBackgroundSpans(Node node, Set<Node> result, boolean isBgParent) {
         if (node.getNodeType() == Node.ELEMENT_NODE) {

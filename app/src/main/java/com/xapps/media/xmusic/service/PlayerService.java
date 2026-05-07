@@ -322,7 +322,7 @@ private final Runnable progressRunnable = new Runnable() {
             RuntimeData.currentProgress = currentProgress;
             ServiceCallback.Hub.send(ServiceCallback.CALLBACK_PROGRESS_UPDATE);
             
-            ExoPlayerHandler.postDelayed(this, 17);
+            ExoPlayerHandler.postDelayed(this, 10);
         }
     }
 };

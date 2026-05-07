@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/coordinator"
+	android:background="?colorSurface"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -166,7 +167,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_marginBottom="2dp"
-                    android:background="@drawable/rv_ripple_bottom"
+                    android:background="@drawable/rv_ripple"
                     android:padding="16dp">
 
                     <TextView
@@ -182,6 +183,29 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/fourth_item"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="2dp"
+                    android:background="@drawable/rv_ripple_bottom"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:textSize="16.0sp"
+                        android:textColor="?colorOnSurface"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Open Source Licenses" />
+                    <TextView
+                        android:textSize="14.0sp"
+                        android:textColor="?colorOutline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Find out more about libraries that were used in this app" />
                 </LinearLayout>
 
             </LinearLayout>

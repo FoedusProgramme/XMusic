@@ -13,6 +13,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewKt;
 import androidx.fragment.app.Fragment;
 import androidx.transition.ChangeBounds;
 import androidx.transition.Fade;
@@ -31,6 +32,7 @@ import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.databinding.FragmentAppearanceBinding;
 import com.xapps.media.xmusic.utils.XUtils;
 import com.xapps.media.xmusic.R;
+import kotlin.Unit;
 
 public class AppearanceFragment extends BaseFragment {
     
@@ -70,6 +72,7 @@ public class AppearanceFragment extends BaseFragment {
         binding.firstPref.setEnabled(XUtils.areBlursOrDynamicColorsSupported());
         binding.firstPref.setAlpha(XUtils.areBlursOrDynamicColorsSupported()? 1f : 0.5f);
         binding.applyButton.setEnabled(false);
+		binding.collapsingtoolbar.setScrimAnimationDuration(0);
         switch (DataManager.getThemeMode()) {
             case 0:
                 binding.systemTheme.setChecked(true);
@@ -85,8 +88,11 @@ public class AppearanceFragment extends BaseFragment {
         if (Build.VERSION.SDK_INT < 31) {
             
         }
+        ViewKt.doOnLayout(activity.getBinding().bottomNavigation, v -> {
+            binding.mainContainer.setPadding(binding.mainContainer.getPaddingRight(), binding.mainContainer.getPaddingTop(), binding.mainContainer.getPaddingLeft(), activity.getBinding().bottomNavigation.getHeight()*2);
+            return Unit.INSTANCE;
+        });
         
-        binding.mainContainer.setPadding(binding.mainContainer.getPaddingRight(), binding.mainContainer.getPaddingTop(), binding.mainContainer.getPaddingLeft(), activity.getBinding().bottomNavigation.getHeight()*2);
     }
 
     private void setupListeners() {

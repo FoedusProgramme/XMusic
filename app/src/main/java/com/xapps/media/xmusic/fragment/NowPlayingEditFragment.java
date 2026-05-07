@@ -57,6 +57,22 @@ public class NowPlayingEditFragment extends BasePrefsFragment {
             "Customize states shapes and animation speed",
             null
         ));
+        
+        items.add(new SettingsItem(
+            SettingsItem.TYPE_NAV,
+            "lyrics_customize",
+            "Lyrics Font",
+            "Change the way lyrics are displayed to your liking",
+            new LyricsEditFragment()
+        ));
+		
+		items.add(new SettingsItem(
+			SettingsItem.TYPE_SWITCH,
+			"enable_lyrics_gradient",
+			"Enable Lyrics Gradient",
+			"Display a beautiful gradient behind lyrics, Might impact performance",
+			null
+		));
 
         return items;
     }
@@ -92,6 +108,8 @@ public class NowPlayingEditFragment extends BasePrefsFragment {
                     dbinding.previewToggle.reloadShapes();
                     dbinding.previewToggle.maxProgress();
                 });
+                dbinding.endDropdown.setOnClickListener(v -> {});
+                dbinding.startDropdown.setOnClickListener(v -> {});
                 builder.setOnDismissListener(dialog -> {
                     if (XUtils.areBlursOrDynamicColorsSupported() && DataManager.isBlurOn()) XUtils.animateBlur(getBinding().coordinator, false, 50);
                 });
@@ -101,6 +119,15 @@ public class NowPlayingEditFragment extends BasePrefsFragment {
                 if (XUtils.areBlursOrDynamicColorsSupported() && DataManager.isBlurOn()) XUtils.animateBlur(getBinding().coordinator, true, 300);
                 builder.create().show();
             break;
+            case "lyrics_customize" :
+                Fragment f = item.destinationFragment;
+                requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.settings_frag, f)
+                    .addToBackStack(null)
+                    .commit();
+            
             
             default :
             break;
@@ -123,6 +150,8 @@ public class NowPlayingEditFragment extends BasePrefsFragment {
             case "stable_colors":
                 activity.getService().sendUpdate(false);
             break;
+			case "enable_lyrics_gradient":
+			    activity.loadSettings();
         }
     }
 }

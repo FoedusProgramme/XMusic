@@ -1,0 +1,73 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/lib_item"
+    android:padding="12dp"
+    android:background="@drawable/rv_ripple_bottom"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+	android:orientation="vertical">
+	<LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+		android:orientation="horizontal">
+		<TextView
+            android:id="@+id/lib_name"
+            android:focusable="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="2dp"
+			android:layout_weight="1"
+            android:text="TextView"
+            android:textSize="20sp"
+            android:singleLine="true"
+            android:lines="1"
+            android:textColor="?colorOnSurface"
+            android:ellipsize="end" />
+		<TextView
+            android:id="@+id/lib_version"
+            android:focusable="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="2dp"
+            android:text="TextView"
+            android:textSize="16sp"
+            android:singleLine="true"
+            android:lines="1"
+            android:textColor="?colorOnSurface"
+            android:ellipsize="end" />
+	</LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+		android:orientation="vertical">
+        <TextView
+            android:id="@+id/owner_name"
+            android:focusable="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TextView"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="5dp"
+            android:textSize="12sp"
+            android:singleLine="true"
+            android:textColor="?colorOutline"
+            android:ellipsize="end" />
+		<com.google.android.material.chip.Chip 
+		    android:id="@+id/license_chip"
+			android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+			app:chipCornerRadius="999dp"
+			android:layout_gravity="right"
+			style="@style/Widget.Material3.Chip.Suggestion"
+			android:checkable="true"
+			android:checked="true"
+			android:clickable="false"
+			android:focusable="false" />
+    </LinearLayout>
+</LinearLayout>

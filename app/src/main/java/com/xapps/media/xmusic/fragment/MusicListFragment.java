@@ -26,7 +26,6 @@ import com.google.android.material.bottomsheet.BottomSheetDragHandleView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialSplitButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.listitem.ListItemViewHolder;
 import com.google.android.material.transition.MaterialSharedAxis;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.MainActivity;
@@ -141,6 +140,7 @@ public class MusicListFragment extends BaseFragment {
         binding.topTitle.setOnClickListener(v -> {
             songsAdapter.notifyDataSetChanged();
             XUtils.showMessage(getActivity(), "done");
+            a.changeAppTheme(0xff000000);
         });
         
         

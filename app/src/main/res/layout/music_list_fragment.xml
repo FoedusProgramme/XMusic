@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:background="@null"
         app:liftOnScroll="false"
+        android:elevation="2dp"
         app:layout_collapseMode="pin"
         android:theme="@style/Widget.Material3.AppBarLayout">
         <com.google.android.material.appbar.CollapsingToolbarLayout

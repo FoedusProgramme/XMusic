@@ -3,25 +3,24 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/coordinator"
+	android:background="?colorSurface"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:paddingHorizontal="8dp"
+	    android:id="@+id/appbar"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$Behavior"
-        android:fitsSystemWindows="true"
         android:background="@null"
-        app:liftOnScrollColor="@android:color/transparent"
-        android:id="@+id/appbar">
+		android:fitsSystemWindows="true"
+		app:liftOnScrollColor="@null">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:layout_height="?attr/collapsingToolbarLayoutLargeSize"
             android:layout_width="match_parent"
             android:id="@+id/collapsingtoolbar"
-            android:background="@null"
-            app:contentScrim="@android:color/transparent"
+            app:contentScrim="?colorSurface"
+			android:paddingHorizontal="8dp"
             app:expandedTitleTextAppearance="@style/ExpandedAppBarTextStyle"
             app:expandedTitleSpacing="0dp"
             app:collapsedTitleTextAppearance="@style/CollapsedAppBarTextStyle"
