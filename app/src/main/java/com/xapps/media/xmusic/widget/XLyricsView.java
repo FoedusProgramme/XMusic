@@ -2,12 +2,14 @@ package com.xapps.media.xmusic.widget;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Paint;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
 import android.graphics.drawable.RippleDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 import android.os.Build;
+import android.text.Layout;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -572,7 +574,7 @@ public class XLyricsView extends RecyclerView {
         @Override
         public void onBindViewHolder(@NonNull LyricViewHolder holder, int position) {
             LyricItem item = lyricItems.get(position);
-            int leftPad = (int) (getWidth() * 0.1f);
+            int leftPad = (int) (getWidth() * 0.05f);
             int rightPad = (int) (getWidth() * 0.2f);
             int topBotPad = (int) (4 * getResources().getDisplayMetrics().density);
 
@@ -669,7 +671,24 @@ public class XLyricsView extends RecyclerView {
                     holder.bgLineView.updateProgress(currentProgressMs, true);
                     
                 } else {
-                    holder.container.setPadding(leftPad, topBotPad, rightPad, topBotPad);
+					LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) holder.mainLineView.getLayoutParams();
+					FrameLayout.LayoutParams lp2 = (FrameLayout.LayoutParams) holder.bgLineView.getLayoutParams();
+					
+					if (item.mainLine.vocalType != 1) {
+						holder.container.setPadding(rightPad, topBotPad, leftPad, topBotPad);
+						lp.gravity = Gravity.RIGHT;
+						lp2.gravity = Gravity.RIGHT;
+						holder.mainLineView.setLineGravity(Layout.Alignment.ALIGN_OPPOSITE);
+						holder.bgLineView.setLineGravity(Layout.Alignment.ALIGN_OPPOSITE);
+					} else {
+						holder.container.setPadding(leftPad, topBotPad, rightPad, topBotPad);
+						lp.gravity = Gravity.LEFT;
+						lp2.gravity = Gravity.LEFT;
+						holder.mainLineView.setLineGravity(Layout.Alignment.ALIGN_NORMAL);
+						holder.bgLineView.setLineGravity(Layout.Alignment.ALIGN_NORMAL);
+					}
+					holder.mainLineView.setLayoutParams(lp);
+					holder.bgLineView.setLayoutParams(lp2);
                     holder.bgWrapper.setPadding(0, 0, 0, 0);
                     holder.container.setBackground(createRipple());
                     

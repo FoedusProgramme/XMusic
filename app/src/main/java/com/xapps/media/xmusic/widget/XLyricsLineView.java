@@ -30,6 +30,8 @@ public class XLyricsLineView extends View {
     private LyricLine lyricLine;
     private LinearGradient brushShader;
     private final Matrix shaderMatrix = new Matrix();
+	
+	private Layout.Alignment alignment = Layout.Alignment.ALIGN_NORMAL;
     
     protected int activeColor = 0xFFFFFFFF;
     protected int pastViewColor = 0x80FFFFFF;
@@ -100,6 +102,10 @@ public class XLyricsLineView extends View {
 		invalidate();
 	}
 	
+	public void setLineGravity(Layout.Alignment alignment) {
+		this.alignment = alignment;
+	}
+	
 	public void setFontConfig(String s) {
 		textPaint.setFontVariationSettings(s);
 	}
@@ -149,7 +155,7 @@ public class XLyricsLineView extends View {
     public void setText(String text, int width) {
         if (width <= 0 || lyricLine == null) return;
         staticLayout = StaticLayout.Builder.obtain(lyricLine.line, 0, lyricLine.line.length(), textPaint, width)
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .setAlignment(alignment)
                 .setIncludePad(true)
                 .setLineSpacing(0f, 1.2f)
                 .build();
@@ -167,8 +173,10 @@ public class XLyricsLineView extends View {
         charXMap = new float[lyricLine.line.length() + 1];
         for (int i = 0; i < charXMap.length; i++) {
             int lineIdx = staticLayout.getLineForOffset(i);
-            charXMap[i] = lineStarts[lineIdx] + staticLayout.getPrimaryHorizontal(i);
+            float lineLeft = staticLayout.getLineLeft(lineIdx);
+            charXMap[i] = lineStarts[lineIdx] + (staticLayout.getPrimaryHorizontal(i) - lineLeft);
         }
+
 
         clusters.clear();
         String content = lyricLine.line.toString();
@@ -371,7 +379,8 @@ public class XLyricsLineView extends View {
             float waveRadius = GRADIENT_WIDTH * 0.75f;
             
             for (VisualCluster vc : clusters) {
-                float clusterCenter = lineStarts[vc.lineIdx] + vc.x + (vc.width / 2f);
+                float lineLeft = staticLayout.getLineLeft(vc.lineIdx);
+                float clusterCenter = lineStarts[vc.lineIdx] + (vc.x - lineLeft) + (vc.width / 2f);
                 float targetElev = 0f;
                 
                 if (isLineActive) {
@@ -382,6 +391,7 @@ public class XLyricsLineView extends View {
                 }
                 vc.currentElevation = targetElev;
             }
+
         }
 
         this.targetGlobalX = globalX;
@@ -437,10 +447,11 @@ public class XLyricsLineView extends View {
 
         for (int i = 0; i < clusters.size(); i++) {
             VisualCluster vc = clusters.get(i);
+            float lineLeft = staticLayout.getLineLeft(vc.lineIdx);
             float lineGlobalStart = lineStarts[vc.lineIdx];
             float lineWidth = lineWidths[vc.lineIdx];
             float lineGlobalEnd = lineGlobalStart + lineWidth;
-            float clusterCenter = lineGlobalStart + vc.x + (vc.width / 2f);
+            float clusterCenter = lineGlobalStart + (vc.x - lineLeft) + (vc.width / 2f);
 
             float targetElev = 0f;
             if (isLineActive && !isSimple) {
@@ -449,6 +460,7 @@ public class XLyricsLineView extends View {
                 float smoothT = t * t * (3f - 2f * t);
                 targetElev = -ELEVATION_AMOUNT * smoothT;
             }
+
 
             vc.currentElevation += (targetElev - vc.currentElevation) * 16f * dt;
             if (Math.abs(targetElev - vc.currentElevation) > 0.1f) animating = true;
@@ -508,7 +520,7 @@ public class XLyricsLineView extends View {
                 } else {
                     float localX = currentGlobalX - lineGlobalStart;
                     float progress = Math.min(1f, Math.max(0f, localX / lineWidth));
-                    float translate = (-GRADIENT_WIDTH) + (lineWidth + GRADIENT_WIDTH) * progress;
+                    float translate = (lineLeft - GRADIENT_WIDTH) + (lineWidth + GRADIENT_WIDTH) * progress;
                     
                     shaderMatrix.setTranslate(translate, 0);
                     brushShader.setLocalMatrix(shaderMatrix);
@@ -517,6 +529,7 @@ public class XLyricsLineView extends View {
                 }
                 canvas.drawText(lyricLine.line, vc.start, vc.end, drawX, drawY, textPaint);
             }
+
 
             if (scale != 1.0f) {
                 canvas.restore();
