@@ -25,6 +25,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDragHandleView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialSplitButton;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.transition.MaterialSharedAxis;
 import com.xapps.media.xmusic.R;
@@ -34,8 +35,10 @@ import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.data.RuntimeData;
 import com.xapps.media.xmusic.databinding.*;
 import com.xapps.media.xmusic.databinding.ActivityMainBinding;
+import com.xapps.media.xmusic.helper.FabPlacementHelper;
 import com.xapps.media.xmusic.helper.SongMetadataHelper;
 import com.xapps.media.xmusic.helper.SongSorter;
+import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.service.PlayerService;
 import com.xapps.media.xmusic.utils.*;
 import com.xapps.media.xmusic.widget.VuMeterView;
@@ -57,7 +60,7 @@ public class MusicListFragment extends BaseFragment {
 	public final Fragment f = this;
 	private String Title = "";
 	private String Artitst = "";
-	private String coverUri = "";
+	private Uri coverUri;
 	public int imageSize, size;
 	private String path = "";
 	private ActivityMainBinding activity;
@@ -75,7 +78,7 @@ public class MusicListFragment extends BaseFragment {
     
     private FastScroller scroller;
     
-    public static FloatingActionButton fab;
+    public static ExtendedFloatingActionButton fab;
     
     private int lastSpacing;
     private int defaultFabMargin;
@@ -85,8 +88,9 @@ public class MusicListFragment extends BaseFragment {
 	public View onCreateView(@NonNull LayoutInflater _inflater, @Nullable ViewGroup _container, @Nullable Bundle _savedInstanceState) {
         a = (MainActivity) getActivity();
 		binding = MusicListFragmentBinding.inflate(_inflater, _container, false);
+		binding.shuffleButton.hide();
         mainHandler = new Handler(Looper.getMainLooper());
-        if (getActivity() != null)binding.collapsingToolbar.setPadding(0, XUtils.getStatusBarHeight(getActivity()), 0, 0);
+        if (getActivity() != null) binding.collapsingToolbar.setPadding(0, XUtils.getStatusBarHeight(getActivity()), 0, 0);
 		initializeLogic();
         setUpListeners(); 
 		return binding.getRoot();
@@ -99,12 +103,15 @@ public class MusicListFragment extends BaseFragment {
         activity = a.getBinding();
         placeholder = ContextCompat.getDrawable(getActivity(), R.drawable.placeholder_small);
         imageSize = XUtils.convertToPx(getActivity(), 45f);
-        activity.bottomNavigation.post(() -> {
-            if (getActivity() == null) return;
+        ViewKt.doOnLayout(activity.bottomNavigation, v -> {
+            if (getActivity() == null) return Unit.INSTANCE;
             a.setMusicListFragmentInstance(this);
-            lastSpacing = XUtils.convertToPx(getActivity(), 5f) + activity.miniPlayerDetailsLayout.getHeight()*2 + activity.bottomNavigation.getHeight();
+            lastSpacing = XUtils.convertToPx(getActivity(), 5f) + activity.miniPlayerDetailsLayout.getHeight()*2 + activity.bottomNavigation.getHeight()*2;
             binding.songsList.addItemDecoration(new BottomSpacingDecoration(lastSpacing));
             binding.songsList.setLayoutManager(new LinearLayoutManager(getContext()));
+            FabPlacementHelper helper = new FabPlacementHelper(binding.shuffleButton, activity.miniPlayerBottomSheet, activity.bottomNavigation, binding.songsList);
+			helper.wireUp(getViewLifecycleOwner());
+			return Unit.INSTANCE;
         });
         
         binding.songsList.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -137,13 +144,6 @@ public class MusicListFragment extends BaseFragment {
     }
     
     public void setUpListeners() {
-        binding.topTitle.setOnClickListener(v -> {
-            songsAdapter.notifyDataSetChanged();
-            XUtils.showMessage(getActivity(), "done");
-            a.changeAppTheme(0xff000000);
-        });
-        
-        
         binding.swipeRefreshLayout.setOnRefreshListener(() -> {
             forceUpdate = true;
             SongMetadataHelper.clearCachedList();
@@ -162,7 +162,7 @@ public class MusicListFragment extends BaseFragment {
         int c3 = MaterialColorUtils.colorOnSurface;
         int c4 = MaterialColorUtils.colorOutline;
         
-        private ArrayList<HashMap<String, Object>> data = new ArrayList();
+        private ArrayList<Song> data = new ArrayList();
         
         private int spacing;
         private int resId = R.drawable.placeholder_small;
@@ -176,7 +176,7 @@ public class MusicListFragment extends BaseFragment {
         
         private SongItemMiddleBinding binding;
         
-		public SongsListAdapter(Context c, ArrayList<HashMap<String, Object>> arraylist) {
+		public SongsListAdapter(Context c, ArrayList<Song> arraylist) {
             spacing = XUtils.convertToPx(c, 5f);
             uri = Uri.parse("android.resource://" + c.getPackageName() + "/" + resId);
             placeholderUri = uri.toString();
@@ -213,13 +213,14 @@ public class MusicListFragment extends BaseFragment {
                 binding.SongTitle.setTextColor(c3);  
                 binding.SongArtist.setTextColor(c4);  
             }
-		    coverUri = data.get(position).get("thumbnail") == null? "invalid" : data.get(position).get("thumbnail").toString();
-		    Title = data.get(position).get("title").toString();
-		    Artitst = data.get(position).get("author").toString();
+		    coverUri = data.get(position).getArtworkUri();
+		    Title = data.get(position).title;
+		    Artitst = data.get(position).artist;
 		    Glide.with(f)
-		    .load(coverUri.equals("invalid")? placeholder : Uri.parse("file://"+coverUri))
+		    .load(coverUri)
 		    .centerCrop()  
             .fallback(placeholder)  
+			.error(placeholder)
             .diskCacheStrategy(DiskCacheStrategy.RESOURCE)  
             .transition(DrawableTransitionOptions.withCrossFade())  
             .placeholder(placeholder)  
@@ -264,7 +265,7 @@ public class MusicListFragment extends BaseFragment {
         
         @Override
         public long getItemId(int position) {
-            String path = data.get(position).get("path").toString();
+            String path = data.get(position).path;
             return path.hashCode();
         }
         
@@ -297,7 +298,7 @@ public class MusicListFragment extends BaseFragment {
 			}
 		}
         
-        public void updateData(ArrayList<HashMap<String, Object>> a) {
+        public void updateData(ArrayList<Song> a) {
             data = a;
             notifyDataSetChanged();
         }
@@ -325,10 +326,10 @@ public class MusicListFragment extends BaseFragment {
             orderButton.setOnClickListener(v -> {
                 boolean b = orderButton.isChecked();
                 DataManager.setDescendingOrder(!b);
-                SongSorter.sort(RuntimeData.songsMap, DataManager.getSongFilterType(), !b, sortedMap -> {
-                    RuntimeData.songsMap = sortedMap;
-                    songsAdapter.updateData(sortedMap);
-                    a.updateSongsQueue(RuntimeData.songsMap);
+                SongSorter.sort(RuntimeData.songs, DataManager.getSongFilterType(), !b, sorted -> {
+                    RuntimeData.songs = sorted;
+                    songsAdapter.updateData(sorted);
+                    a.updateSongsQueue(RuntimeData.songs);
                 });
             });
             filterButton.setOnClickListener(v -> {
@@ -376,107 +377,94 @@ public class MusicListFragment extends BaseFragment {
                         b.tenthItem.setChecked(true);
                         b.tenthRadio.setChecked(true);
                     break;
-                    case BITRATE :
-                        b.eleventhItem.setChecked(true);
-                        b.eleventhRadio.setChecked(true);
-                    break;
                 }
                 b.firstItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.TITLE);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.TITLE, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.TITLE, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
                 b.secondItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.ARTIST);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.ARTIST, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.ARTIST, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
                 b.thirdItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.ALBUM);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.ALBUM, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.ALBUM, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
                 b.fourthItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.ALBUM_ARTIST);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.ALBUM_ARTIST, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.ALBUM_ARTIST, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
                 b.fifthItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.YEAR);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.YEAR, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.YEAR, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
                 b.sixthItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.TRACK);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.TRACK, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.TRACK, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
                 b.seventhItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.DURATION);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.DURATION, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.DURATION, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
                 b.eighthItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.DATE_ADDED);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.DATE_ADDED, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.DATE_ADDED, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
                 b.ninethItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.DATE_MODIFIED);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.DATE_MODIFIED, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.DATE_MODIFIED, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
                 b.tenthItem.setOnClickListener(v2 -> {
                     DataManager.setSongFilterType(SongSorter.SortBy.SIZE);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.SIZE, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
+                    SongSorter.sort(RuntimeData.songs, SongSorter.SortBy.SIZE, DataManager.isDescendingOrder(), sortedMap -> {
+                        RuntimeData.songs = sortedMap;
                         songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
-                    });
-                    bs.dismiss();
-                });
-                b.eleventhItem.setOnClickListener(v2 -> {
-                    DataManager.setSongFilterType(SongSorter.SortBy.BITRATE);
-                    SongSorter.sort(RuntimeData.songsMap, SongSorter.SortBy.BITRATE, DataManager.isDescendingOrder(), sortedMap -> {
-                        RuntimeData.songsMap = sortedMap;
-                        songsAdapter.updateData(sortedMap);
-                        a.updateSongsQueue(RuntimeData.songsMap);
+                        a.updateSongsQueue(RuntimeData.songs);
                     });
                     bs.dismiss();
                 });
@@ -532,7 +520,7 @@ public class MusicListFragment extends BaseFragment {
     public void shuffle() {
         Uri uri = Uri.parse("android.resource://" + getActivity().getPackageName() + "/" + R.drawable.placeholder);
         String placeholderUri = uri.toString();
-        int r = new Random().nextInt((RuntimeData.songsMap.size()-1 - 0) + 1) + 0;
+        int r = new Random().nextInt((RuntimeData.songs.size()-1 - 0) + 1) + 0;
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastClickTime < DEBOUNCE_MS) {
             return;
@@ -571,13 +559,13 @@ public class MusicListFragment extends BaseFragment {
         executor.execute(() -> {
             SongMetadataHelper.getAllSongs(getActivity(), new SongLoadListener() {
                 @Override
-                public void onComplete(ArrayList<HashMap<String, Object>> map) {
+                public void onCompleteNew(ArrayList<Song> list) {
                     if (getActivity() == null) return;
-                    SongSorter.sort(map, DataManager.getSongFilterType(), DataManager.isDescendingOrder(), sortedList -> {
-                        RuntimeData.songsMap = sortedList;
+                    SongSorter.sort(list, DataManager.getSongFilterType(), DataManager.isDescendingOrder(), sortedList -> {
+                        RuntimeData.songs = sortedList;
                         a.updateSongsQueue(sortedList);
-                        size = RuntimeData.songsMap.size();
-                        songsAdapter = new SongsListAdapter(getActivity(), RuntimeData.songsMap);
+                        size = RuntimeData.songs.size();
+                        songsAdapter = new SongsListAdapter(getActivity(), RuntimeData.songs);
                         MainActivity act = (MainActivity) getActivity();
                         HeaderAdapter headerAdapter = new HeaderAdapter();
                         concatAdapter = new ConcatAdapter(headerAdapter, songsAdapter);
@@ -591,12 +579,6 @@ public class MusicListFragment extends BaseFragment {
                                 if (binding.emptyLayout.getVisibility() == View.VISIBLE) TransitionManager.beginDelayedTransition(binding.coordinator, msa);
                                 binding.emptyLayout.setVisibility(View.GONE);
                                 binding.swipeRefreshLayout.setVisibility(View.VISIBLE);
-                                ViewKt.doOnLayout(binding.collapsingToolbar, v -> {
-                                    binding.shuffleButton.setTranslationY(v.getHeight() / 2f);
-                                    binding.shuffleButton.show();
-                                    return Unit.INSTANCE;
-                                });
-                                
                             }
                         });
                     });

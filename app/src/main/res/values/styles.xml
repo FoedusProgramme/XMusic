@@ -39,8 +39,4 @@
         <item name="android:contentDescription">@null</item>
         <item name="android:importantForAccessibility">no</item>
   </style>
-  <style name="CustomTextViewStyle">
-    <item name="android:fontFamily">@font/google_sans_flex</item>
-    <item name="android:fontVariationSettings">\'ROND\' 100</item>
-  </style>
 </resources>

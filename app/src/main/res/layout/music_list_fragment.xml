@@ -5,7 +5,7 @@
     android:id="@+id/coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@null"
+    android:background="?colorSurfaceContainer"
     android:orientation="vertical">
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/app_bar"
@@ -29,9 +29,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@null"
-                android:orientation="horizontal"
+                android:orientation="vertical"
                 android:gravity="bottom"
-                android:paddingHorizontal="15dp"
                 app:layout_collapseMode="pin">
                 <TextView
                     android:id="@+id/top_title"
@@ -39,10 +38,74 @@
                     android:layout_height="wrap_content"
                     android:text="@string/app_name"
                     android:textColor="?colorSurfaceInverse"
-                    android:paddingVertical="15dp"
+                    android:paddingTop="15dp"
+                    android:paddingBottom="12dp"
+                    android:paddingHorizontal="15dp"
                     android:layout_weight="1"
                     android:background="@null"
-                    android:textSize="30dp" />
+                    android:textSize="34dp" />
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:background="@null">
+                    <com.google.android.material.button.MaterialButtonGroup
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="8dp"
+                        android:gravity="start"
+                        android:spacing="4dp"
+                        android:paddingHorizontal="15dp"
+                        app:selectionRequired="true"
+                        app:singleSelection="true"
+                        app:checkedButton="@id/songs_tab"
+                        android:background="@null"
+                        app:overflowMode="none">
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/songs_tab"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Songs"
+                            android:theme="@style/Widget.Material3.Button.TonalButton"
+                            android:checkable="true" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/artists_tab"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Artists"
+                            android:theme="@style/Widget.Material3.Button.TonalButton"
+                            android:checkable="true" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/albums_tab"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Albums"
+                            android:theme="@style/Widget.Material3.Button.TonalButton"
+                            android:checkable="true" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/playlists_tab"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Playlists"
+                            android:theme="@style/Widget.Material3.Button.TonalButton"
+                            android:checkable="true" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/genre_tab"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Genre"
+                            android:theme="@style/Widget.Material3.Button.TonalButton"
+                            android:checkable="true" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/storage_tab"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Storage"
+                            android:theme="@style/Widget.Material3.Button.TonalButton"
+                            android:checkable="true" />
+                    </com.google.android.material.button.MaterialButtonGroup>
+                </HorizontalScrollView>
+                
             </LinearLayout>
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
@@ -51,6 +114,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
+        android:background="@drawable/rounded_corners_rv"
         android:transitionGroup="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
         <FrameLayout
@@ -106,14 +170,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:scrimColor="?colorSurface" />
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/shuffle_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="right|top"
+        android:layout_gravity="right|bottom"
         android:translationY="0dp"
-        android:visibility="gone"
         android:layout_marginHorizontal="16dp"
-        android:src="@drawable/ic_shuffle"
-        style="@style/Widget.Material3.FloatingActionButton.Small.Primary" />
+        app:icon="@drawable/ic_shuffle"
+        android:text="shuffle"
+        android:theme="@style/Widget.Material3.ExtendedFloatingActionButton.Small" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

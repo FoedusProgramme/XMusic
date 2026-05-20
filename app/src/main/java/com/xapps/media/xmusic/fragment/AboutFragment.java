@@ -45,6 +45,7 @@ public class AboutFragment extends BaseFragment {
         init();
         return binding.getRoot();
 	}
+	
 
     private void init() {
         setupUI();

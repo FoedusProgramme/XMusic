@@ -36,6 +36,7 @@ import com.xapps.media.xmusic.application.XApplication;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.data.RuntimeData;
 import com.xapps.media.xmusic.helper.ServiceCallback;
+import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.utils.*;
 import java.io.*;
 import java.util.*;
@@ -57,10 +58,6 @@ public class PlayerService extends MediaLibraryService {
 	private Bitmap icon;  
 	public static boolean isPlaying, isRunning;  
 	private int currentState;
-	/*public static String currentTitle;  
-	public static String currentArtist;  
-	public static String currentCover;
-	public static Bitmap currentArt;*/
 	public static int lastProgress = 0;
 	public static int lastMax = 0;
     public static int currentPosition = 0;
@@ -104,7 +101,8 @@ public class PlayerService extends MediaLibraryService {
     public static Map<String, Integer> lightColors;
     public static Map<String, Integer> darkColors;
     
-    public static ArrayList<HashMap<String, Object>> songsMap = new ArrayList();
+    public static ArrayList<Song> songs = new ArrayList<>();
+	
     
     Player.Commands playerCommands = new Player.Commands.Builder().addAllCommands().build();
     
@@ -170,17 +168,17 @@ public class PlayerService extends MediaLibraryService {
 			if (intent.getAction().equals("ACTION_UPDATE")) {
                 mediaItems = new ArrayList<>();
                 data = "";
-                ArrayList<HashMap<String, Object>> song = RuntimeData.songsMap;
+                ArrayList<Song> song = RuntimeData.songs;
                 executor.execute(() -> {
                     for (int i = 0; i < song.size(); i++) {
-                        if (song.get(i).get("thumbnail") != null) {
-                            mt = new MediaMetadata.Builder().setTitle(song.get(i).get("title").toString()).setArtist(song.get(i).get("author").toString()).setArtworkUri(Uri.parse("file://"+song.get(i).get("thumbnail").toString())).build();
+                        if (song.get(i).getArtworkUri() != null) {
+                            mt = new MediaMetadata.Builder().setTitle(song.get(i).title).setArtist(song.get(i).artist).setArtworkUri(song.get(i).getArtworkUri()).build();
                         } else {
-                            mt = new MediaMetadata.Builder().setTitle(song.get(i).get("title").toString()).setArtist(song.get(i).get("author").toString()).setArtworkUri(fallbackUri).build();
+                            mt = new MediaMetadata.Builder().setTitle(song.get(i).title).setArtist(song.get(i).artist).setArtworkUri(fallbackUri).build();
                         }
-                        String path = song.get(i).get("path").toString();
+                        String path = song.get(i).path;
                         Uri uri2 = Uri.fromFile(new File(path));
-                        data = data + song.get(i).get("title").toString() + "|s|" + song.get(i).get("author").toString() + "|s|" + path + "#i#";
+                        data = data + song.get(i).title + "|s|" + song.get(i).artist + "|s|" + path + "#i#";
                         MediaItem mediaItem = new MediaItem.Builder().setMediaMetadata(mt).setUri(uri2).build();
                         mediaItems.add(mediaItem);
                     }
@@ -238,11 +236,11 @@ public class PlayerService extends MediaLibraryService {
         executor_.execute(() -> {
             Bitmap transparentBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.transparent); 
             Bitmap bmp;
-            if (RuntimeData.songsMap == null) {
+            if (RuntimeData.songs == null) {
                 bmp = transparentBitmap;
             } else {
-                Object thumb = RuntimeData.songsMap.get(currentPosition).get("thumbnail");
-                bmp = thumb == null? transparentBitmap : loadBitmapFromPath(thumb.toString());
+                Uri thumb = RuntimeData.songs.get(currentPosition).getArtworkUri();
+                bmp = thumb == null? transparentBitmap : loadBitmapFromPath(thumb);
             }
             if (DataManager.areStableColors()) {
                 ColorPaletteUtils.generateFromColor(MaterialColorUtils.colorPrimary, (light, dark) -> {
@@ -271,10 +269,10 @@ public class PlayerService extends MediaLibraryService {
         });
     }
     
-    private Bitmap loadBitmapFromPath(String uri) {
+    private Bitmap loadBitmapFromPath(Uri uri) {
         InputStream in = null;
         try {
-            in = getContentResolver().openInputStream(Uri.parse("file://"+uri));
+            in = getContentResolver().openInputStream(uri);
             return BitmapFactory.decodeStream(in);
         } catch (Exception e) {
             e.printStackTrace();

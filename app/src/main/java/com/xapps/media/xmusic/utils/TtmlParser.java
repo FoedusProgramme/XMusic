@@ -1,9 +1,11 @@
 package com.xapps.media.xmusic.utils;
 
 import android.text.SpannableString;
+import com.xapps.media.xmusic.lyric.LyricsParser;
 import com.xapps.media.xmusic.models.LyricLine;
 import com.xapps.media.xmusic.models.LyricSyllable;
 import com.xapps.media.xmusic.models.LyricWord;
+import java.util.Collections;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -73,56 +75,137 @@ public class TtmlParser {
     }
 
     private static List<LyricLine> processParagraph(Element p, String mainVocalistId, String divAgentId) {
-        List<LyricLine> results = new ArrayList<>();
-        String lineAgent = p.getAttributeNS(NS_TTM, "agent");
-        if (lineAgent == null || lineAgent.isEmpty()) lineAgent = divAgentId;
-        int vocalType = (lineAgent != null && !lineAgent.isEmpty() && !lineAgent.equals(mainVocalistId)) ? 2 : 1;
 
-        int pStart = (int) parseTimestamp(p.getAttribute("begin"));
-        int pEnd = (int) parseTimestamp(p.getAttribute("end"));
+    List<LyricLine> results = new ArrayList<>();
 
-        String role = p.getAttributeNS(NS_TTM, "role");
-        if ("x-instrumental".equals(role) || "instrumental".equalsIgnoreCase(lineAgent)) {
-            if (pEnd - pStart >= 5000) {
-                LyricLine breakLine = new LyricLine(pStart, new SpannableString(""), new ArrayList<>());
-                breakLine.endTime = pEnd;
-                breakLine.isWaitingDots = true;
-                results.add(breakLine);
-            }
-            return results;
-        }
+    String lineAgent = p.getAttributeNS(NS_TTM, "agent");
 
-        List<Element> mainSpans = new ArrayList<>();
-        List<Element> bgSpans = new ArrayList<>();
+    if (lineAgent == null || lineAgent.isEmpty()) {
+        lineAgent = divAgentId;
+    }
 
-        NodeList children = p.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++) {
-            Node child = children.item(i);
-            if (child instanceof Element) {
-                Element e = (Element) child;
-                if ("span".equals(e.getLocalName())) {
-                    if ("x-bg".equals(e.getAttributeNS(NS_TTM, "role"))) {
-                        findSpansRecursive(e, bgSpans);
-                    } else {
-                        mainSpans.add(e);
-                    }
-                }
-            }
-        }
+    int vocalType =
+            (lineAgent != null
+                            && !lineAgent.isEmpty()
+                            && !lineAgent.equals(mainVocalistId))
+                    ? 2
+                    : 1;
 
-        boolean hasMain = !mainSpans.isEmpty();
+    int pStart = (int) parseTimestamp(p.getAttribute("begin"));
+    int pEnd = (int) parseTimestamp(p.getAttribute("end"));
 
-        if (hasMain) {
-            results.add(assembleLine(mainSpans, pStart, pEnd, vocalType, false, false));
-        }
+    String role = p.getAttributeNS(NS_TTM, "role");
 
-        if (!bgSpans.isEmpty()) {
-            int bgStart = (int) parseTimestamp(bgSpans.get(0).getAttribute("begin"));
-            results.add(assembleLine(bgSpans, bgStart, pEnd, vocalType, true, hasMain));
+    if ("x-instrumental".equals(role)
+            || "instrumental".equalsIgnoreCase(lineAgent)) {
+
+        if (pEnd - pStart >= 5000) {
+
+            LyricLine breakLine =
+                    new LyricLine(
+                            pStart,
+                            new SpannableString(""),
+                            new ArrayList<>()
+                    );
+
+            breakLine.endTime = pEnd;
+            breakLine.isWaitingDots = true;
+
+            results.add(breakLine);
         }
 
         return results;
     }
+
+    List<Element> mainSpans = new ArrayList<>();
+    List<Element> bgSpans = new ArrayList<>();
+
+    NodeList children = p.getChildNodes();
+
+    for (int i = 0; i < children.getLength(); i++) {
+
+        Node child = children.item(i);
+
+        if (child instanceof Element) {
+
+            Element e = (Element) child;
+
+            if ("span".equals(e.getLocalName())) {
+
+                if ("x-bg".equals(e.getAttributeNS(NS_TTM, "role"))) {
+                    findSpansRecursive(e, bgSpans);
+                } else {
+                    mainSpans.add(e);
+                }
+            }
+        }
+    }
+
+    boolean hasMain = !mainSpans.isEmpty();
+
+    if (!hasMain && bgSpans.isEmpty()) {
+
+    String text = p.getTextContent();
+
+    if (text != null) {
+        text = text.trim();
+    }
+
+    if (text != null && !text.isEmpty()) {
+
+        String prefix = vocalType == 2 ? "v2: " : "";
+
+        LyricLine line =
+                LyricsParser.processContent(
+                        prefix + text,
+                        pStart,
+                        0
+                );
+
+        if (line != null) {
+            line.endTime = pEnd;
+            results.add(line);
+        }
+    }
+
+    return results;
+}
+    if (hasMain) {
+
+        results.add(
+                assembleLine(
+                        mainSpans,
+                        pStart,
+                        pEnd,
+                        vocalType,
+                        false,
+                        false
+                )
+        );
+    }
+
+    if (!bgSpans.isEmpty()) {
+
+        int bgStart =
+                (int)
+                        parseTimestamp(
+                                bgSpans.get(0).getAttribute("begin")
+                        );
+
+        results.add(
+                assembleLine(
+                        bgSpans,
+                        bgStart,
+                        pEnd,
+                        vocalType,
+                        true,
+                        hasMain
+                )
+        );
+    }
+
+    return results;
+}
 
     private static LyricLine assembleLine(List<Element> spans, int lineStart, int lineEnd, int vocalType, boolean isBg, boolean isLinkedBg) {
         List<LyricWord> words = new ArrayList<>();

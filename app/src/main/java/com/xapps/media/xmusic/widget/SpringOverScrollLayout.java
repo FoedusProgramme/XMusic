@@ -22,12 +22,12 @@ public class SpringOverScrollLayout extends RelativeLayout implements NestedScro
 
     private static final float MAX_DRAG = 500f;
     private static final float THRESHOLD_RATIO = 2.5f;
-    private static final float LOCKED_OFFSET = 200f;
+    private static final float LOCKED_OFFSET = 250f;
     
     private static final float FRICTION_BASE = 1f;
     private static final float FRICTION_BUMP_STRENGTH = 0.8f;
     private static final float BUMP_WIDTH = 50f;
-    private static final float JUMP_BOOST = 180f;
+    private static final float JUMP_BOOST = 100f;
 
     private static final long COMMIT_HOLD_TIME_MS = 200;
 

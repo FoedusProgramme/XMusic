@@ -1,4 +1,4 @@
-package com.xapps.media.xmusic.helper;
+package com.xapps.media.xmusic.utils;
 
 import android.content.ContentUris;
 import android.content.Context;
@@ -24,14 +24,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
-public class SongMetadataHelper {
+public class SongsScanner {
+ /*
 
     private static ArrayList<Song> songs = new ArrayList<>();
 
     public static void getAllSongs(Context context, SongLoadListener listener) {
 
-        if (!songs.isEmpty()) {
-            if (listener != null) listener.onCompleteNew(songs);
+        if (!songsData.isEmpty()) {
+            if (listener != null) listener.onCompleteNew(songsData);
             return;
         }
 
@@ -53,6 +54,7 @@ public class SongMetadataHelper {
                 MediaStore.Audio.Media.DATE_ADDED,
                 MediaStore.Audio.Media.DATE_MODIFIED,
                 MediaStore.Audio.Media.MIME_TYPE,
+                MediaStore.Audio.Media.BITRATE,
                 MediaStore.Audio.Media.SIZE
         };
 
@@ -87,6 +89,7 @@ public class SongMetadataHelper {
         int dateAddedIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED);
         int dateModifiedIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED);
         int mimeIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE);
+        int bitrateIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.BITRATE);
         int sizeIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE);
 
         while (cursor.moveToNext()) {
@@ -104,9 +107,10 @@ public class SongMetadataHelper {
             long dateAdded = cursor.getLong(dateAddedIndex);
             long dateModified = cursor.getLong(dateModifiedIndex);
             String mimeType = cursor.getString(mimeIndex);
+            int bitrate = cursor.getInt(bitrateIndex);
             long size = cursor.getLong(sizeIndex);
 
-            Song song = new Song(songId, path, title, artist, album, albumId, albumArtist, year, track, duration, dateAdded, dateModified, mimeType, size);
+            Song song = new Song(songId, path, title, artist, album, albumId, albumArtist, year, track, duration, dateAdded, dateModified, mimeType, bitrate, size);
 			
             songsList.add(song);
 
@@ -117,14 +121,14 @@ public class SongMetadataHelper {
 
         cursor.close();
 
-        songs = songsList;
+        song = songListMap;
 
         if (listener != null) {
-            listener.onCompleteNew(songsList);
+            listener.onComplete(songListMap);
         }
     }
 
-    /*public static String getSongCover(Context context, String path, long songId) {
+    public static String getSongCover(Context context, String path, long songId) {
         String cached = getCachedCoverPath(context, path);
         if (cached != null) return cached;
 
@@ -185,7 +189,7 @@ public class SongMetadataHelper {
             return coverFile.getAbsolutePath();
         } catch (IOException ignored) {}
         return null;
-    }*/
+    }
 
     private static String hashFilePath(String filePath) {
         return String.valueOf(filePath.hashCode());
@@ -205,6 +209,7 @@ public class SongMetadataHelper {
     }
 
     public static void clearCachedList() {
-        songs = new ArrayList<>();
+        songsData = new ArrayList<>();
     }
+*/
 }

@@ -1,20 +1,35 @@
 {
   "allFiles": [
     {
-      "file": "/storage/emulated/0/AndroidIDEProjects/XMusicHighlyUnstable/app/src/main/java/com/xapps/media/xmusic/activity/MainActivity.java",
+      "file": "/storage/emulated/0/AndroidIDEProjects/XMusicHighlyUnstable/app/src/main/java/com/xapps/media/xmusic/service/PlayerService.java",
       "selection": {
         "end": {
-          "column": 83,
-          "index": 42559,
-          "line": 910
+          "column": 33,
+          "index": 10318,
+          "line": 238
         },
         "start": {
-          "column": 83,
-          "index": 42559,
-          "line": 910
+          "column": 33,
+          "index": 10318,
+          "line": 238
+        }
+      }
+    },
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/XMusicHighlyUnstable/app/src/main/java/com/xapps/media/xmusic/activity/WelcomeActivity.java",
+      "selection": {
+        "end": {
+          "column": 33,
+          "index": 5615,
+          "line": 119
+        },
+        "start": {
+          "column": 33,
+          "index": 5615,
+          "line": 119
         }
       }
     }
   ],
-  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/XMusicHighlyUnstable/app/src/main/java/com/xapps/media/xmusic/activity/MainActivity.java"
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/XMusicHighlyUnstable/app/src/main/java/com/xapps/media/xmusic/activity/WelcomeActivity.java"
 }

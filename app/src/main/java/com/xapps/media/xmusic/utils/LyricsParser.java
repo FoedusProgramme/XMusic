@@ -209,7 +209,7 @@ public class LyricsParser {
         return result;
     }
 
-    private static LyricLine processContent(String content, long lineStartTime, long globalOffset) {
+    public static LyricLine processContent(String content, long lineStartTime, long globalOffset) {
         List<LyricWord> words = new ArrayList<>();
         String t = content;
         int vocalType = 1;

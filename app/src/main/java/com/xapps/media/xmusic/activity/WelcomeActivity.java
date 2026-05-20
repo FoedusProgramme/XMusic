@@ -37,6 +37,7 @@ import com.google.android.material.transition.MaterialSharedAxis;
 import com.xapps.media.xmusic.activity.MainActivity;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.helper.SongMetadataHelper;
+import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.utils.XUtils;
 import com.xapps.media.xmusic.common.SongLoadListener;
 import com.xapps.media.xmusic.data.DataManager;
@@ -122,12 +123,12 @@ public class WelcomeActivity extends AppCompatActivity {
                         }
                         
                         @Override
-                        public void onProgress(java.util.ArrayList<HashMap<String, Object>> songs, int count) {
+                        public void onProgressNew(java.util.ArrayList<Song> songs, int count) {
                             binding.progressBar.setProgressCompat(count, true);
                         }
                 
                         @Override
-                        public void onComplete(java.util.ArrayList<HashMap<String, Object>> songs) {
+                        public void onCompleteNew(java.util.ArrayList<Song> songs) {
                             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                                 DataManager.setDataInitialized();
                                 Intent i = new Intent();

@@ -1,128 +1,54 @@
 package com.xapps.media.xmusic.activity;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ArgbEvaluator;
-import android.animation.ValueAnimator;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
+import android.animation.*;
+import android.content.*;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.RenderEffect;
-import android.graphics.Shader;
-import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.TransitionDrawable;
+import android.graphics.*;
+import android.graphics.drawable.*;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.IBinder;
-import android.os.Looper;
-import android.text.TextPaint;
-import android.util.Log;
-import android.util.TypedValue;
-import android.view.Choreographer;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowInsetsController;
-import android.view.animation.Interpolator;
-import android.view.animation.PathInterpolator;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.SeekBar;
-import android.widget.TextView;
-import androidx.activity.BackEventCompat;
-import androidx.activity.EdgeToEdge;
+import android.os.*;
+import android.util.*;
+import android.view.*;
+import android.view.animation.*;
+import android.widget.*;
+import androidx.activity.*;
 import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.*;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsAnimationCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import androidx.core.view.*;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.session.MediaController;
 import androidx.media3.session.SessionToken;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.transition.Fade;
-import androidx.transition.TransitionManager;
-import androidx.transition.TransitionSeekController;
-import androidx.viewpager2.widget.ViewPager2;
+import androidx.transition.*;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.resources.TypefaceUtils;
 import com.google.android.material.search.SearchView;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.transition.MaterialFadeThrough;
-import com.google.android.material.transition.MaterialSharedAxis;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.xapps.media.xmusic.R;
-import com.xapps.media.xmusic.adapter.CustomPagerAdapter;
 import com.xapps.media.xmusic.common.PlaybackControlListener;
 import com.xapps.media.xmusic.common.SongLoadListener;
-import com.xapps.media.xmusic.data.DataManager;
-import com.xapps.media.xmusic.data.LiveColors;
-import com.xapps.media.xmusic.data.RuntimeData;
+import com.xapps.media.xmusic.data.*;
 import com.xapps.media.xmusic.databinding.ActivityMainBinding;
-import com.xapps.media.xmusic.fragment.MusicListFragment;
-import com.xapps.media.xmusic.fragment.SearchFragment;
-import com.xapps.media.xmusic.fragment.SettingsFragment;
+import com.xapps.media.xmusic.fragment.*;
 import com.xapps.media.xmusic.helper.ServiceCallback;
 import com.xapps.media.xmusic.helper.SongMetadataHelper;
-import com.xapps.media.xmusic.lyric.LyricsExtractor;
-import com.xapps.media.xmusic.lyric.LyricsParser;
-import com.xapps.media.xmusic.models.BottomSheetBehavior;
-import com.xapps.media.xmusic.models.CustomBottomSheetBehavior;
-import com.xapps.media.xmusic.models.SquigglyProgress;
+import com.xapps.media.xmusic.lyric.*;
+import com.xapps.media.xmusic.models.*;
 import com.xapps.media.xmusic.service.PlayerService;
-import com.xapps.media.xmusic.utils.ColorPaletteUtils;
-import com.xapps.media.xmusic.utils.MaterialColorUtils;
-import com.xapps.media.xmusic.utils.XUtils;
+import com.xapps.media.xmusic.utils.*;
 import com.xapps.media.xmusic.viewmodel.MainActivityViewModel;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import kotlin.Pair;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function2;
+import java.util.*;
+import java.util.concurrent.*;
+import kotlin.*;
 
 public class MainActivity extends BaseActivity implements ServiceCallback, PlaybackControlListener {
 
@@ -256,7 +182,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {   
                 if (mediaController.getPlaybackState() != Player.STATE_IDLE) {
-                    String songPath = RuntimeData.songsMap.get(mediaController.getCurrentMediaItemIndex()).get("path").toString();
+                    String songPath = RuntimeData.songs.get(mediaController.getCurrentMediaItemIndex()).path;
                     loadLyrics(songPath);
                 }
                 if (mediaItem != null) {
@@ -280,14 +206,14 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                     } else {
                         binding.miniPlayerBottomSheet.setProgress(0f);
                     }
-                    if (RuntimeData.songsMap.size() == 1) {
+                    if (RuntimeData.songs.size() == 1) {
                         binding.previousButton.setActive(false);
                         binding.nextButton.setActive(false);
                     } else {
-                        if (position == 0) {
+                        if (position == 0 && !(mediaController.getShuffleModeEnabled() || mediaController.getRepeatMode() == Player.REPEAT_MODE_ALL)) {
                             binding.previousButton.setActive(false);
                             binding.nextButton.setActive(true);
-                        } else if (position == RuntimeData.songsMap.size() - 1) {
+                        } else if (position == RuntimeData.songs.size() - 1 && !(mediaController.getShuffleModeEnabled() || mediaController.getRepeatMode() == Player.REPEAT_MODE_ALL)) {
                             binding.previousButton.setActive(true);
                             binding.nextButton.setActive(false);
                         } else {
@@ -373,7 +299,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             mediaController.setMediaItems(PlayerService.mediaItems, position, 0);
             PlayerService.areMediaItemsEmpty = false;
             mediaController.prepare();
-            String songPath = RuntimeData.songsMap.get(mediaController.getCurrentMediaItemIndex()).get("path").toString();
+            String songPath = RuntimeData.songs.get(mediaController.getCurrentMediaItemIndex()).path;
             loadLyrics(songPath);
         } else {
             mediaController.seekTo(position, 0);
@@ -404,9 +330,9 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     }
     
     private void updateCoverPager(int index) {
-        if (RuntimeData.songsMap.isEmpty()) return;
+        if (RuntimeData.songs.isEmpty()) return;
         
-        Object cover = RuntimeData.songsMap.get(index).get("thumbnail");
+        Uri cover = RuntimeData.songs.get(index).getArtworkUri();
         if (coverTarget != null) {
             Glide.with(this).clear(coverTarget);
         }
@@ -443,7 +369,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         td.startTransition(duration);
     }
     
-    public void updateSongsQueue(ArrayList<HashMap<String, Object>> s) {
+    public void updateSongsQueue(ArrayList<Song> s) {
         Intent playIntent = new Intent(this, PlayerService.class);
         playIntent.setAction("ACTION_UPDATE");
         startService(playIntent);
@@ -455,7 +381,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         viewmodel.setBNVAsHidden(isBnvHidden);
         viewmodel.saveBNVPosition(binding.bottomNavigation.getSelectedItemId());
         if (mediaController != null) viewmodel.setLastPosition(mediaController.getCurrentMediaItemIndex());
-        PlayerService.songsMap = RuntimeData.songsMap;
+        PlayerService.songs = RuntimeData.songs;
     }
     
     private void restoreStateIfPossible() {
@@ -474,7 +400,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                 updateProgress(mediaController.getCurrentPosition());
                 updateColors();
                 if (mediaController.getPlaybackState() == Player.STATE_READY) {
-                    String songPath = RuntimeData.songsMap.get(mediaController.getCurrentMediaItemIndex()).get("path").toString();
+                    String songPath = RuntimeData.songs.get(mediaController.getCurrentMediaItemIndex()).path;
                     loadLyrics(songPath);
                 }
                 binding.bottomNavigation.postDelayed(() -> {
@@ -493,7 +419,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             ColorPaletteUtils.lightColors = PlayerService.lightColors;
             syncPlayerUI(mediaController.getCurrentMediaItemIndex());
             updateColors();
-            String songPath = RuntimeData.songsMap.get(mediaController.getCurrentMediaItemIndex()).get("path").toString();
+            String songPath = RuntimeData.songs.get(mediaController.getCurrentMediaItemIndex()).path;
             loadLyrics(songPath);
             updateAdapters(mediaController.getMediaItemCount() > 0? mediaController.getCurrentMediaItemIndex() : -1, mediaController.isPlaying());
             binding.bottomNavigation.postDelayed(() -> {
@@ -571,16 +497,6 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         binding.songSeekbar.setOnClickListener(v -> {
             
         });
-
-        View.OnClickListener navClick = v -> {
-            if (System.currentTimeMillis() - lastClick < 150) return;
-            lastClick = System.currentTimeMillis();
-            String placeholder = "android.resource://" + getPackageName() + "/" + R.drawable.placeholder;
-            int index = mediaController.getCurrentMediaItemIndex();
-            index += (v == binding.nextButton ? 1 : -1);
-            HashMap<String, Object> song = RuntimeData.songsMap.get(index);
-            setSong(index, false);
-        };
 
         binding.nextButton.setOnClickListener(v -> {
             mediaController.seekToNext();
@@ -894,14 +810,14 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         executor.execute(() -> {
                 SongMetadataHelper.getAllSongs(context, new SongLoadListener(){
                     @Override
-                    public void onProgress(ArrayList<HashMap<String, Object>> songs, int count) {
+                    public void onProgressNew(ArrayList<Song> songs, int count) {
                     
                     }
                     
                     @Override 
-                    public void onComplete(ArrayList<HashMap<String, Object>> songs) {
-                        RuntimeData.songsMap = songs;
-                        PlayerService.songsMap = songs;
+                    public void onCompleteNew(ArrayList<Song> songs) {
+                        RuntimeData.songs = songs;
+                        PlayerService.songs = songs;
                         new Handler(Looper.getMainLooper()).post(() -> {
                             if (songs.size() > 0) {
                                 wasAdjusted = true;
@@ -912,7 +828,6 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                                 }    
                             } else {
                                 XUtils.showMessage(context, "no songs found");
-                                MusicListFragment.fab.hide();
                             } 
                         });
                     }
@@ -981,30 +896,30 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     }
     
     public void updateTexts(int pos) {
-        if (RuntimeData.songsMap.size() > 0 && mediaController != null) {
+        if (RuntimeData.songs.size() > 0 && mediaController != null) {
             int p = mediaController.getCurrentMediaItemIndex();
 
-            binding.totalDurationText.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("duration").toString());
-            binding.artistBigTitle.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("author").toString());
-            binding.songBigTitle.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("title").toString());
-            binding.currentSongTitle.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("title").toString());
-            binding.currentSongArtist.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("author").toString());
+            binding.totalDurationText.setText(RuntimeData.songs.get(pos == -1 ? p : pos).getFormattedDuration());
+            binding.artistBigTitle.setText(RuntimeData.songs.get(pos == -1 ? p : pos).artist);
+            binding.songBigTitle.setText(RuntimeData.songs.get(pos == -1 ? p : pos).title);
+            binding.currentSongTitle.setText(RuntimeData.songs.get(pos == -1 ? p : pos).title);
+            binding.currentSongArtist.setText(RuntimeData.songs.get(pos == -1 ? p : pos).artist);
     
         } else if (isRestoring || PlayerService.isPlaying) {
             int p = viewmodel.loadLastPosition();
     
-            binding.totalDurationText.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("duration").toString());
-            binding.artistBigTitle.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("author").toString());
-            binding.songBigTitle.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("title").toString());
-            binding.currentSongTitle.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("title").toString());
-            binding.currentSongArtist.setText(RuntimeData.songsMap.get(pos == -1 ? p : pos).get("author").toString());
+            binding.totalDurationText.setText(RuntimeData.songs.get(pos == -1 ? p : pos).getFormattedDuration());
+            binding.artistBigTitle.setText(RuntimeData.songs.get(pos == -1 ? p : pos).artist);
+            binding.songBigTitle.setText(RuntimeData.songs.get(pos == -1 ? p : pos).title);
+            binding.currentSongTitle.setText(RuntimeData.songs.get(pos == -1 ? p : pos).title);
+            binding.currentSongArtist.setText(RuntimeData.songs.get(pos == -1 ? p : pos).artist);
     
             isRestoring = false;
         }
     }
     
     private void updateSongInfoLayout(int pos) {
-
+        if (RuntimeData.songs.isEmpty()) return;
         int p;
 
         if (mediaController != null) {
@@ -1014,9 +929,15 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         }
 
         int index = pos == -1 ? p : pos;
-
-        String mime = RuntimeData.songsMap.get(index).get("mimeType").toString();
-        String path = RuntimeData.songsMap.get(index).get("path").toString();
+		
+		final String path;
+		final String mime;
+		try {
+            mime = RuntimeData.songs.get(index).mimeType;
+            path = RuntimeData.songs.get(index).path;
+		} catch (IndexOutOfBoundsException e) {
+			return;
+		}
 
         binding.songInfoText.animate().alpha(0f).setDuration(100).start();
 
@@ -1064,14 +985,14 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     }
     
     public void updateMaxValue(int pos) {
-        if (RuntimeData.songsMap.size() > 0 && mediaController != null) {
+        if (RuntimeData.songs.size() > 0 && mediaController != null) {
             int p = mediaController.getCurrentMediaItemIndex();
-            int max = Integer.parseInt(RuntimeData.songsMap.get(pos == -1? p : pos).get("total").toString());
+            int max = (int) RuntimeData.songs.get(pos == -1? p : pos).duration;
             binding.songSeekbar.setMax(max);
             binding.musicProgress.setMax(max);
         } else if (isRestoring || PlayerService.isPlaying) {
             int p = PlayerService.currentPosition;
-            int max = Integer.parseInt(RuntimeData.songsMap.get(pos == -1? p : pos).get("total").toString());
+            int max = (int) RuntimeData.songs.get(pos == -1? p : pos).duration;
             binding.songSeekbar.setMax(max);
             binding.musicProgress.setMax(max);
             isRestoring = false;
@@ -1079,19 +1000,20 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     }
     
     public void HideBNV(boolean hide) {
-        bottomSheetBehavior.hhh(hide);
         if (isBnvHidden == hide) return;
         isBnvHidden = hide;
-        Interpolator interpolator = new PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f);
+        android.view.animation.Interpolator interpolator = new PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f);
         if (hide) {
             binding.bottomNavigation.animate().alpha(0.5f).translationY(binding.bottomNavigation.getHeight()).setDuration(300).setInterpolator(interpolator).start();
             binding.miniPlayerBottomSheet.animate().translationY(bnvHeight).setDuration(300).setInterpolator(interpolator).start();
+			if (MusicListFragment.fab != null) MusicListFragment.fab.hide();
         } else {
             int extraInt = XUtils.convertToPx(context, 25);
             if (bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) { 
                 binding.miniPlayerBottomSheet.animate().translationY(0).setDuration(300).setInterpolator(interpolator).start();
             }
             binding.bottomNavigation.animate().alpha(1f).translationY(0).setDuration(300).setInterpolator(interpolator).start();
+			if (MusicListFragment.fab != null) MusicListFragment.fab.show();
         }
     }
     
@@ -1331,5 +1253,4 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             }
         });
 	}
-    
 }

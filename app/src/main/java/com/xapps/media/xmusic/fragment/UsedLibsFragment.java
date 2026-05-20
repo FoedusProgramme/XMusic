@@ -1,13 +1,18 @@
 package com.xapps.media.xmusic.fragment;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.*;
 import androidx.annotation.*;
+import androidx.core.view.ViewCompat;
 import androidx.core.view.ViewKt;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.transition.Hold;
+import com.google.android.material.transition.MaterialContainerTransform;
 import com.mikepenz.aboutlibraries.Libs;
 import com.mikepenz.aboutlibraries.entity.Library;
 import com.xapps.media.xmusic.activity.MainActivity;
@@ -32,10 +37,15 @@ public class UsedLibsFragment extends BaseFragment {
 	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 		binding = FragmentUsedLibsBinding.inflate(inflater, container, false);
         activity = (MainActivity) getActivity();
-        init();
         return binding.getRoot();
 	}
     
+	@Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        init();
+    }
+	
     private void init() {
 		ViewKt.doOnLayout(activity.getBinding().bottomNavigation, v -> {
             try {
@@ -44,12 +54,13 @@ public class UsedLibsFragment extends BaseFragment {
 				adapter = new ListAdapter(getActivity(), list);
 				binding.recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 				binding.recyclerView.setAdapter(adapter);
-			    binding.recyclerView.addItemDecoration(new SpacingDecoration(activity.getBinding().bottomNavigation.getHeight()));
+			    binding.recyclerView.addItemDecoration(new SpacingDecoration(activity.getBinding().bottomNavigation.getHeight()*2));
 		    } catch (Exception e) {
 			
 		    }
             return Unit.INSTANCE;
         });
+		
 	}
 
     public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
@@ -66,8 +77,6 @@ public class UsedLibsFragment extends BaseFragment {
         private static final int TYPE_TOP = 0;
         private static final int TYPE_MIDDLE = 1;
         private static final int TYPE_BOTTOM = 2;
-        
-        private LibrariesItemLayoutBinding binding;
         
 		public ListAdapter(Context c, List<Library> list) {
             spacing = XUtils.convertToPx(c, 5f);
@@ -88,9 +97,12 @@ public class UsedLibsFragment extends BaseFragment {
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
+			
 			Library lib = libsList.get(position);
 		    View view = holder.itemView;
-            binding = LibrariesItemLayoutBinding.bind(view);
+            LibrariesItemLayoutBinding binding = LibrariesItemLayoutBinding.bind(view);
+			String transitionName = "license_"+String.valueOf(position);
+			ViewCompat.setTransitionName(binding.libItem, transitionName);
 			
 			String libName = "Unknown";
 			
@@ -121,6 +133,11 @@ public class UsedLibsFragment extends BaseFragment {
             }
 
             binding.ownerName.setText(owner);
+			
+			final String name = libName;
+			binding.libItem.setOnClickListener(v -> {
+				openFragment(name, lib.getLicenses().iterator().next().getLicenseContent());
+			});
 	    }
         
         @Override
@@ -142,6 +159,17 @@ public class UsedLibsFragment extends BaseFragment {
 				super(v);
 			}
 		}
+	}
+	
+	private void openFragment(String name, String text) {
+		LibDetailsFragment fragment = LibDetailsFragment.newInstance(name, text);
+        requireActivity()
+        .getSupportFragmentManager()
+        .beginTransaction()
+		.setReorderingAllowed(true)
+        .replace(R.id.settings_frag, fragment)
+        .addToBackStack(null)
+        .commit();
 	}
 
     public class SpacingDecoration extends RecyclerView.ItemDecoration {

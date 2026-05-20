@@ -268,7 +268,7 @@ public class XUtils {
     }
     
     public static void animateBlur(View view, boolean enable, long duration) {
-        ValueAnimator va = ValueAnimator.ofFloat(enable? 0f : 1f, enable? 1f : 0f);
+        ValueAnimator va = ValueAnimator.ofFloat(enable? 0.1f : 1f, enable? 1f : 0.1f);
         va.setDuration(duration);
         va.addUpdateListener(a -> {
             float progress = (float) a.getAnimatedValue();

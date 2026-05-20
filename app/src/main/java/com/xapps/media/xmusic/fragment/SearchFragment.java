@@ -36,6 +36,7 @@ import com.xapps.media.xmusic.databinding.SearchItemMiddleBinding;
 import com.xapps.media.xmusic.helper.SongMetadataHelper;
 import com.xapps.media.xmusic.helper.SongSearchHelper;
 import com.xapps.media.xmusic.models.BottomSheetBehavior;
+import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 import com.xapps.media.xmusic.utils.XUtils;
 
@@ -188,7 +189,7 @@ public class SearchFragment extends BaseFragment {
         final String query = lastQuery == null ? "" : lastQuery.trim().toLowerCase();
 
         executor.execute(() -> {
-            ArrayList<HashMap<String, Object>> results =
+            ArrayList<Song> results =
             SongSearchHelper.search(
                 query,
                 searchAll || searchTitle,
@@ -213,7 +214,7 @@ public class SearchFragment extends BaseFragment {
         private static final int TYPE_MIDDLE = 1;
         private static final int TYPE_BOTTOM = 2;
 
-        private final ArrayList<HashMap<String, Object>> data = new ArrayList<>();
+        private final ArrayList<Song> data = new ArrayList<>();
 
         private final int c1 = MaterialColorUtils.colorPrimary;
         private final int c2 = MaterialColorUtils.colorSecondary;
@@ -222,7 +223,7 @@ public class SearchFragment extends BaseFragment {
 
         private final String placeholderUri;
 
-        SearchListAdapter(Context c, ArrayList<HashMap<String, Object>> list) {
+        SearchListAdapter(Context c, ArrayList<Song> list) {
             setHasStableIds(true);
             placeholderUri = Uri.parse("android.resource://" + c.getPackageName() + "/" + R.drawable.placeholder).toString();
             data.addAll(list);
@@ -247,7 +248,7 @@ public class SearchFragment extends BaseFragment {
 
         @Override
         public long getItemId(int position) {
-            return data.get(position).get("path").toString().hashCode();
+            return data.get(position).path.hashCode();
         }
 
         @NonNull
@@ -265,10 +266,10 @@ public class SearchFragment extends BaseFragment {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            HashMap<String, Object> item = data.get(position);
+            Song song = data.get(position);
             SearchItemMiddleBinding b = holder.binding;
 
-            boolean active = data.get(position).get("path").toString().equals(currentSong);
+            boolean active = song.path.equals(currentSong);
 
             if (!a.getController().isPlaying()) b.vumeterView.pause(); else b.vumeterView.resume();
 
@@ -277,14 +278,16 @@ public class SearchFragment extends BaseFragment {
             b.SongTitle.setTextColor(active ? c1 : c3);
             b.SongArtist.setTextColor(active ? c2 : c4);
 
-            b.SongTitle.setText((String) item.get("title"));
-            b.SongArtist.setText((String) item.get("author"));
+            b.SongTitle.setText(song.title);
+            b.SongArtist.setText(song.artist);
 
-            String cover = (String) item.get("thumbnail");
+            Uri cover = song.getArtworkUri();
 
             Glide.with(b.songCover)
-                .load(cover == null ? placeholderUri : Uri.parse("file://" + cover))
+                .load(cover)
                 .centerCrop()
+				.error(R.drawable.placeholder_small)
+				.fallback(R.drawable.placeholder_small)
                 .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .override(imageSize, imageSize)
@@ -299,10 +302,10 @@ public class SearchFragment extends BaseFragment {
                 long now = System.currentTimeMillis();
                 if (now - lastClickTime < DEBOUNCE_MS) return;
                 lastClickTime = now;
-                String path = data.get(pos).get("path").toString();
+                String path = song.path;
                 int realIndex = -1;
-                for (int i = 0; i < RuntimeData.songsMap.size(); i++) {
-                    if (RuntimeData.songsMap.get(i).get("path").toString().equals(path)) {
+                for (int i = 0; i < RuntimeData.songs.size(); i++) {
+                    if (RuntimeData.songs.get(i).path.toString().equals(path)) {
                         realIndex = i;
                         break;
                     }
@@ -327,7 +330,7 @@ public class SearchFragment extends BaseFragment {
             return data.size();
         }
 
-        void setData(ArrayList<HashMap<String, Object>> newData) {
+        void setData(ArrayList<Song> newData) {
             DiffUtil.DiffResult diff = DiffUtil.calculateDiff(new SongDiff(data, newData));
             data.clear();
             data.addAll(newData);
@@ -346,10 +349,10 @@ public class SearchFragment extends BaseFragment {
 
     static class SongDiff extends DiffUtil.Callback {
 
-        private final ArrayList<HashMap<String, Object>> oldL;
-        private final ArrayList<HashMap<String, Object>> newL;
+        private final ArrayList<Song> oldL;
+        private final ArrayList<Song> newL;
 
-        SongDiff(ArrayList<HashMap<String, Object>> o, ArrayList<HashMap<String, Object>> n) {
+        SongDiff(ArrayList<Song> o, ArrayList<Song> n) {
             oldL = o;
             newL = n;
         }
@@ -366,7 +369,7 @@ public class SearchFragment extends BaseFragment {
 
         @Override
         public boolean areItemsTheSame(int o, int n) {
-            return oldL.get(o).get("path").equals(newL.get(n).get("path"));
+            return oldL.get(o).path.equals(newL.get(n).path);
         }
 
         @Override
@@ -395,10 +398,8 @@ public class SearchFragment extends BaseFragment {
     public void updateActiveItem(int pos) {
         currentPos = pos;
         oldSong = currentSong;
-        currentSong = pos >= 0? RuntimeData.songsMap.get(pos).get("path").toString() : "null";
+        currentSong = pos >= 0? RuntimeData.songs.get(pos).path : "null";
         if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
-        /*if (!oldSong.equals("")) 
-        if (!currentSong.equals(""))*/
     }
     
     public void updateVumeter(boolean b) {
@@ -417,21 +418,17 @@ public class SearchFragment extends BaseFragment {
         executor.execute(() -> {
             SongMetadataHelper.getAllSongs(getActivity(), new SongLoadListener() {
                 @Override
-                public void onComplete(ArrayList<HashMap<String, Object>> map) {
+                public void onCompleteNew(ArrayList<Song> map) {
                     bindInitial();
                 }
-
-                @Override
-                public void onProgress(
-                    ArrayList<HashMap<String, Object>> map, int count) {}
-                });
+			});
         });
     }
     
     private void bindInitial() {
         if (!isAdded() || getContext() == null) return;
         new Handler(Looper.getMainLooper()).post(() -> {
-            ArrayList<HashMap<String, Object>> initial = SongSearchHelper.search("", true, true, true, true);
+            ArrayList<Song> initial = SongSearchHelper.search("", true, true, true, true);
             searchAdapter = new SearchListAdapter(requireContext(), initial);
             binding.searchRecycler.setAdapter(searchAdapter);
         });
