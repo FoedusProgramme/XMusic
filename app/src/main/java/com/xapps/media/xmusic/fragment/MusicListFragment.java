@@ -50,6 +50,7 @@ import java.util.concurrent.Executors;
 import kotlin.Unit;
 import me.zhanghai.android.fastscroll.FastScroller;
 import me.zhanghai.android.fastscroll.FastScrollerBuilder;
+import me.zhanghai.android.fastscroll.PopupTextProvider;
 
 public class MusicListFragment extends BaseFragment {
 	
@@ -106,7 +107,7 @@ public class MusicListFragment extends BaseFragment {
         ViewKt.doOnLayout(activity.bottomNavigation, v -> {
             if (getActivity() == null) return Unit.INSTANCE;
             a.setMusicListFragmentInstance(this);
-            lastSpacing = XUtils.convertToPx(getActivity(), 5f) + activity.miniPlayerDetailsLayout.getHeight()*2 + activity.bottomNavigation.getHeight()*2;
+            lastSpacing = XUtils.convertToPx(getActivity(), 5f) + activity.coversPager.getHeight()*2 + activity.bottomNavigation.getHeight()*2 ;
             binding.songsList.addItemDecoration(new BottomSpacingDecoration(lastSpacing));
             binding.songsList.setLayoutManager(new LinearLayoutManager(getContext()));
             FabPlacementHelper helper = new FabPlacementHelper(binding.shuffleButton, activity.miniPlayerBottomSheet, activity.bottomNavigation, binding.songsList);
@@ -119,7 +120,6 @@ public class MusicListFragment extends BaseFragment {
         binding.shuffleButton.setOnClickListener(v -> {
             shuffle();
         });
-        
 	}
     
     @Override
@@ -145,24 +145,31 @@ public class MusicListFragment extends BaseFragment {
     
     public void setUpListeners() {
         binding.swipeRefreshLayout.setOnRefreshListener(() -> {
+			if (scroller != null) scroller.setForceHidden(true);
             forceUpdate = true;
             SongMetadataHelper.clearCachedList();
             loadSongs();
             a.loadSongs();
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 binding.swipeRefreshLayout.setRefreshing(false);
-            }, 2000);
+            }, 2500);
+        });
+		
+		binding.appBar.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
+            boolean anyVisible = Math.abs(verticalOffset) < appBarLayout.getTotalScrollRange();
+
+            if (scroller != null) scroller.setForceHidden(anyVisible || binding.swipeRefreshLayout.isRefreshing());
         });
     }
 	
-	public class SongsListAdapter extends RecyclerView.Adapter<SongsListAdapter.ViewHolder> {
+	public class SongsListAdapter extends RecyclerView.Adapter<SongsListAdapter.ViewHolder> implements PopupTextProvider {
 		
         int c1 = MaterialColorUtils.colorPrimary;
         int c2 = MaterialColorUtils.colorSecondary;
         int c3 = MaterialColorUtils.colorOnSurface;
         int c4 = MaterialColorUtils.colorOutline;
         
-        private ArrayList<Song> data = new ArrayList();
+        private ArrayList<Song> data = new ArrayList<>();
         
         private int spacing;
         private int resId = R.drawable.placeholder_small;
@@ -272,7 +279,8 @@ public class MusicListFragment extends BaseFragment {
         @Override
         public void onViewRecycled(@NonNull ViewHolder holder) {
             super.onViewRecycled(holder);
-            Glide.with(holder.itemView.getContext()).clear((View)holder.itemView.findViewById(R.id.songCover)); 
+			View v = holder.itemView.findViewById(R.id.songCover);
+            Glide.with(holder.itemView.getContext()).clear(v); 
         }
 
         @Override
@@ -292,6 +300,19 @@ public class MusicListFragment extends BaseFragment {
             return TYPE_MIDDLE;
         }
 		
+		@Override
+        @Nullable
+        public CharSequence getPopupText(View view, int position) {
+            Song song = data.get(position);
+            String title = song.title;
+
+            if (title == null || title.isEmpty()) {
+                return "#";
+            }
+
+            return String.valueOf(Character.toUpperCase(title.charAt(0)));
+        }
+		
 		static class ViewHolder extends RecyclerView.ViewHolder {
 			public ViewHolder(View v) {
 				super(v);
@@ -304,7 +325,7 @@ public class MusicListFragment extends BaseFragment {
         }
 	}
 
-    public class HeaderAdapter extends RecyclerView.Adapter<HeaderAdapter.HeaderViewHolder> {
+    public class HeaderAdapter extends RecyclerView.Adapter<HeaderAdapter.HeaderViewHolder>{
 	    @Override
 	    public HeaderViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 		    View headerView = LayoutInflater.from(parent.getContext()).inflate(R.layout.header_view, parent, false);
@@ -314,7 +335,25 @@ public class MusicListFragment extends BaseFragment {
 	    @Override
 		public void onBindViewHolder(HeaderViewHolder holder, int position) {
             activity.bottomNavigation.post(() -> {
-                if (scroller == null) scroller = new FastScrollerBuilder(binding.songsList).useMd2Style().setPadding(0, XUtils.convertToPx(getActivity(), 18f) + holder.itemView.getHeight(), 0, activity.bottomNavigation.getHeight()+XUtils.getNavigationBarHeight(getActivity())).build();
+                if (scroller == null) scroller = new FastScrollerBuilder(binding.songsList).useMd2Style().setPopupStyle(t -> {
+					t.setTextColor(MaterialColorUtils.colorOnPrimaryContainer);
+					t.setTextSize(XUtils.convertSpToPx(getActivity(), 18f));
+					t.setGravity(Gravity.CENTER);
+					t.setBackground(ContextCompat.getDrawable(getActivity(), R.drawable.shape_clover));
+				}).setPopupTextProvider((view, position2) -> {
+                if (position2 <= 0 || position2 - 1 >= RuntimeData.songs.size()) {
+                    return null;
+                }
+
+                Song song = RuntimeData.songs.get(position2 - 1);
+                String title = song.title;
+
+                if (title == null || title.isEmpty()) {
+                    return "#";
+                }
+
+                return String.valueOf(Character.toUpperCase(title.charAt(0)));
+            }).setPadding(0, XUtils.convertToPx(getActivity(), 18f) + holder.itemView.getHeight(), 0, XUtils.convertToPx(getActivity(), 5f) + activity.coversPager.getHeight() + activity.bottomNavigation.getHeight()*2).build();
             });
 			View view = holder.itemView;
 			TextView sg = (TextView) view.findViewById(R.id.songs_count);
@@ -559,7 +598,7 @@ public class MusicListFragment extends BaseFragment {
         executor.execute(() -> {
             SongMetadataHelper.getAllSongs(getActivity(), new SongLoadListener() {
                 @Override
-                public void onCompleteNew(ArrayList<Song> list) {
+                public void onComplete(ArrayList<Song> list) {
                     if (getActivity() == null) return;
                     SongSorter.sort(list, DataManager.getSongFilterType(), DataManager.isDescendingOrder(), sortedList -> {
                         RuntimeData.songs = sortedList;
@@ -583,11 +622,6 @@ public class MusicListFragment extends BaseFragment {
                         });
                     });
                     
-                }
-                    
-                @Override
-                public void onProgress(ArrayList<HashMap<String, Object>> map, int count) {
-                        
                 }
             });
         });

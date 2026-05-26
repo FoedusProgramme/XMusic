@@ -23,7 +23,7 @@ public class XLyricsRomajiLineView extends XLyricsLineView {
     
     @Override
     public float getExtraPadding() {
-        return textPaint.getTextSize() * 0.1f;
+        return textPaint.getTextSize() * 0.4f;
     }
 
 }

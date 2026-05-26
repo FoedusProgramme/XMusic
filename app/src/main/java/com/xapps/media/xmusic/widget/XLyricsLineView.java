@@ -495,7 +495,7 @@ public class XLyricsLineView extends View {
             }
 
             if (shadowColor != 0) {
-                textPaint.setShadowLayer(18f, 0f, 0f, shadowColor);
+                textPaint.setShadowLayer(12f, 0f, 0f, shadowColor);
             } else {
                 textPaint.clearShadowLayer();
             }

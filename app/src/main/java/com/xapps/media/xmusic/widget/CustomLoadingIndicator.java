@@ -56,7 +56,7 @@ public class CustomLoadingIndicator extends View {
         super(context, attrs);
         mShapePaint.setColor(MaterialColorUtils.colorPrimary);
         mBgPaint.setColor(MaterialColorUtils.colorPrimaryContainer);
-        setLayerType(LAYER_TYPE_SOFTWARE, null);
+        //setLayerType(LAYER_TYPE_SOFTWARE, null);
         updateMorph();
     }
 

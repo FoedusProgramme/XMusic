@@ -25,6 +25,8 @@ import java.util.Locale;
 
 public class SongMetadataHelperLegacy {
 
+    /*
+
     private static final String CACHE_DIR_NAME = "covers";
     private static ArrayList<HashMap<String, Object>> songsData = new ArrayList<>();
 
@@ -237,4 +239,5 @@ public class SongMetadataHelperLegacy {
     public static void clearCachedList() {
         songsData = new ArrayList<>();
     }
+    */
 }

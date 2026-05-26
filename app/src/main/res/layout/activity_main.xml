@@ -361,7 +361,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
-                android:translationY="125dp"
+                android:translationY="250dp"
                 app:menu="@menu/bnv_menu"
                 app:labelVisibilityMode="unlabeled"
                 app:itemTextAppearanceActive="@style/BoldStyleBNV" />

@@ -123,8 +123,8 @@ public class SpringOverScrollRelativeLayout extends RelativeLayout implements Ne
         int rem = dyU - pConsumed[1];
 
         if (rem != 0 && type == ViewCompat.TYPE_TOUCH) {
-            boolean isAtTop = appBarOffset >= 0 && !ViewCompat.canScrollVertically(target, -1);
-            boolean isAtBottom = Math.abs(appBarOffset) >= totalAppBarRange && !ViewCompat.canScrollVertically(target, 1);
+            boolean isAtTop = appBarOffset >= 0 && !target.canScrollVertically(-1);
+            boolean isAtBottom = Math.abs(appBarOffset) >= totalAppBarRange && !target.canScrollVertically(1);
 
             if ((rem < 0 && isAtTop) || (rem > 0 && isAtBottom)) {
                 applyOverScroll(-rem);

@@ -34,7 +34,7 @@ import com.xapps.media.xmusic.utils.XUtils;
 import com.xapps.media.xmusic.R;
 import kotlin.Unit;
 
-public class AppearanceFragment extends BaseFragment {
+public class AppearanceFragment extends SubFragment {
     
     private FragmentAppearanceBinding binding;
     private MainActivity activity;
@@ -98,6 +98,7 @@ public class AppearanceFragment extends BaseFragment {
     private void setupListeners() {
         binding.toolbar.setNavigationOnClickListener(v -> {
             getActivity().getOnBackPressedDispatcher().onBackPressed();
+			activity.HideBNV(false);
         });
         binding.secondPref.setOnClickListener(v -> {
             binding.secondSwitch.setChecked(!binding.secondSwitch.isChecked());

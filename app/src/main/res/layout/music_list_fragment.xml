@@ -15,7 +15,7 @@
         app:liftOnScroll="false"
         android:elevation="2dp"
         app:layout_collapseMode="pin"
-        android:theme="@style/Widget.Material3.AppBarLayout">
+        style="@style/Widget.Material3.AppBarLayout">
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsing_toolbar"
             android:layout_width="match_parent"
@@ -44,68 +44,39 @@
                     android:layout_weight="1"
                     android:background="@null"
                     android:textSize="34dp" />
-                <HorizontalScrollView
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tab_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:scrollbars="none"
-                    android:background="@null">
-                    <com.google.android.material.button.MaterialButtonGroup
+					android:visibility="gone"
+					android:paddingHorizontal="15dp"
+                    android:background="@null"
+                    app:tabIndicator="@drawable/tab_indicator_pill"
+					app:tabRippleColor="@null"
+					app:tabTextAppearance="@style/TabTextStyle"
+                    app:tabIndicatorColor="?colorPrimaryContainer"
+					app:tabIndicatorGravity="stretch"
+                    app:tabIndicatorFullWidth="true"
+					app:tabMode="scrollable"
+					app:tabGravity="start"
+                    app:tabTextColor="?colorOutline"
+					app:tabPaddingStart="12dp"
+					app:tabPaddingEnd="12dp"
+					app:tabSelectedTextAppearance="@style/SelectedTabTextStyle"
+                    app:tabSelectedTextColor="?colorSecondary">
+                    <com.google.android.material.tabs.TabItem
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingBottom="8dp"
-                        android:gravity="start"
-                        android:spacing="4dp"
-                        android:paddingHorizontal="15dp"
-                        app:selectionRequired="true"
-                        app:singleSelection="true"
-                        app:checkedButton="@id/songs_tab"
-                        android:background="@null"
-                        app:overflowMode="none">
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/songs_tab"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Songs"
-                            android:theme="@style/Widget.Material3.Button.TonalButton"
-                            android:checkable="true" />
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/artists_tab"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Artists"
-                            android:theme="@style/Widget.Material3.Button.TonalButton"
-                            android:checkable="true" />
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/albums_tab"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Albums"
-                            android:theme="@style/Widget.Material3.Button.TonalButton"
-                            android:checkable="true" />
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/playlists_tab"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Playlists"
-                            android:theme="@style/Widget.Material3.Button.TonalButton"
-                            android:checkable="true" />
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/genre_tab"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Genre"
-                            android:theme="@style/Widget.Material3.Button.TonalButton"
-                            android:checkable="true" />
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/storage_tab"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Storage"
-                            android:theme="@style/Widget.Material3.Button.TonalButton"
-                            android:checkable="true" />
-                    </com.google.android.material.button.MaterialButtonGroup>
-                </HorizontalScrollView>
-                
+                        android:text="One" />
+                    <com.google.android.material.tabs.TabItem
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Two" />
+                    <com.google.android.material.tabs.TabItem
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Three" />
+                </com.google.android.material.tabs.TabLayout>
             </LinearLayout>
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
@@ -178,6 +149,13 @@
         android:translationY="0dp"
         android:layout_marginHorizontal="16dp"
         app:icon="@drawable/ic_shuffle"
-        android:text="shuffle"
+        android:text="Shuffle"
         android:theme="@style/Widget.Material3.ExtendedFloatingActionButton.Small" />
+	<FrameLayout
+        android:id="@+id/blocking_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#00000000"
+        android:clickable="false"
+        android:focusable="false"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

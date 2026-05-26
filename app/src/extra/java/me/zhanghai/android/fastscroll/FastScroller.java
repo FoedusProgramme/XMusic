@@ -73,6 +73,7 @@ public class FastScroller {
     private int mDragStartThumbOffset;
     private int mNavigationBarHeight;
     private boolean mDragging;
+	private boolean mForceHidden;
 
     @NonNull
     private final Runnable mAutoHideScrollbarRunnable = this::autoHideScrollbar;
@@ -274,7 +275,7 @@ public class FastScroller {
     private void onScrollChanged() {
 
         updateScrollbarState();
-        if (!mScrollbarEnabled) {
+        if (!mScrollbarEnabled || mForceHidden) {
             return;
         }
 
@@ -284,7 +285,7 @@ public class FastScroller {
 
     private boolean onTouchEvent(@NonNull MotionEvent event) {
 
-        if (!mScrollbarEnabled) {
+        if (!mScrollbarEnabled || mForceHidden) {
             return false;
         }
 
@@ -445,6 +446,29 @@ public class FastScroller {
 
     private void cancelAutoHideScrollbar() {
         mView.removeCallbacks(mAutoHideScrollbarRunnable);
+    }
+	
+	public void showScrollbar() {
+        mAnimationHelper.showScrollbar(mTrackView, mThumbView);
+        postAutoHideScrollbar();
+    }
+	
+	public void setForceHidden(boolean hidden) {
+        mForceHidden = hidden;
+
+        if (hidden) {
+            if (mDragging) {
+                setDragging(false);
+            }
+            cancelAutoHideScrollbar();
+            mAnimationHelper.hideScrollbar(mTrackView, mThumbView);
+            mAnimationHelper.hidePopup(mPopupView);
+        } else {
+            if (mScrollbarEnabled) {
+                mAnimationHelper.showScrollbar(mTrackView, mThumbView);
+                postAutoHideScrollbar();
+            }
+        }
     }
 
     public interface ViewHelper {

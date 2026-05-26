@@ -50,5 +50,6 @@
         <item name="android:enforceNavigationBarContrast">true</item>
         <item name="fontFamily">@font/google_sans_flex</item>
         <item name="android:fontFamily">@font/google_sans_flex</item>
+		<item name="android:popupTheme">@style/AppPopupTheme</item>
     </style>
 </resources>

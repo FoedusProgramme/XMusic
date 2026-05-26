@@ -6,12 +6,9 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.AnimatedVectorDrawable;
@@ -19,14 +16,11 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
-import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import com.google.android.material.shape.MaterialShapes;
 
 import com.xapps.media.xmusic.R;
@@ -40,7 +34,6 @@ import com.xapps.media.xmusic.utils.XUtils;
 
 public class NewPlayerToggle extends LinearLayout {
 
-    
     public static final int SHAPE_SQUARE      = 0;
     public static final int SHAPE_SOFT_BURST  = 1;
     public static final int SHAPE_COOKIE_9    = 2;
@@ -79,6 +72,7 @@ public class NewPlayerToggle extends LinearLayout {
     private int defaultEndShape = SHAPE_COOKIE_9;
     private boolean isMorphing = false;
     private boolean isAnimating;
+	private boolean interactionLocked = false;
     
     private ImageView image;
     
@@ -122,7 +116,7 @@ public class NewPlayerToggle extends LinearLayout {
         lp.gravity = Gravity.CENTER;
         image.setLayoutParams(lp);
         int p = XUtils.convertToPx(context, 20f);
-		image.setPadding(p, p, p, p);
+        image.setPadding(p, p, p, p);
         
         image.setImageDrawable(newAvd(R.drawable.pause_avd));
         ((AnimatedVectorDrawable) image.getDrawable()).start();
@@ -130,7 +124,7 @@ public class NewPlayerToggle extends LinearLayout {
         addView(image);
 
         setOnClickListener(v -> {
-            if(isMorphing) return;
+            if(interactionLocked || isMorphing) return;
             isAnimating = !isAnimating;
             if (autoMorph) {
                morphTo((currentShape+1) % SHAPES.length); 
@@ -152,6 +146,14 @@ public class NewPlayerToggle extends LinearLayout {
             }
             if(extraClickListener != null) extraClickListener.onClick(this);
         });
+    }
+	
+	public void setInteractionLocked(boolean locked) {
+        interactionLocked = locked;
+    }
+
+    public boolean isInteractionLocked() {
+        return interactionLocked;
     }
     
     private void startRotation() {
@@ -266,9 +268,13 @@ public class NewPlayerToggle extends LinearLayout {
         return isMorphing;
     }
 
-    private void morphTo(int shape){
-        if(isMorphing) return;
-        if(shape < 0 || shape >= SHAPES.length) return;
+    public void morphTo(int shape) {
+        morphTo(shape, false);
+    }
+
+    public void morphTo(int shape, boolean force) {
+        if (!force && isMorphing) return;
+        if (shape < 0 || shape >= SHAPES.length) return;
 
         targetShape = shape;
         progress = 0f;
@@ -276,46 +282,87 @@ public class NewPlayerToggle extends LinearLayout {
 
         if (animator != null) animator.cancel();
 
-        animator = ValueAnimator.ofFloat(0f,1f);
+        animator = ValueAnimator.ofFloat(0f, 1f);
         animator.setDuration(morphDuration);
         animator.addUpdateListener(v -> {
-            progress = (float)v.getAnimatedValue();
+            progress = (float) v.getAnimatedValue();
             invalidate();
         });
-        animator.addListener(new Animator.AnimatorListener(){
-            @Override public void onAnimationEnd(Animator a){
+
+        animator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationEnd(Animator a) {
                 currentShape = targetShape;
                 progress = 1f;
                 isMorphing = false;
                 invalidate();
             }
-            @Override public void onAnimationStart(Animator a){}
-            @Override public void onAnimationCancel(Animator a){ isMorphing = false; }
-            @Override public void onAnimationRepeat(Animator a){}
+
+            @Override
+            public void onAnimationStart(Animator a) {}
+
+            @Override
+            public void onAnimationCancel(Animator a) {
+                isMorphing = false;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator a) {}
         });
+
         animator.start();
+    }	
+	
+	public void forcePlayState() {
+        if (isAnimating || currentShape == defaultEndShape) return;
+
+        isAnimating = true;
+        startRotation();
+        morphTo(defaultEndShape, true);
+
+        image.setImageDrawable(newAvd(R.drawable.resume_avd));
+        AnimatedVectorDrawable avd = (AnimatedVectorDrawable) image.getDrawable();
+        if (avd != null) avd.start();
+    }
+
+    public void forcePauseState() {
+        if (!isAnimating || currentShape == defaultStartShape) return;
+
+        isAnimating = false;
+        stopRotation();
+        morphTo(defaultStartShape, true);
+
+        image.setImageDrawable(newAvd(R.drawable.pause_avd));
+        AnimatedVectorDrawable avd = (AnimatedVectorDrawable) image.getDrawable();
+        if (avd != null) avd.start();
     }
     
     public void setTargetShape(int shape) {
-        if (SHAPES.length - 1 >= shape && shape >= 0) {
-            targetShape = shape;
+        if (shape >= 0 && shape < SHAPES.length) {
             defaultEndShape = shape;
             DataManager.sp.edit().putInt("player_toggle_target_shape", shape).apply();
+            if (isAnimating) {
+                currentShape = shape;
+                targetShape = shape;
+            }
+            invalidate();
         } else {
-            throw new IllegalArgumentException("Shape Int must be between 0 and "+String.valueOf(SHAPES.length-1));
+            throw new IllegalArgumentException("Shape Int must be between 0 and " + (SHAPES.length - 1));
         }
-        invalidate();
     }
     
     public void setStartShape(int shape) {
-        if (SHAPES.length - 1 >= shape && shape >= 0) {
-            currentShape = shape;
+        if (shape >= 0 && shape < SHAPES.length) {
             defaultStartShape = shape;
             DataManager.sp.edit().putInt("player_toggle_start_shape", shape).apply();
+            if (!isAnimating) {
+                currentShape = shape;
+                targetShape = shape;
+            }
+            invalidate();
         } else {
-            throw new IllegalArgumentException("Shape Int must be between 0 and "+String.valueOf(SHAPES.length-1));
+            throw new IllegalArgumentException("Shape Int must be between 0 and " + (SHAPES.length - 1));
         }
-        invalidate();
     }
     
     public void morphToInstant(int shape){
@@ -366,21 +413,21 @@ public class NewPlayerToggle extends LinearLayout {
     public void setMorphDuration(long ms){ morphDuration = Math.max(ms,0); }
 
     public void setShapeColor(int color) {
-		indicatorColor = color;
+        indicatorColor = color;
         invalidate();
-	}
+    }
 
-	public void setIconColor(int color) {
+    public void setIconColor(int color) {
         avdColor = color;
         Drawable d = image.getDrawable();
         if (d != null) d.setTint(color);
     }
     
     public int getShapeColor() {
-		return indicatorColor;
-	}
+        return indicatorColor;
+    }
 
-	public int getIconColor() {
+    public int getIconColor() {
         return avdColor;
     }
 
@@ -394,10 +441,15 @@ public class NewPlayerToggle extends LinearLayout {
     }
 
     public void reloadShapes() {
-        currentShape = DataManager.sp.getInt("player_toggle_start_shape", SHAPE_SQUARE);
-        targetShape = DataManager.sp.getInt("player_toggle_target_shape", SHAPE_COOKIE_12);
-        defaultEndShape = targetShape;
-        defaultStartShape = currentShape;
+        defaultStartShape = DataManager.sp.getInt("player_toggle_start_shape", SHAPE_SQUARE);
+        defaultEndShape = DataManager.sp.getInt("player_toggle_target_shape", SHAPE_COOKIE_12);
+        if (isAnimating) {
+            currentShape = defaultEndShape;
+            targetShape = defaultEndShape;
+        } else {
+            currentShape = defaultStartShape;
+            targetShape = defaultStartShape;
+        }
         invalidate();
     }
 

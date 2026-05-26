@@ -17,6 +17,7 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.*;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.*;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
@@ -41,6 +42,7 @@ import com.xapps.media.xmusic.databinding.ActivityMainBinding;
 import com.xapps.media.xmusic.fragment.*;
 import com.xapps.media.xmusic.helper.ServiceCallback;
 import com.xapps.media.xmusic.helper.SongMetadataHelper;
+import com.xapps.media.xmusic.helper.SongSorter;
 import com.xapps.media.xmusic.lyric.*;
 import com.xapps.media.xmusic.models.*;
 import com.xapps.media.xmusic.service.PlayerService;
@@ -69,7 +71,8 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     public BottomSheetBehavior bottomSheetBehavior, innerBottomSheetBehavior;
     private HandlerThread handlerThread = new HandlerThread("BackgroundThread");
     private SquigglyProgress progressDrawable;
-    private int bnvHeight, statusBarHeight, navBarHeight, bsbHeight, bottomSheetColor, tmpColor, playerSurface;
+    private int statusBarHeight, navBarHeight, bsbHeight, bottomSheetColor, tmpColor, playerSurface;
+	public int bnvHeight;
     private long lastClick;
     private float currentSlideOffset, tmpY;
     public OnBackPressedCallback callback, callback2, callback3;
@@ -83,7 +86,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         saveUIState();
         super.onSaveInstanceState(outState);
     }
-        
+	
     private final ServiceConnection connection = new ServiceConnection() {
     
         @Override
@@ -165,8 +168,9 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                     setupControllerListener();
                 } catch (Exception e) {
                     showInfoDialog("Error", 0, e.toString(), "OK");
-                }
-                restoreStateIfPossible();
+                } finally {
+					restoreStateIfPossible();
+				}
             }, MoreExecutors.directExecutor());
         }
         
@@ -181,7 +185,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         mediaController.addListener(new Player.Listener() {
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {   
-                if (mediaController.getPlaybackState() != Player.STATE_IDLE) {
+                if (mediaController.getPlaybackState() == Player.STATE_BUFFERING || mediaController.getPlaybackState() == Player.STATE_READY) {
                     String songPath = RuntimeData.songs.get(mediaController.getCurrentMediaItemIndex()).path;
                     loadLyrics(songPath);
                 }
@@ -192,7 +196,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                     if (!binding.toggleView.isAnimating()) binding.toggleView.startAnimation();
                     PlayerService.currentPosition = position;
                     seekbarFree = false;
-                    binding.currentDurationText.setText(SongMetadataHelper.millisecondsToDuration(0));
+                    binding.currentDurationText.setText(XUtils.millisecondsToDuration(0));
                     binding.songSeekbar.setProgress(0, true);
                     binding.musicProgress.setProgressCompat(0, true);
                     if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -222,6 +226,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                         }
                     }
                 }
+				
             }
             
             @Override
@@ -231,7 +236,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             
             @Override
             public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
-                if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST) {
+                if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST || reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM) {
                     if (playWhenReady) {
                         binding.toggleView.startAnimation();
                         progressDrawable.setAnimate(true);
@@ -239,6 +244,14 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                         binding.toggleView.stopAnimation();
                         progressDrawable.setAnimate(false);
                     }
+                }
+            }
+			
+			@Override
+            public void onPlaybackStateChanged(int playbackState) {
+                if (playbackState == Player.STATE_ENDED) {
+					binding.toggleView.stopAnimation();
+					progressDrawable.setAnimate(false);
                 }
             }
         });
@@ -257,11 +270,15 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         handler = new Handler(Looper.getMainLooper());
         bottomSheetBehavior = BottomSheetBehavior.from(binding.miniPlayerBottomSheet);
         binding.bottomNavigation.post(() -> {
-            binding.bottomNavigation.setSelectedItemId(viewmodel.loadBNVPosition());
+            
+        });
+		ViewKt.doOnLayout(binding.bottomNavigation, v -> {
+			binding.bottomNavigation.setSelectedItemId(viewmodel.loadBNVPosition());
             bnvHeight = binding.bottomNavigation.getHeight() - XUtils.getNavigationBarHeight(context);
 			XUtils.increaseMargins(binding.musicProgress, 0, 0, 0, navBarHeight);
-			bottomSheetBehavior.setPeekHeight(bottomSheetBehavior.getPeekHeight() + navBarHeight);
-        });
+			bottomSheetBehavior.setPeekHeight(binding.coversPager.getHeight() + binding.bottomNavigation.getHeight()/*bottomSheetBehavior.getPeekHeight() +*/ + navBarHeight);
+			return Unit.INSTANCE;
+		});
         bottomSheetBehavior.setHideable(true);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         handlerThread.start();
@@ -295,12 +312,12 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     public void setSong(int position, boolean ignored) {
         if (mediaController.getPlaybackState() == Player.STATE_BUFFERING) return;
 
+        String songPath = RuntimeData.songs.get(position).path;
+		loadLyrics(songPath);
         if (!samePlaylistByPath(mediaController, PlayerService.mediaItems)) {
             mediaController.setMediaItems(PlayerService.mediaItems, position, 0);
             PlayerService.areMediaItemsEmpty = false;
             mediaController.prepare();
-            String songPath = RuntimeData.songs.get(mediaController.getCurrentMediaItemIndex()).path;
-            loadLyrics(songPath);
         } else {
             mediaController.seekTo(position, 0);
         }
@@ -326,8 +343,10 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     private void updateProgress(long position) {
         binding.musicProgress.setProgressCompat((int) position, true);
         binding.songSeekbar.setProgress((int) position, false);
-        binding.currentDurationText.setText(SongMetadataHelper.millisecondsToDuration(position));
+        binding.currentDurationText.setText(XUtils.millisecondsToDuration(position));
     }
+	
+	private boolean exists;
     
     private void updateCoverPager(int index) {
         if (RuntimeData.songs.isEmpty()) return;
@@ -337,7 +356,14 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             Glide.with(this).clear(coverTarget);
         }
 
-        coverTarget = new CustomTarget<Drawable>() {
+		backgroundHandler.post(() -> {
+            exists = false;
+			try (ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(cover, "r")) {
+                exists = pfd != null;
+            } catch (Exception ignored) {
+				
+            }
+			coverTarget = new CustomTarget<Drawable>() {
             @Override
             public void onResourceReady(Drawable drawable, Transition<? super Drawable> transition) {
                 crossfadeDrawable(binding.coversPager, drawable, 200);
@@ -348,15 +374,19 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                 binding.coversPager.setImageDrawable(placeholder);
             }
         };
-    
-        Glide.with(this)
+			
+            handler.post(() -> {
+				Glide.with(this)
             .asDrawable()
-            .load(cover == null ? R.drawable.placeholder : cover)
+            .load(exists? cover : R.drawable.placeholder)
             .apply(new RequestOptions()
             .override(binding.miniPlayerBottomSheet.getWidth(), binding.miniPlayerBottomSheet.getWidth())
             .centerCrop()
             .priority(Priority.NORMAL))
             .into(coverTarget);
+			});
+		});
+
     }
     
     private void crossfadeDrawable(ImageView iv, Drawable next, int duration) {
@@ -386,6 +416,8 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     
     private void restoreStateIfPossible() {
         seekbarFree = true;
+		Fragment f = getSupportFragmentManager().findFragmentById(R.id.settings_frag);
+		boolean validshow = !(f.getClass() == SettingsFragment.class);
         if (viewmodel.isDataSaved()) {
             ColorPaletteUtils.darkColors = PlayerService.darkColors;
             ColorPaletteUtils.lightColors = PlayerService.lightColors;
@@ -396,7 +428,6 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             }
             if (mediaController.getMediaItemCount() > 0) {
                 updateAdapters(index, mediaController.isPlaying());
-                syncPlayerUI(mediaController.getCurrentMediaItemIndex());
                 updateProgress(mediaController.getCurrentPosition());
                 updateColors();
                 if (mediaController.getPlaybackState() == Player.STATE_READY) {
@@ -404,28 +435,30 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                     loadLyrics(songPath);
                 }
                 binding.bottomNavigation.postDelayed(() -> {
+					syncPlayerUI(mediaController.getCurrentMediaItemIndex());
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     isBnvHidden = true;
-                    HideBNV(false);
+                    HideBNV(validshow);
                 }, 100);
             } else {
                 binding.bottomNavigation.postDelayed(() -> {
+					syncPlayerUI(mediaController.getCurrentMediaItemIndex());
                     isBnvHidden = true;
-                    HideBNV(false);
+                    HideBNV(validshow);
                 }, 100);
             }
         } else if (PlayerService.isAnythingPlaying()) {
             ColorPaletteUtils.darkColors = PlayerService.darkColors;
             ColorPaletteUtils.lightColors = PlayerService.lightColors;
-            syncPlayerUI(mediaController.getCurrentMediaItemIndex());
             updateColors();
             String songPath = RuntimeData.songs.get(mediaController.getCurrentMediaItemIndex()).path;
             loadLyrics(songPath);
             updateAdapters(mediaController.getMediaItemCount() > 0? mediaController.getCurrentMediaItemIndex() : -1, mediaController.isPlaying());
             binding.bottomNavigation.postDelayed(() -> {
+				syncPlayerUI(mediaController.getCurrentMediaItemIndex());
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 isBnvHidden = true;
-                HideBNV(false);
+                HideBNV(validshow);
             }, 100);
             updateProgress(mediaController.getContentPosition());
         } else {
@@ -509,7 +542,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    binding.currentDurationText.setText(SongMetadataHelper.millisecondsToDuration((int)progress));
+                    binding.currentDurationText.setText(XUtils.millisecondsToDuration((int)progress));
                     binding.musicProgress.setProgress(progress);
                 }
             }
@@ -536,20 +569,31 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
 
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             if (searchFragment.binding.searchView.getCurrentTransitionState() == SearchView.TransitionState.SHOWING) return false;
-            TransitionManager.beginDelayedTransition(binding.Coordinator, transition);
             int id = item.getItemId();
             searchFragment.binding.searchView.hide();
             if (id == R.id.menuHomeFragment) {
+				if (musicListFragment != null) musicListFragment.freeze(false);
+				if (settingsFragment != null) settingsFragment.freeze(true);
+				if (searchFragment != null) searchFragment.freeze(true);
+				TransitionManager.beginDelayedTransition(binding.Coordinator, transition);
                 binding.searchFrag.setVisibility(View.GONE);
                 binding.settingsFrag.setVisibility(View.GONE);
                 binding.mainFrag.setVisibility(View.VISIBLE);
                 return true;
             } else if (id == R.id.menuSearchFragment) {
+				if (musicListFragment != null) musicListFragment.freeze(true);
+				if (settingsFragment != null) settingsFragment.freeze(true);
+				if (searchFragment != null) searchFragment.freeze(false);
+				TransitionManager.beginDelayedTransition(binding.Coordinator, transition);
                 binding.searchFrag.setVisibility(View.VISIBLE);
                 binding.mainFrag.setVisibility(View.GONE);
                 binding.settingsFrag.setVisibility(View.GONE);
                 return true;
             } else if (id == R.id.menuSettingsFragment) {
+				if (musicListFragment != null) musicListFragment.freeze(true);
+				if (settingsFragment != null) settingsFragment.freeze(false);
+				if (searchFragment != null) searchFragment.freeze(true);
+				TransitionManager.beginDelayedTransition(binding.Coordinator, transition);
                 binding.searchFrag.setVisibility(View.GONE);
                 binding.mainFrag.setVisibility(View.GONE);
                 binding.settingsFrag.setVisibility(View.VISIBLE);
@@ -660,7 +704,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         innerBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         innerBottomSheetBehavior.setDraggable(true);
         
-        innerBottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+        innerBottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
 			@Override
 			public void onStateChanged(@NonNull View bottomSheet, int newState) {
                 if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
@@ -810,25 +854,29 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         executor.execute(() -> {
                 SongMetadataHelper.getAllSongs(context, new SongLoadListener(){
                     @Override
-                    public void onProgressNew(ArrayList<Song> songs, int count) {
+                    public void onProgress(ArrayList<Song> songs, int count) {
                     
                     }
                     
-                    @Override 
-                    public void onCompleteNew(ArrayList<Song> songs) {
-                        RuntimeData.songs = songs;
-                        PlayerService.songs = songs;
-                        new Handler(Looper.getMainLooper()).post(() -> {
-                            if (songs.size() > 0) {
+                    @Override
+                    public void onComplete(ArrayList<Song> songs) {
+                        SongSorter.sort(songs, DataManager.getSongFilterType(), DataManager.isDescendingOrder(), sorted -> {
+                            RuntimeData.songs = sorted;
+                            PlayerService.songs = sorted;
+
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                if (!sorted.isEmpty()) {
                                 wasAdjusted = true;
-                                if (PlayerService.isPlaying && !songs.isEmpty()) {
-                                    updateCoverPager(PlayerService.currentPosition);
-                                    binding.toggleView.startAnimation();
-                                    syncPlayerUI(PlayerService.currentPosition);
-                                }    
-                            } else {
-                                XUtils.showMessage(context, "no songs found");
-                            } 
+
+                                    if (PlayerService.isPlaying) {
+                                        updateCoverPager(PlayerService.currentPosition);
+                                        binding.toggleView.startAnimation();
+                                        syncPlayerUI(PlayerService.currentPosition);
+                                    }
+                                } else {
+                                    XUtils.showMessage(context, "no songs found");
+                                }
+                            });
                         });
                     }
                 });
@@ -933,7 +981,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
 		final String path;
 		final String mime;
 		try {
-            mime = RuntimeData.songs.get(index).mimeType;
+            mime = XUtils.getAudioCodec(this, Uri.parse("file://"+RuntimeData.songs.get(index).path));
             path = RuntimeData.songs.get(index).path;
 		} catch (IndexOutOfBoundsException e) {
 			return;
@@ -987,11 +1035,13 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     public void updateMaxValue(int pos) {
         if (RuntimeData.songs.size() > 0 && mediaController != null) {
             int p = mediaController.getCurrentMediaItemIndex();
+			if (pos == -1 && p == -1) return;
             int max = (int) RuntimeData.songs.get(pos == -1? p : pos).duration;
             binding.songSeekbar.setMax(max);
             binding.musicProgress.setMax(max);
         } else if (isRestoring || PlayerService.isPlaying) {
             int p = PlayerService.currentPosition;
+			if (pos == -1 && p == -1) return;
             int max = (int) RuntimeData.songs.get(pos == -1? p : pos).duration;
             binding.songSeekbar.setMax(max);
             binding.musicProgress.setMax(max);
@@ -1000,21 +1050,24 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     }
     
     public void HideBNV(boolean hide) {
-        if (isBnvHidden == hide) return;
+        if (isBnvHidden == hide || binding == null) return;
         isBnvHidden = hide;
         android.view.animation.Interpolator interpolator = new PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f);
-        if (hide) {
-            binding.bottomNavigation.animate().alpha(0.5f).translationY(binding.bottomNavigation.getHeight()).setDuration(300).setInterpolator(interpolator).start();
-            binding.miniPlayerBottomSheet.animate().translationY(bnvHeight).setDuration(300).setInterpolator(interpolator).start();
-			if (MusicListFragment.fab != null) MusicListFragment.fab.hide();
-        } else {
-            int extraInt = XUtils.convertToPx(context, 25);
-            if (bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) { 
-                binding.miniPlayerBottomSheet.animate().translationY(0).setDuration(300).setInterpolator(interpolator).start();
+		ViewKt.doOnLayout(binding.bottomNavigation, v -> {
+		    if (hide) {
+                binding.bottomNavigation.animate().alpha(0.5f).translationY(binding.bottomNavigation.getHeight()).setDuration(300).setInterpolator(interpolator).start();
+                binding.miniPlayerBottomSheet.animate().translationY(bnvHeight).setDuration(300).setInterpolator(interpolator).start();
+			    if (MusicListFragment.fab != null) MusicListFragment.fab.hide();
+            } else {
+                int extraInt = XUtils.convertToPx(context, 25);
+                if (bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) { 
+                    binding.miniPlayerBottomSheet.animate().translationY(0).setDuration(300).setInterpolator(interpolator).start();
+                }
+                binding.bottomNavigation.animate().translationY(0).alpha(1f).setDuration(300).setInterpolator(interpolator).start();
+			    if (MusicListFragment.fab != null) MusicListFragment.fab.show();
             }
-            binding.bottomNavigation.animate().alpha(1f).translationY(0).setDuration(300).setInterpolator(interpolator).start();
-			if (MusicListFragment.fab != null) MusicListFragment.fab.show();
-        }
+			return Unit.INSTANCE;
+		});
     }
     
     public boolean isBNVHidden() {
@@ -1093,19 +1146,21 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             
             binding.toggleView.setShapeColor(iop);
             binding.toggleView.setIconColor(ip);
-            binding.xlyricsView.setLyricColor(ios);
+            binding.xlyricsView.setLyricColor(ios, io);
 			binding.placeholderLyricsText.setTextColor(ios);
+			
+			
             
             binding.nextButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
             binding.favoriteButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
             binding.saveButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
             binding.previousButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
             
-            nextBg.setColorFilter(iot, PorterDuff.Mode.SRC_IN);
-            favBg.setColorFilter(iot, PorterDuff.Mode.SRC_IN);
-            saveBg.setColorFilter(iot, PorterDuff.Mode.SRC_IN);
-            prevBg.setColorFilter(iot, PorterDuff.Mode.SRC_IN);
-            
+            nextBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
+            favBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
+            saveBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
+            prevBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
+        
             playerSurface = is;
             
             if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) background.setColor(playerSurface);
@@ -1193,24 +1248,9 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     }
 
     public void setDarkStatusBar(Window window, boolean dark) {
-        if (Build.VERSION.SDK_INT >= 30) {
-            WindowInsetsController controller = window.getInsetsController();
-            if (controller == null) return;
-
-            int appearance = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
-            controller.setSystemBarsAppearance(dark ? appearance : 0, appearance);
-        } else {
-            View decor = window.getDecorView();
-            int flags = decor.getSystemUiVisibility();
-
-            if (dark) {
-                flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            } else {
-                flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            }
-
-            decor.setSystemUiVisibility(flags);
-        }
+		WindowInsetsControllerCompat controller =
+        WindowCompat.getInsetsController(window, window.getDecorView());
+        controller.setAppearanceLightStatusBars(dark);
     }
 
     public void loadSettings() {

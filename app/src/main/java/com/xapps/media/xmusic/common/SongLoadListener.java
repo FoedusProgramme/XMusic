@@ -8,11 +8,7 @@ public interface SongLoadListener {
 
     default void onStarted(int totalSongs) {}
 
-    default void onProgress(ArrayList<HashMap<String, Object>> songs, int count) {}
+    default void onProgress(ArrayList<Song> songs, int count) {}
 
-    default void onComplete(ArrayList<HashMap<String, Object>> songs) {}
-
-    default void onProgressNew(ArrayList<Song> songs, int count) {}
-
-    default void onCompleteNew(ArrayList<Song> songs) {}
+    default void onComplete(ArrayList<Song> songs) {}
 }

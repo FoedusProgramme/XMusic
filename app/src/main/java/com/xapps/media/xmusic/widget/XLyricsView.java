@@ -31,6 +31,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.xapps.media.xmusic.common.PlaybackControlListener;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.models.LyricLine;
+import com.xapps.media.xmusic.utils.ColorPaletteUtils;
+import com.xapps.media.xmusic.utils.MaterialColorUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -57,7 +59,7 @@ public class XLyricsView extends RecyclerView {
     private long waveTriggerTime = 0;
     private int waveAnchorIndex = -1;
     private int accumulatedDy = 0;
-    private int currentColor;
+    private int currentColor, rippleColor;
 
     private boolean isAutoScrollPaused = false;
     private boolean isBlurEnabled = true;
@@ -102,8 +104,9 @@ public class XLyricsView extends RecyclerView {
         listener = l;
     }
 
-    public void setLyricColor(int color) {
+    public void setLyricColor(int color, int color2) {
         currentColor = color;
+		rippleColor = color2;
         if (getAdapter() != null) getAdapter().notifyDataSetChanged();
     }
 
@@ -476,7 +479,7 @@ public class XLyricsView extends RecyclerView {
                 return 150f / dm.densityDpi;
             }
         };
-        scroller.setTargetPosition(index);
+        scroller.setTargetPosition(activeIndexes.isEmpty()? index : activeIndexes.get(0));
         if (getLayoutManager() != null) getLayoutManager().startSmoothScroll(scroller);
     }
 
@@ -499,7 +502,7 @@ public class XLyricsView extends RecyclerView {
     private RippleDrawable createRipple() {
         ShapeDrawable mask = new ShapeDrawable(new RoundRectShape(new float[]{0,0,0,0,0,0,0,0}, null, null));
         mask.getPaint().setColor(0xFFFFFFFF);
-        return new RippleDrawable(ColorStateList.valueOf(0x10FFFFFF), null, mask);
+        return new RippleDrawable(ColorStateList.valueOf(0x66909090), null, mask);
     }
 
     private class LyricsAdapter extends RecyclerView.Adapter<LyricViewHolder> {
@@ -727,6 +730,7 @@ public class XLyricsView extends RecyclerView {
                 if (item.romajiLine != null) {
                     holder.romajiWrapper.setVisibility(View.VISIBLE);
                     holder.romajiView.setLyricLine(item.romajiLine);
+					holder.romajiView.setLyricColor(currentColor);
                     holder.romajiView.setFontConfig(DataManager.getFontConfig());
                     if (item.romajiLine.line != null) {
                         holder.romajiView.setText(item.romajiLine.line.toString(), getWidth() - leftPad - rightPad);

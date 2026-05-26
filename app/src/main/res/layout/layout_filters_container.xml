@@ -285,7 +285,7 @@
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
-                    android:background="@drawable/rv_ripple"
+                    android:background="@drawable/rv_ripple_bottom"
                     android:padding="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/tenth_item">
@@ -301,33 +301,6 @@
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
                         android:id="@+id/tenth_radio"
-                        android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"
-                        android:clickable="false"
-                        android:focusable="false" />
-
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
-
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
-                    android:layout_height="wrap_content"
-                    android:layout_width="match_parent"
-                    android:layout_marginBottom="2dp"
-                    android:background="@drawable/rv_ripple_bottom"
-                    android:padding="4dp"
-                    android:orientation="horizontal"
-                    android:id="@+id/eleventh_item">
-
-                    <TextView
-                        android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"
-                        android:textSize="16.0sp"
-                        android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
-                        android:layout_weight="1"
-                        android:text="Bitrate" />
-
-                    <com.google.android.material.radiobutton.MaterialRadioButton
-                        android:id="@+id/eleventh_radio"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:clickable="false"

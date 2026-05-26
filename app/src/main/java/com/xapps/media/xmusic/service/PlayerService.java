@@ -9,7 +9,7 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.*;
 import android.service.controls.actions.CommandAction;
-import android.util.Log;
+import com.xapps.media.xmusic.utils.Log;
 import android.view.Choreographer;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,6 +37,7 @@ import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.data.RuntimeData;
 import com.xapps.media.xmusic.helper.ServiceCallback;
 import com.xapps.media.xmusic.models.Song;
+import com.xapps.media.xmusic.stats.StatsAudioAnalyzer;
 import com.xapps.media.xmusic.utils.*;
 import java.io.*;
 import java.util.*;
@@ -86,6 +87,8 @@ public class PlayerService extends MediaLibraryService {
     private Callback callback;
     
     private volatile long currentPlayerPositionMs = 0;
+	
+	private StatsAudioAnalyzer statsAnalyzer;
     
     private Choreographer choreographer;
     
@@ -122,6 +125,11 @@ public class PlayerService extends MediaLibraryService {
 	@Override 
 	public void onCreate() {  
 		super.onCreate();  
+		registerReceiver(
+            noisyReceiver,
+            new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+        );
+		statsAnalyzer = new StatsAudioAnalyzer(getApplicationContext());
         sendInitialUpdate(false); 
         CustomNotificationProvider cnp = new CustomNotificationProvider(this);
         cnp.setSmallIcon(R.drawable.service_icon);
@@ -209,6 +217,11 @@ public class PlayerService extends MediaLibraryService {
                             @Override
                             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                                 currentPosition = player.getCurrentMediaItemIndex();
+								if (mediaItem == null || mediaItem.localConfiguration == null) {
+									statsAnalyzer.stopAnalysis();
+								} else {
+									statsAnalyzer.startAnalysis(RuntimeData.songs.get(currentPosition));
+								}
                                 sendUpdate(true);
                             }
                                 
@@ -216,6 +229,11 @@ public class PlayerService extends MediaLibraryService {
                             public void onIsPlayingChanged(boolean playing) {
                                 isPlaying = playing;
                                 ServiceCallback.Hub.send(ServiceCallback.CALLBACK_VUMETER_UPDATE);
+								if (isPlaying) {
+									statsAnalyzer.resumeAnalysis();
+								} else {
+									statsAnalyzer.pauseAnalysis();
+								}
                             }
                     
                             });
@@ -240,9 +258,26 @@ public class PlayerService extends MediaLibraryService {
                 bmp = transparentBitmap;
             } else {
                 Uri thumb = RuntimeData.songs.get(currentPosition).getArtworkUri();
-                bmp = thumb == null? transparentBitmap : loadBitmapFromPath(thumb);
+				boolean exists = false;
+                try (ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(thumb, "r")) {
+                    exists = pfd != null;
+                } catch (Exception ignored) {
+                }
+                bmp = exists? loadBitmapFromPath(thumb) : transparentBitmap;
             }
             if (DataManager.areStableColors()) {
+                ColorPaletteUtils.generateFromColor(MaterialColorUtils.colorPrimary, (light, dark) -> {
+                    lightColors = light;
+                    darkColors = dark;
+                    ServiceCallback.Hub.send(ServiceCallback.CALLBACK_COLORS_UPDATE);
+                });
+            } else {
+                ColorPaletteUtils.generateFromBitmap(bmp, (light, dark) -> {
+                    lightColors = light;
+                    darkColors = dark;
+                    ServiceCallback.Hub.send(ServiceCallback.CALLBACK_COLORS_UPDATE);
+                });
+            }if (DataManager.areStableColors()) {
                 ColorPaletteUtils.generateFromColor(MaterialColorUtils.colorPrimary, (light, dark) -> {
                     lightColors = light;
                     darkColors = dark;
@@ -419,6 +454,7 @@ private void stopUpdates() {
         }
         super.onDestroy();  
 		abandonAudioFocus();
+		unregisterReceiver(noisyReceiver);
 	}  
 	
 	private PendingIntent getServiceIntent(Context context, String action) {  
@@ -491,16 +527,14 @@ private void stopUpdates() {
         private int shuffleIcon = shuffleMode.equals("SHUFFLE_ON")? R.drawable.ic_shuffle : R.drawable.ic_shuffle_off;
      
         SessionCommand loopCommand = new SessionCommand(loopMode, Bundle.EMPTY);
-        CommandButton loopButton = new CommandButton.Builder()
-                                    .setIconResId(loopIcon)
+        CommandButton loopButton = new CommandButton.Builder(getLoopMedia3Icon(loopMode))
                                     .setDisplayName("repeat")
                                     .setSessionCommand(loopCommand)
                                     .setSlots(CommandButton.SLOT_FORWARD)
                                     .build();
                                     
         SessionCommand shuffleCommand = new SessionCommand(shuffleMode, Bundle.EMPTY);
-        CommandButton shuffleButton = new CommandButton.Builder()
-                                        .setIconResId(shuffleIcon)
+        CommandButton shuffleButton = new CommandButton.Builder(getShuffleMedia3Icon(shuffleMode))
                                         .setDisplayName("shuffle")
                                         .setSessionCommand(shuffleCommand)
                                         .setSlots(CommandButton.SLOT_FORWARD_SECONDARY)
@@ -579,15 +613,13 @@ private void stopUpdates() {
                     };
 
                     loopCommand = new SessionCommand(loopMode, Bundle.EMPTY);
-                    loopButton = new CommandButton.Builder()
-                        .setIconResId(loopIcon)
+                    loopButton = new CommandButton.Builder(getLoopMedia3Icon(loopMode))
                         .setDisplayName("repeat")
                         .setSessionCommand(loopCommand)
                         .setSlots(CommandButton.SLOT_FORWARD)
                         .build();
                     shuffleCommand = new SessionCommand(shuffleMode, Bundle.EMPTY);
-                    shuffleButton = new CommandButton.Builder()
-                                        .setIconResId(shuffleIcon)
+                    shuffleButton = new CommandButton.Builder(getShuffleMedia3Icon(shuffleMode))
                                         .setDisplayName("shuffle")
                                         .setSessionCommand(shuffleCommand)
                                         .setSlots(CommandButton.SLOT_FORWARD_SECONDARY)
@@ -608,6 +640,21 @@ private void stopUpdates() {
                 return Futures.immediateFuture(resumptionPlaylist);
             }*/
 
+    }
+	
+	private int getLoopMedia3Icon(String mode) {
+        return switch (mode) {
+            case "LOOP_OFF" -> CommandButton.ICON_REPEAT_OFF;
+            case "LOOP_SINGLE" -> CommandButton.ICON_REPEAT_ONE;
+            default -> CommandButton.ICON_REPEAT_ALL;
+        };
+    }
+
+    private int getShuffleMedia3Icon(String mode) {
+        return switch (mode) {
+            case "SHUFFLE_ON" -> CommandButton.ICON_SHUFFLE_ON;
+            default -> CommandButton.ICON_SHUFFLE_OFF;
+        };
     }
     
     private MediaSession.MediaItemsWithStartPosition restorePlaylist() {
@@ -652,9 +699,11 @@ private void stopUpdates() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
-                if (player.isPlaying()) {
-                    player.pause();
-                }
+				ExoPlayerHandler.post(() -> {
+                    if (player.isPlaying()) {
+                        player.pause();
+                    }
+				});
             }
         }
     };

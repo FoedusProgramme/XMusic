@@ -17,7 +17,7 @@ import com.xapps.media.xmusic.utils.MaterialColorUtils;
 import com.xapps.media.xmusic.utils.XUtils;
 import java.util.Random;
 
-public class AboutFragment extends BaseFragment {
+public class AboutFragment extends SubFragment {
     private FragmentAboutBinding binding;
     private MainActivity activity;
     
@@ -65,19 +65,14 @@ public class AboutFragment extends BaseFragment {
             binding.collapsingtoolbar.setScrimVisibleHeightTrigger(binding.collapsingtoolbar.getHeight());
             binding.collapsingtoolbar.setScrimAnimationDuration(0);
         });
+		
+		binding.toolbar.setNavigationOnClickListener(v -> {
+            getActivity().getOnBackPressedDispatcher().onBackPressed();
+			activity.HideBNV(false);
+        });
 
         binding.versionText.setText(BuildConfig.VERSION_NAME);
         binding.buildText.setText(BuildConfig.BUILD_TYPE);
-        
-        
-        
-        
-        /*MaterialContainerTransform exitTransform = new MaterialContainerTransform();
-        exitTransform.setDuration(350);
-        exitTransform.setScrimColor(Color.TRANSPARENT);
-        exitTransform.setDrawingViewId(R.id.settings_frag);
-        setExitTransition(exitTransform);*/
-        
     }
 
     private void setupListeners() {

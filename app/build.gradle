@@ -9,8 +9,8 @@ android {
         applicationId "com.xapps.media.xmusic"
         minSdk 26
         targetSdk 36
-        versionCode 31
-        versionName "0.31 Alpha"
+        versionCode 35
+        versionName "0.35 Alpha"
 
         def localProps = new Properties()
         def localPropsFile = rootProject.file("local.properties")
@@ -164,4 +164,11 @@ dependencies {
 
     implementation(name: "fastscroller", ext: "aar")
     implementation(name: "roundedimageview", ext: "aar")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+            "-Xlint:unchecked",
+            "-Xlint:deprecation"
+    ]
 }

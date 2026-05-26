@@ -215,6 +215,10 @@ public class SpringOverScrollLayout extends RelativeLayout implements NestedScro
             }
         }
     }
+	
+	public boolean isRefreshing() {
+		return isRefreshing;
+	}
 
     @Override
     protected void onFinishInflate() {

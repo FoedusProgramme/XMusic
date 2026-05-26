@@ -156,8 +156,6 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:padding="12dp"
-                    android:alpha="0.5"
-                    android:visibility="gone"
                     android:background="@drawable/rv_ripple">
 
                     <ImageView
@@ -244,5 +242,13 @@
         </androidx.core.widget.NestedScrollView>
 
     </com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/blocking_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#00000000"
+        android:clickable="false"
+        android:focusable="false"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

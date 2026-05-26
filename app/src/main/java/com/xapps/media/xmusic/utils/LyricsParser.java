@@ -3,7 +3,7 @@ package com.xapps.media.xmusic.lyric;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.SpannableString;
-import android.util.Log;
+import com.xapps.media.xmusic.utils.Log;
 import com.xapps.media.xmusic.models.LyricLine;
 import com.xapps.media.xmusic.models.LyricSyllable;
 import com.xapps.media.xmusic.models.LyricWord;

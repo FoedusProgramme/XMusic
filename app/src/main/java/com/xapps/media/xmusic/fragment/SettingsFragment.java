@@ -69,6 +69,14 @@ public class SettingsFragment extends BaseFragment {
             .addToBackStack("root")
             .commit();
         });
+		
+		binding.thirdCategory.setOnClickListener(v -> {
+            getActivity().getSupportFragmentManager()
+            .beginTransaction()
+            .replace(R.id.settings_frag, new ExperimentsFragment())
+            .addToBackStack("root")
+            .commit();
+        });
         
         binding.infoCategory.setOnClickListener(v -> {
             getActivity().getSupportFragmentManager()

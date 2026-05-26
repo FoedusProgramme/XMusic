@@ -9,7 +9,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.*;
 import android.provider.Settings;
-import android.util.Log;
+import com.xapps.media.xmusic.utils.Log;
 import android.view.*;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -123,12 +123,12 @@ public class WelcomeActivity extends AppCompatActivity {
                         }
                         
                         @Override
-                        public void onProgressNew(java.util.ArrayList<Song> songs, int count) {
+                        public void onProgress(java.util.ArrayList<Song> songs, int count) {
                             binding.progressBar.setProgressCompat(count, true);
                         }
                 
                         @Override
-                        public void onCompleteNew(java.util.ArrayList<Song> songs) {
+                        public void onComplete(java.util.ArrayList<Song> songs) {
                             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                                 DataManager.setDataInitialized();
                                 Intent i = new Intent();

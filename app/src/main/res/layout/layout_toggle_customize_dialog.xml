@@ -56,6 +56,7 @@
                 android:id="@+id/end_dropdown"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+				android:textColor="?colorOnSurface"
                 android:inputType="none"
                 app:simpleItems="@array/toggle_shapes" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -77,6 +78,7 @@
                 android:id="@+id/start_dropdown"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+				android:textColor="?colorOnSurface"
                 android:inputType="none"
                 app:simpleItems="@array/toggle_shapes" />
         </com.google.android.material.textfield.TextInputLayout>

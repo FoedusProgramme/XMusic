@@ -135,8 +135,9 @@ public class UsedLibsFragment extends BaseFragment {
             binding.ownerName.setText(owner);
 			
 			final String name = libName;
+			final String website = lib.getWebsite();
 			binding.libItem.setOnClickListener(v -> {
-				openFragment(name, lib.getLicenses().iterator().next().getLicenseContent());
+				openFragment(name, lib.getLicenses().iterator().next().getLicenseContent(), website);
 			});
 	    }
         
@@ -161,8 +162,8 @@ public class UsedLibsFragment extends BaseFragment {
 		}
 	}
 	
-	private void openFragment(String name, String text) {
-		LibDetailsFragment fragment = LibDetailsFragment.newInstance(name, text);
+	private void openFragment(String name, String text, String w) {
+		LibDetailsFragment fragment = LibDetailsFragment.newInstance(name, text, w);
         requireActivity()
         .getSupportFragmentManager()
         .beginTransaction()

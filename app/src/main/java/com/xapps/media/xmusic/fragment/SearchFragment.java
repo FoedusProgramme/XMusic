@@ -418,7 +418,7 @@ public class SearchFragment extends BaseFragment {
         executor.execute(() -> {
             SongMetadataHelper.getAllSongs(getActivity(), new SongLoadListener() {
                 @Override
-                public void onCompleteNew(ArrayList<Song> map) {
+                public void onComplete(ArrayList<Song> map) {
                     bindInitial();
                 }
 			});

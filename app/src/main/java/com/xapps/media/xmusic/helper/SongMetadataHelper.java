@@ -31,7 +31,7 @@ public class SongMetadataHelper {
     public static void getAllSongs(Context context, SongLoadListener listener) {
 
         if (!songs.isEmpty()) {
-            if (listener != null) listener.onCompleteNew(songs);
+            if (listener != null) listener.onComplete(songs);
             return;
         }
 
@@ -65,7 +65,7 @@ public class SongMetadataHelper {
         );
 
         if (cursor == null) {
-            if (listener != null) listener.onCompleteNew(songsList);
+            if (listener != null) listener.onComplete(songsList);
             return;
         }
         
@@ -111,7 +111,7 @@ public class SongMetadataHelper {
             songsList.add(song);
 
             if (listener != null) {
-                listener.onProgressNew(songsList, songsList.size());
+                listener.onProgress(songsList, songsList.size());
             }
         }
 
@@ -120,87 +120,7 @@ public class SongMetadataHelper {
         songs = songsList;
 
         if (listener != null) {
-            listener.onCompleteNew(songsList);
-        }
-    }
-
-    /*public static String getSongCover(Context context, String path, long songId) {
-        String cached = getCachedCoverPath(context, path);
-        if (cached != null) return cached;
-
-        try {
-            Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId);
-            Uri albumArtUri = Uri.withAppendedPath(uri, "albumart");
-            InputStream is = context.getContentResolver().openInputStream(albumArtUri);
-            if (is != null) {
-                Bitmap b = BitmapFactory.decodeStream(is);
-                is.close();
-                if (b != null) {
-                    String cachePath = saveCoverToCache(context, path, b);
-                    b.recycle();
-                    return cachePath;
-                }
-            }
-        } catch (Exception ignored) {}
-
-        ParcelFileDescriptor pfd = null;
-        try {
-            pfd = ParcelFileDescriptor.open(new File(path), ParcelFileDescriptor.MODE_READ_ONLY);
-            int fd = pfd.detachFd();
-            Picture cover = TagLib.getFrontCover(fd);
-            if (cover != null && cover.getData() != null) {
-                Bitmap b = BitmapFactory.decodeByteArray(cover.getData(), 0, cover.getData().length);
-                if (b != null) {
-                    String cachePath = saveCoverToCache(context, path, b);
-                    b.recycle();
-                    return cachePath;
-                }
-            }
-        } catch (Exception ignored) {
-        } finally {
-            if (pfd != null) {
-                try { pfd.close(); } catch (IOException ignored) {}
-            }
-        }
-
-        return null;
-    }
-
-    public static String getCachedCoverPath(Context context, String songFilePath) {
-        String hashedFileName = hashFilePath(songFilePath);
-        File cacheDir = new File(context.getCacheDir(), CACHE_DIR_NAME);
-        if (!cacheDir.exists()) cacheDir.mkdirs();
-        File coverFile = new File(cacheDir, hashedFileName + ".jpg");
-        if (coverFile.exists()) return coverFile.getAbsolutePath();
-        return null;
-    }
-
-    private static String saveCoverToCache(Context context, String songFilePath, Bitmap bitmap) {
-        String hashedFileName = hashFilePath(songFilePath);
-        File cacheDir = new File(context.getCacheDir(), CACHE_DIR_NAME);
-        if (!cacheDir.exists()) cacheDir.mkdirs();
-        File coverFile = new File(cacheDir, hashedFileName + ".jpg");
-        try (FileOutputStream fos = new FileOutputStream(coverFile)) {
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-            return coverFile.getAbsolutePath();
-        } catch (IOException ignored) {}
-        return null;
-    }*/
-
-    private static String hashFilePath(String filePath) {
-        return String.valueOf(filePath.hashCode());
-    }
-
-    public static String millisecondsToDuration(long milliseconds) {
-        long seconds = milliseconds / 1000;
-        long hours = seconds / 3600;
-        long minutes = (seconds % 3600) / 60;
-        long remainingSeconds = seconds % 60;
-
-        if (hours > 0) {
-            return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, remainingSeconds);
-        } else {
-            return String.format(Locale.getDefault(), "%02d:%02d", minutes, remainingSeconds);
+            listener.onComplete(songsList);
         }
     }
 

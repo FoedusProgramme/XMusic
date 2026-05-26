@@ -14,6 +14,9 @@ import android.graphics.RenderEffect;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -32,6 +35,7 @@ import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.R;
 
 import java.lang.reflect.Field;
+import java.util.Locale;
 
 public class XUtils {
 
@@ -290,6 +294,98 @@ public class XUtils {
             }
         });
         va.start();
+    }
+	
+	public static String hashFilePath(String filePath) {
+        return String.valueOf(filePath.hashCode());
+    }
+	
+	public static String getAudioCodec(Context context, Uri uri) {
+        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+
+        try {
+            mmr.setDataSource(context, uri);
+
+            String mime = mmr.extractMetadata(
+                MediaMetadataRetriever.METADATA_KEY_MIMETYPE
+            );
+
+            if (mime != null) {
+                switch (mime) {
+                    case "audio/flac":
+                        return "FLAC";
+                    case "audio/mpeg":
+                        return "MP3";
+                    case "audio/opus":
+                        return "OPUS";
+                    case "audio/vorbis":
+                        return "VORBIS";
+                    case "audio/alac":
+                        return "ALAC";
+                    case "audio/mp4":
+                        break; // sus
+                    default:
+                    if (mime.startsWith("audio/")) {
+                        return mime.replace("audio/", "").toUpperCase();
+                    }
+                }
+            }
+
+        } catch (Exception ignored) {
+        } finally {
+			try {
+                mmr.release();
+			} catch (Exception e) {
+				
+			}
+        }
+
+        MediaExtractor extractor = new MediaExtractor();
+
+        try {
+            extractor.setDataSource(context, uri, null);
+
+            for (int i = 0; i < extractor.getTrackCount(); i++) {
+                MediaFormat format = extractor.getTrackFormat(i);
+                String mime = format.getString(MediaFormat.KEY_MIME);
+
+                if (mime == null || !mime.startsWith("audio/")) continue;
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    String codecs = format.getString(MediaFormat.KEY_CODECS_STRING);
+
+                    if (codecs != null) {
+                        String lower = codecs.toLowerCase();
+
+                        if (lower.contains("alac")) return "ALAC";
+                        if (lower.contains("mp4a")) return "AAC";
+                        if (lower.contains("opus")) return "OPUS";
+                    }
+                }
+
+                if ("audio/mp4a-latm".equals(mime)) return "AAC";
+                if ("audio/alac".equals(mime)) return "ALAC";
+            }
+    
+        } catch (Exception ignored) {
+        } finally {
+            extractor.release();
+        }
+
+        return "UNKNOWN";
+    }
+
+    public static String millisecondsToDuration(long milliseconds) {
+        long seconds = milliseconds / 1000;
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        long remainingSeconds = seconds % 60;
+
+        if (hours > 0) {
+            return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, remainingSeconds);
+        } else {
+            return String.format(Locale.getDefault(), "%02d:%02d", minutes, remainingSeconds);
+        }
     }
 
 }

@@ -18,7 +18,7 @@ import com.xapps.media.xmusic.widget.NewPlayerToggle;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NowPlayingEditFragment extends BasePrefsFragment {
+public class NowPlayingEditFragment extends SubPrefsFragment {
 
     private MainActivity activity;
     
@@ -78,7 +78,7 @@ public class NowPlayingEditFragment extends BasePrefsFragment {
     }
 
     @Override
-    protected void onNavigate(SettingsItem item) {
+    protected void onItemSelected(SettingsItem item) {
         switch (item.id) {
             case "toggle_customize" :
             int oldStartShape = DataManager.sp.getInt("player_toggle_start_shape", NewPlayerToggle.SHAPE_SQUARE);

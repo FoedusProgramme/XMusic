@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinator"
+    android:background="?colorSurface"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:paddingHorizontal="8dp"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:fitsSystemWindows="true"
+        android:background="@android:color/transparent"
+        app:liftOnScrollColor="@android:color/transparent"
+        android:id="@+id/appbar">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:layout_height="?attr/collapsingToolbarLayoutLargeSize"
+            android:layout_width="match_parent"
+            android:id="@+id/collapsingtoolbar"
+            app:contentScrim="@android:color/transparent"
+            android:background="@null"
+            app:expandedTitleTextAppearance="@style/ExpandedAppBarTextStyle"
+            app:expandedTitleSpacing="0dp"
+            app:collapsedTitleTextAppearance="@style/CollapsedAppBarTextStyle"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:layout_height="?attr/actionBarSize"
+                android:layout_width="match_parent"
+                app:title="Advanced"
+                app:navigationIcon="@drawable/ic_arrow_back"
+                android:theme="@style/ThemeOverlay.Material3.Toolbar.CircleNavigationButton"
+                app:layout_collapseMode="pin"
+                android:id="@+id/toolbar" />
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scroll_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:overScrollMode="never"
+            android:transitionGroup="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/scan_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="16dp"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Register Songs"
+                    android:layout_margin="16dp"
+                    android:layout_gravity="center_horizontal" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edit_text"
+                        android:layout_height="wrap_content"
+                        android:layout_width="match_parent"
+                        android:padding="8dp" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/verify_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="16dp"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Check Song"
+                    android:layout_margin="16dp"
+                    android:layout_gravity="center_horizontal" />
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+    </com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
