@@ -707,6 +707,7 @@ private void stopUpdates() {
             }
         }
     };
+	
 
     public class LocalBinder extends Binder {
         public PlayerService getService() {
