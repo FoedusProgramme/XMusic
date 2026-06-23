@@ -57,6 +57,7 @@
                 android:id="@+id/covers_pager"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                app:srcCompat="@drawable/placeholder"
                 app:layout_constraintStart_toStartOf="@+id/miniPlayerBottomSheet"
                 app:layout_constraintTop_toTopOf="parent" />
             <LinearLayout

@@ -16,6 +16,7 @@ import com.xapps.media.xmusic.models.BottomSheetBehavior;
 import com.xapps.media.xmusic.models.SquigglyProgress;
 import com.xapps.media.xmusic.service.PlayerService;
 import com.xapps.media.xmusic.utils.XUtils;
+import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
 import java.util.function.Consumer;
 
 public class ActivityMediaController {
@@ -66,6 +67,7 @@ public class ActivityMediaController {
                     activity.loadLyrics(songPath);
                 }
                 if (mediaItem != null) {
+                    activity.floatBnv(true);
 					ActivityMainBinding binding = activity.getBinding();
                     int position = controller.getCurrentMediaItemIndex();
                     activity.updateAdapters(position, controller.isPlaying());
@@ -77,13 +79,13 @@ public class ActivityMediaController {
                     binding.currentDurationText.setText(XUtils.millisecondsToDuration(0));
                     binding.songSeekbar.setProgress(0, true);
                     binding.musicProgress.setProgressCompat(0, true);
-                    if (activity.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) activity.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    if (binding.expressiveBottomSheet.getState() == ExpressiveSliderLayout.STATE_HIDDEN) binding.expressiveBottomSheet.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
                     activity.syncPlayerUI(position);
                     activity.saveUIState();
                     activity.backgroundHandler.postDelayed(() -> {
                             activity.seekbarFree = true;
                         }, 150);
-                    if (activity.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                    if (binding.expressiveBottomSheet.getState() == ExpressiveSliderLayout.STATE_EXPANDED) {
                         binding.miniPlayerBottomSheet.setProgress(1f);
                     } else {
                         binding.miniPlayerBottomSheet.setProgress(0f);

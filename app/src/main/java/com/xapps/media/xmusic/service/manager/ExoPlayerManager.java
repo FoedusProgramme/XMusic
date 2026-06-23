@@ -52,6 +52,7 @@ public final class ExoPlayerManager {
 
         player = new ExoPlayer.Builder(context, renderers)
                 .setLooper(/*playerThread.getLooper()*/Looper.getMainLooper())
+                .experimentalSetDynamicSchedulingEnabled(false)
                 .setAudioAttributes(attrs, true)
                 .build();
                 

@@ -8,18 +8,17 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.xapps.media.xmusic.models.BottomSheetBehavior;
+import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
 
 public class FabPlacementHelper implements DefaultLifecycleObserver {
 
     private final ExtendedFloatingActionButton fab;
-    private final View bottomSheet;
+    private final ExpressiveSliderLayout bottomSheet;
     @Nullable private final View bottomNavigationView;
     @Nullable private final RecyclerView recyclerView;
     private final float marginPx;
 
-    private BottomSheetBehavior<?> bottomSheetBehavior;
-    private BottomSheetBehavior.BottomSheetCallback sheetCallback;
+    private ExpressiveSliderLayout.SliderCallback sheetCallback;
     private RecyclerView.OnScrollListener scrollListener;
 
     private final int[] bnvLoc = new int[2];
@@ -32,7 +31,7 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
     };
 
     public FabPlacementHelper(@NonNull ExtendedFloatingActionButton fab, 
-                              @NonNull View bottomSheet, 
+                              @NonNull ExpressiveSliderLayout bottomSheet, 
                               @Nullable View bottomNavigationView,
                               @Nullable RecyclerView recyclerView) {
         this.fab = fab;
@@ -50,16 +49,14 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
 
     @Override
     public void onCreate(@NonNull LifecycleOwner owner) {
-        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        
-        sheetCallback = new BottomSheetBehavior.BottomSheetCallback() {
+        sheetCallback = new ExpressiveSliderLayout.SliderCallback() {
             @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if (newState == BottomSheetBehavior.STATE_COLLAPSED || newState == BottomSheetBehavior.STATE_HIDDEN) {
+            public void onStateChanged(int newState) {
+                if (newState == ExpressiveSliderLayout.STATE_COLLAPSED || newState == ExpressiveSliderLayout.STATE_HIDDEN) {
                     if (fab.getVisibility() != View.VISIBLE) {
                         fab.show();
                     }
-                } else if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                } else if (newState == ExpressiveSliderLayout.STATE_EXPANDED) {
                     if (fab.getVisibility() == View.VISIBLE) {
                         fab.hide();
                     }
@@ -67,7 +64,7 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
             }
 
             @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+            public void onSlide(float slideOffset) {
                 if (slideOffset > 0f) {
                     if (fab.getVisibility() == View.VISIBLE) {
                         fab.hide();
@@ -84,11 +81,9 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
             scrollListener = new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
-                    if (bottomSheetBehavior != null) {
-                        int state = bottomSheetBehavior.getState();
-                        if (state == BottomSheetBehavior.STATE_EXPANDED || state == BottomSheetBehavior.STATE_DRAGGING) {
-                            return;
-                        }
+                    int state = bottomSheet.getState();
+                    if (state == ExpressiveSliderLayout.STATE_EXPANDED || state == ExpressiveSliderLayout.STATE_DRAGGING) {
+                        return;
                     }
 
                     if (dy > 10) {
@@ -103,16 +98,16 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
 
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
-        if (bottomSheetBehavior != null && sheetCallback != null) {
-            bottomSheetBehavior.addBottomSheetCallback(sheetCallback);
+        if (bottomSheet != null && sheetCallback != null) {
+            bottomSheet.addSliderCallback(sheetCallback);
         }
         
         if (recyclerView != null && scrollListener != null) {
             recyclerView.addOnScrollListener(scrollListener);
         }
         
-        int state = bottomSheetBehavior.getState();
-        if (state == BottomSheetBehavior.STATE_EXPANDED) {
+        int state = bottomSheet.getState();
+        if (state == ExpressiveSliderLayout.STATE_EXPANDED) {
             fab.hide();
         } else {
             fab.show();
@@ -123,8 +118,8 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
 
     @Override
     public void onStop(@NonNull LifecycleOwner owner) {
-        if (bottomSheetBehavior != null && sheetCallback != null) {
-            bottomSheetBehavior.removeBottomSheetCallback(sheetCallback);
+        if (bottomSheet != null && sheetCallback != null) {
+            bottomSheet.removeSliderCallback(sheetCallback);
         }
         
         if (recyclerView != null && scrollListener != null) {
@@ -136,13 +131,12 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
 
     @Override
     public void onDestroy(@NonNull LifecycleOwner owner) {
-        bottomSheetBehavior = null;
         sheetCallback = null;
         scrollListener = null;
     }
 
     private void updateTranslationFrameByFrame() {
-        if (fab == null || bottomSheet == null || bottomSheetBehavior == null) return;
+        if (fab == null || bottomSheet == null) return;
 
         float baselineY = ((View) bottomSheet.getParent()).getHeight();
 
@@ -151,13 +145,17 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
             baselineY = bnvLoc[1];
         }
 
-        bottomSheet.getLocationInWindow(sheetLoc);
-        float sheetTop = sheetLoc[1];
+        View sheetChild = bottomSheet.getChildCount() > 0 ? bottomSheet.getChildAt(0) : null;
+        float sheetTop = baselineY;
+        if (sheetChild != null) {
+            sheetChild.getLocationInWindow(sheetLoc);
+            sheetTop = sheetLoc[1];
+        }
 
-        int state = bottomSheetBehavior.getState();
+        int state = bottomSheet.getState();
         float targetBoundaryY;
 
-        if (state == BottomSheetBehavior.STATE_HIDDEN) {
+        if (state == ExpressiveSliderLayout.STATE_HIDDEN) {
             targetBoundaryY = baselineY;
         } else {
             targetBoundaryY = Math.min(baselineY, sheetTop);

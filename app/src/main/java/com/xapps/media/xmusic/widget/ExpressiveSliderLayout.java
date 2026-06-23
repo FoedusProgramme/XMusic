@@ -21,6 +21,8 @@ import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
 import com.google.android.material.shape.MaterialShapeDrawable;
 import com.xapps.media.xmusic.models.ViewDragHelper;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ExpressiveSliderLayout extends FrameLayout {
 
@@ -35,11 +37,11 @@ public class ExpressiveSliderLayout extends FrameLayout {
     public static final int STATE_SETTLING = 4;
     public static final int STATE_HIDDEN = 5;
 
-    private static final int DISMISS_THRESHOLD = 200;
+    private static final int DISMISS_THRESHOLD = 100;
 
     private ViewDragHelper dragHelper;
     private View sheetView;
-    private SliderCallback sliderCallback;
+    private final List<SliderCallback> sliderCallbacks = new ArrayList<>();
     private MaterialShapeDrawable internalBackground;
     private SpringAnimation settleSpringAnim;
     
@@ -52,6 +54,7 @@ public class ExpressiveSliderLayout extends FrameLayout {
     private int expandedTop;
     private int hiddenTop;
     private int currentState = STATE_HIDDEN;
+    private int targetState = STATE_HIDDEN;
     private int peekHeight = 250;
     private int systemBottomInset = 0;
 
@@ -62,11 +65,14 @@ public class ExpressiveSliderLayout extends FrameLayout {
     private float cornerRadiusBottomLeft = 0f;
     private float cornerRadiusBottomRight = 0f;
     private int sheetBackgroundColor = Color.parseColor("#1C1B1F");
+    
+    private boolean isDraggable = true;
 
     private final OnBackPressedCallback backCallback = new OnBackPressedCallback(false) {
         @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
         @Override
-        public void handleOnBackStarted(@NonNull BackEventCompat backEvent) {}
+        public void handleOnBackStarted(@NonNull BackEventCompat backEvent) {
+        }
 
         @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
         @Override
@@ -80,10 +86,10 @@ public class ExpressiveSliderLayout extends FrameLayout {
             int dy = targetTop - sheetView.getTop();
             ViewCompat.offsetTopAndBottom(sheetView, dy);
             
-            applyExponentialMorph(slideOffset);
+            applyExponentialMorph(slideOffset, sheetView.getTop());
             
-            if (sliderCallback != null) {
-                sliderCallback.onSlide(slideOffset);
+            for (SliderCallback callback : sliderCallbacks) {
+                callback.onSlide(slideOffset);
             }
         }
 
@@ -113,8 +119,8 @@ public class ExpressiveSliderLayout extends FrameLayout {
         dragHelper = ViewDragHelper.create(this, 1.0f, new DragCallback());
         internalBackground = new MaterialShapeDrawable();
         internalBackground.setFillColor(ColorStateList.valueOf(sheetBackgroundColor));
-        ViewCompat.setElevation(this, 100f);
-        setClickable(true);
+        ViewCompat.setElevation(this, 0f);
+        setClickable(false);
 
         ViewCompat.setOnApplyWindowInsetsListener(this, (v, insets) -> {
             int newBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
@@ -146,9 +152,9 @@ public class ExpressiveSliderLayout extends FrameLayout {
                 if (dyBoost != 0) {
                     ViewCompat.offsetTopAndBottom(sheetView, dyBoost);
                     float progress = calculateSlideOffset(sheetView.getTop());
-                    applyExponentialMorph(progress);
-                    if (sliderCallback != null) {
-                        sliderCallback.onSlide(progress);
+                    applyExponentialMorph(progress, sheetView.getTop());
+                    for (SliderCallback callback : sliderCallbacks) {
+                        callback.onSlide(progress);
                     }
                 }
             }
@@ -163,13 +169,31 @@ public class ExpressiveSliderLayout extends FrameLayout {
         return backCallback;
     }
 
-    public void setSliderCallback(SliderCallback callback) {
-        this.sliderCallback = callback;
+    public void addSliderCallback(SliderCallback callback) {
+        if (!sliderCallbacks.contains(callback)) {
+            sliderCallbacks.add(callback);
+        }
+    }
+    
+    public void removeSliderCallback(SliderCallback callback) {
+        sliderCallbacks.remove(callback);
+    }
+
+    public void setDraggable(boolean draggable) {
+        this.isDraggable = draggable;
+    }
+
+    public boolean isDraggable() {
+        return isDraggable;
     }
 
     public void setPeekHeight(int peekHeight) {
         this.peekHeight = peekHeight;
         requestLayout();
+    }
+    
+    public int getPeekHeight() {
+        return this.peekHeight;
     }
 
     public void setSheetBackgroundColor(int color) {
@@ -185,6 +209,15 @@ public class ExpressiveSliderLayout extends FrameLayout {
         requestLayout();
     }
 
+    public int getFloatingMargin(@NonNull String type) {
+        if ("side".equalsIgnoreCase(type)) {
+            return floatingSideMargin;
+        } else if ("bottom".equalsIgnoreCase(type)) {
+            return floatingBottomMargin;
+        }
+        return 0;
+    }
+
     public void setFloatingCornerRadii(float tl, float tr, float bl, float br) {
         this.cornerRadiusTopLeft = tl;
         this.cornerRadiusTopRight = tr;
@@ -192,13 +225,37 @@ public class ExpressiveSliderLayout extends FrameLayout {
         this.cornerRadiusBottomRight = br;
         
         if (currentState == STATE_COLLAPSED) {
-            applyExponentialMorph(0f);
+            applyExponentialMorph(0f, sheetView.getTop());
         }
+    }
+
+    public void setSlideOffset(float offset) {
+        if (sheetView == null || !ViewCompat.isLaidOut(this)) return;
+        float safeOffset = Math.max(0f, Math.min(1f, offset));
+        int range = collapsedTop - expandedTop;
+        int targetTop = collapsedTop - (int) (range * safeOffset);
+        
+        int dy = targetTop - sheetView.getTop();
+        if (dy != 0) {
+            ViewCompat.offsetTopAndBottom(sheetView, dy);
+            applyExponentialMorph(safeOffset, sheetView.getTop());
+            
+            for (SliderCallback callback : sliderCallbacks) {
+                callback.onSlide(safeOffset);
+            }
+        }
+    }
+
+    public float getSlideOffset() {
+        if (sheetView == null || !ViewCompat.isLaidOut(this)) return 0f;
+        return calculateSlideOffset(sheetView.getTop());
     }
 
     public void setState(int state) {
         if (this.currentState == state) return;
         
+        this.targetState = state;
+
         if (sheetView == null || !ViewCompat.isLaidOut(this) || getHeight() == 0) {
             this.currentState = state;
             return;
@@ -218,6 +275,10 @@ public class ExpressiveSliderLayout extends FrameLayout {
         dispatchState(STATE_SETTLING);
         settleWithSpring(targetTop, state, 0f);
     }
+    
+    public int getState() {
+        return this.currentState;
+    }
 
     private void settleWithSpring(int targetTop, int targetState, float initialVelocity) {
         if (settleSpringAnim != null && settleSpringAnim.isRunning()) {
@@ -226,26 +287,35 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
         FloatValueHolder floatValueHolder = new FloatValueHolder(sheetView.getTop());
         settleSpringAnim = new SpringAnimation(floatValueHolder);
-
         settleSpringAnim.setStartVelocity(initialVelocity);
 
         SpringForce springForce = new SpringForce();
         springForce.setFinalPosition(targetTop);
-        springForce.setDampingRatio(SpringForce.DAMPING_RATIO_NO_BOUNCY);
-        springForce.setStiffness(SpringForce.STIFFNESS_MEDIUM);
+        springForce.setDampingRatio((sheetView.getTop() > targetTop)? SpringForce.DAMPING_RATIO_NO_BOUNCY : SpringForce.DAMPING_RATIO_LOW_BOUNCY);
+        springForce.setStiffness(500f);
 
         settleSpringAnim.setSpring(springForce);
 
         settleSpringAnim.addUpdateListener((animation, value, velocity) -> {
             int currentTop = sheetView.getTop();
-            int dy = Math.round(value) - currentTop;
+            int targetViewTop = Math.round(value);
+            int dy = targetViewTop - currentTop;
+            
             ViewCompat.offsetTopAndBottom(sheetView, dy);
             
-            float progress = calculateSlideOffset(sheetView.getTop());
-            applyExponentialMorph(progress);
+            int newTop = sheetView.getTop();
+            float progress = calculateSlideOffset(newTop);
+            applyExponentialMorph(progress, newTop);
             
-            if (sliderCallback != null) {
-                sliderCallback.onSlide(progress);
+            float reportedProgress = progress;
+            if (targetState == STATE_COLLAPSED && reportedProgress < 0f) {
+                reportedProgress = 0f;
+            } else if (targetState == STATE_EXPANDED && reportedProgress > 1f) {
+                reportedProgress = 1f;
+            }
+            
+            for (SliderCallback callback : sliderCallbacks) {
+                callback.onSlide(reportedProgress);
             }
         });
 
@@ -281,7 +351,10 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        int previousTop = sheetView != null ? sheetView.getTop() : 0;
+
         super.onLayout(changed, left, top, right, bottom);
+        
         if (sheetView != null) {
             int actualPeekHeight = peekHeight + (floatingBottomMargin == 0 ? systemBottomInset : 0);
             int actualBottomMargin = floatingBottomMargin > 0 ? floatingBottomMargin + systemBottomInset : 0;
@@ -290,21 +363,40 @@ public class ExpressiveSliderLayout extends FrameLayout {
             hiddenTop = getHeight();
             collapsedTop = hiddenTop - actualPeekHeight - actualBottomMargin;
 
-            int currentTop;
-            if (currentState == STATE_EXPANDED) currentTop = expandedTop;
-            else if (currentState == STATE_HIDDEN) currentTop = hiddenTop;
-            else currentTop = collapsedTop;
+            if (currentState == STATE_SETTLING && settleSpringAnim != null && settleSpringAnim.isRunning()) {
+                int dynamicTargetTop = collapsedTop;
+                if (targetState == STATE_EXPANDED) {
+                    dynamicTargetTop = expandedTop;
+                } else if (targetState == STATE_HIDDEN) {
+                    dynamicTargetTop = hiddenTop;
+                }
+                settleSpringAnim.getSpring().setFinalPosition(dynamicTargetTop);
+            }
 
-            sheetView.layout(left, currentTop, right, currentTop + sheetView.getMeasuredHeight());
+            if (currentState == STATE_DRAGGING || currentState == STATE_SETTLING) {
+                float progress = calculateSlideOffset(previousTop);
+                applyExponentialMorph(progress, previousTop);
+            } else {
+                int targetTop;
+                if (currentState == STATE_EXPANDED) targetTop = expandedTop;
+                else if (currentState == STATE_HIDDEN) targetTop = hiddenTop;
+                else targetTop = collapsedTop;
 
-            if (currentState == STATE_COLLAPSED) {
-                applyExponentialMorph(0f);
+                sheetView.layout(left, targetTop, right, targetTop + sheetView.getMeasuredHeight());
+
+                if (currentState == STATE_COLLAPSED) {
+                    applyExponentialMorph(0f, targetTop);
+                } else if (currentState == STATE_EXPANDED) {
+                    applyExponentialMorph(1f, targetTop);
+                }
             }
         }
     }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if (!isDraggable) return false;
+        
         boolean intercepted = dragHelper.shouldInterceptTouchEvent(ev);
         if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
             if (dragHelper.isViewUnder(sheetView, (int) ev.getX(), (int) ev.getY())) {
@@ -318,6 +410,14 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
+        if (!isDraggable) return false;
+        
+        if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
+            if (!dragHelper.isViewUnder(sheetView, (int) ev.getX(), (int) ev.getY())) {
+                return false;
+            }
+        }
+        
         dragHelper.processTouchEvent(ev);
         return true;
     }
@@ -325,24 +425,24 @@ public class ExpressiveSliderLayout extends FrameLayout {
     private void dispatchState(int state) {
         if (currentState != state) {
             currentState = state;
-            if (sliderCallback != null) {
-                sliderCallback.onStateChanged(state);
+            for (SliderCallback callback : sliderCallbacks) {
+                callback.onStateChanged(state);
             }
         }
     }
 
-    private void applyExponentialMorph(float slideOffset) {
+    private void applyExponentialMorph(float slideOffset, int currentTop) {
         if (sheetView == null) return;
 
         float safeOffset = Math.max(0f, Math.min(1f, slideOffset));
         float invertedOffset = 1.0f - safeOffset;
-        float exponentialFactor = (float) Math.pow(invertedOffset, 3.0);
+        float exponentialFactor = (float) Math.pow(invertedOffset, 3.0f);
 
         if (internalBackground != null) {
-            float currentTl = cornerRadiusTopLeft * exponentialFactor;
-            float currentTr = cornerRadiusTopRight * exponentialFactor;
-            float currentBl = cornerRadiusBottomLeft * exponentialFactor;
-            float currentBr = cornerRadiusBottomRight * exponentialFactor;
+            float currentTl = cornerRadiusTopLeft * (float)Math.pow(exponentialFactor, 0.1f);
+            float currentTr = cornerRadiusTopRight * (float)Math.pow(exponentialFactor, 0.1f);
+            float currentBl = cornerRadiusBottomLeft * (float)Math.pow(exponentialFactor, 0.1f);
+            float currentBr = cornerRadiusBottomRight * (float)Math.pow(exponentialFactor, 0.1f);
 
             internalBackground.setShapeAppearanceModel(
                 internalBackground.getShapeAppearanceModel().toBuilder()
@@ -360,13 +460,14 @@ public class ExpressiveSliderLayout extends FrameLayout {
         int currentLeft = (int) (floatingSideMargin * exponentialFactor);
         int currentRight = parentWidth - currentLeft;
         
-        int currentTop = sheetView.getTop();
         int currentBottom;
 
         int actualBottomMargin = floatingBottomMargin > 0 ? floatingBottomMargin + systemBottomInset : 0;
+        int actualPeekHeight = peekHeight + (floatingBottomMargin == 0 ? systemBottomInset : 0);
 
-        if (currentTop > collapsedTop) {
-            int actualPeekHeight = peekHeight + (floatingBottomMargin == 0 ? systemBottomInset : 0);
+        if (currentTop < expandedTop) {
+            currentBottom = currentTop + (parentHeight - expandedTop);
+        } else if (currentTop > collapsedTop) {
             currentBottom = currentTop + actualPeekHeight;
         } else {
             currentBottom = parentHeight - (int) (actualBottomMargin * exponentialFactor);
@@ -379,16 +480,16 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
         @Override
         public boolean tryCaptureView(@NonNull View child, int pointerId) {
-            return child == sheetView;
+            return isDraggable && child == sheetView;
         }
 
         @Override
         public void onViewPositionChanged(@NonNull View changedView, int left, int top, int dx, int dy) {
             float progress = calculateSlideOffset(top);
-            applyExponentialMorph(progress);
+            applyExponentialMorph(progress, sheetView.getTop());
 
-            if (sliderCallback != null) {
-                sliderCallback.onSlide(progress);
+            for (SliderCallback callback : sliderCallbacks) {
+                callback.onSlide(progress);
             }
         }
 
@@ -411,51 +512,51 @@ public class ExpressiveSliderLayout extends FrameLayout {
             currentJumpBoost = 0;
 
             int targetTop;
-            int targetState;
+            int targetStateLocal;
 
             boolean passedThreshold = accumulatedFingerDrag >= DISMISS_THRESHOLD;
             accumulatedFingerDrag = 0;
 
             if (yvel < -500) {
                 targetTop = expandedTop;
-                targetState = STATE_EXPANDED;
+                targetStateLocal = STATE_EXPANDED;
             } else if (yvel > 500) {
                 if (releasedChild.getTop() >= collapsedTop) {
                     if (passedThreshold) {
                         targetTop = hiddenTop;
-                        targetState = STATE_HIDDEN;
+                        targetStateLocal = STATE_HIDDEN;
                     } else {
                         targetTop = collapsedTop;
-                        targetState = STATE_COLLAPSED;
+                        targetStateLocal = STATE_COLLAPSED;
                     }
                 } else {
                     targetTop = collapsedTop;
-                    targetState = STATE_COLLAPSED;
+                    targetStateLocal = STATE_COLLAPSED;
                 }
             } else {
                 if (releasedChild.getTop() > collapsedTop) {
                     if (passedThreshold) {
                         targetTop = hiddenTop;
-                        targetState = STATE_HIDDEN;
+                        targetStateLocal = STATE_HIDDEN;
                     } else {
                         targetTop = collapsedTop;
-                        targetState = STATE_COLLAPSED;
+                        targetStateLocal = STATE_COLLAPSED;
                     }
                 } else {
                     if (releasedChild.getTop() < (collapsedTop + expandedTop) / 2) {
                         targetTop = expandedTop;
-                        targetState = STATE_EXPANDED;
+                        targetStateLocal = STATE_EXPANDED;
                     } else {
                         targetTop = collapsedTop;
-                        targetState = STATE_COLLAPSED;
+                        targetStateLocal = STATE_COLLAPSED;
                     }
                 }
             }
 
             dispatchState(STATE_SETTLING);
-            float maxVelocity = 3000f;
+            float maxVelocity = 1000f;
             float clampedVelocity = Math.max(-maxVelocity, Math.min(yvel, maxVelocity));
-            settleWithSpring(targetTop, targetState, clampedVelocity);
+            settleWithSpring(targetTop, targetStateLocal, clampedVelocity);
         }
 
         @Override
@@ -488,7 +589,7 @@ public class ExpressiveSliderLayout extends FrameLayout {
                     }
                     
                     float progress = (float) accumulatedFingerDrag / DISMISS_THRESHOLD;
-                    float friction = 0.99f * (float) Math.pow(1.0f - progress, 5.0);
+                    float friction = 1f * (float) Math.pow(1.0f - progress, 5.0);
                     
                     int freeDy = 0;
                     int frictionDy = dy;

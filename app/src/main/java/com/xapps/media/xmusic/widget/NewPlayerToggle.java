@@ -61,27 +61,27 @@ public class NewPlayerToggle extends LinearLayout {
     private final Path path = new Path();
     private final Matrix matrix = new Matrix();
     private final Rect bounds = new Rect();
+    
     private ValueAnimator animator;
+    private ValueAnimator rotateAnimator;
+    private ValueAnimator snapAnimator;
+    private ValueAnimator scaleAnim;
 
     private float progress = 1f;
-    private ValueAnimator rotateAnimator;
     private float shapeRotation = 0f;
     private int currentShape = SHAPE_SQUARE;
-    private int targetShape = SHAPES.length - SHAPES.length;
+    private int targetShape = 0;
     private int defaultStartShape = SHAPE_SQUARE;
     private int defaultEndShape = SHAPE_COOKIE_9;
     private boolean isMorphing = false;
     private boolean isAnimating;
-	private boolean interactionLocked = false;
+    private boolean interactionLocked = false;
     
     private ImageView image;
-    
-    private ObjectAnimator rotateAnimation;
 
     private OnClickListener extraClickListener;
 
     private float pressScale = 1f;
-    private ValueAnimator scaleAnim;
 
     private static final RoundedPolygon[] SHAPES = {
         MaterialShapes.normalize(MaterialShapes.SQUARE,    true,new RectF(-1,-1,1,1)),
@@ -110,8 +110,8 @@ public class NewPlayerToggle extends LinearLayout {
 
         image = new ImageView(context);
         LayoutParams lp = new LayoutParams(
-        LayoutParams.MATCH_PARENT,
-        LayoutParams.MATCH_PARENT
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.MATCH_PARENT
         );
         lp.gravity = Gravity.CENTER;
         image.setLayoutParams(lp);
@@ -146,9 +146,10 @@ public class NewPlayerToggle extends LinearLayout {
             }
             if(extraClickListener != null) extraClickListener.onClick(this);
         });
+        forcePauseState();
     }
 	
-	public void setInteractionLocked(boolean locked) {
+    public void setInteractionLocked(boolean locked) {
         interactionLocked = locked;
     }
 
@@ -157,6 +158,10 @@ public class NewPlayerToggle extends LinearLayout {
     }
     
     private void startRotation() {
+        if (snapAnimator != null && snapAnimator.isRunning()) {
+            snapAnimator.cancel();
+        }
+
         if (rotateAnimator != null && rotateAnimator.isRunning()) return;
 
         rotateAnimator = ValueAnimator.ofFloat(shapeRotation, shapeRotation + 360f);
@@ -179,19 +184,22 @@ public class NewPlayerToggle extends LinearLayout {
         }
             
         float angle = getShapeAngle();
-    
         float currentNormalized = shapeRotation % 360f;
-    
+        if (currentNormalized < 0) currentNormalized += 360f;
         float targetNormalized = (float) (Math.ceil(currentNormalized / angle) * angle);
 
-        ValueAnimator snap = ValueAnimator.ofFloat(currentNormalized, targetNormalized);
-        snap.setDuration(600);
-        snap.setInterpolator(new android.view.animation.DecelerateInterpolator());
-        snap.addUpdateListener(v -> {
+        if (snapAnimator != null && snapAnimator.isRunning()) {
+            snapAnimator.cancel();
+        }
+
+        snapAnimator = ValueAnimator.ofFloat(currentNormalized, targetNormalized);
+        snapAnimator.setDuration(600);
+        snapAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        snapAnimator.addUpdateListener(v -> {
             shapeRotation = (float) v.getAnimatedValue();
             invalidate();
         });
-        snap.start();
+        snapAnimator.start();
     }
     
     private float getShapeAngle() {
@@ -209,7 +217,7 @@ public class NewPlayerToggle extends LinearLayout {
     }
     
     public void stopAnimation() {
-        if (!isAnimating || currentShape == defaultStartShape) return;
+        if (!isAnimating) return;
         isAnimating = false;
         stopRotation();
         morphTo(defaultStartShape);
@@ -218,7 +226,7 @@ public class NewPlayerToggle extends LinearLayout {
     }
     
     public void startAnimation() {
-        if (isAnimating || currentShape == defaultEndShape) return;
+        if (isAnimating) return;
         isAnimating = true;
         startRotation();
         morphTo(defaultEndShape);
@@ -313,7 +321,7 @@ public class NewPlayerToggle extends LinearLayout {
         animator.start();
     }	
 	
-	public void forcePlayState() {
+    public void forcePlayState() {
         isAnimating = true;
         startRotation();
         morphTo(defaultEndShape, true);
@@ -452,5 +460,14 @@ public class NewPlayerToggle extends LinearLayout {
     public void maxProgress() {
         progress = 1f;
         invalidate();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (animator != null) animator.cancel();
+        if (rotateAnimator != null) rotateAnimator.cancel();
+        if (snapAnimator != null) snapAnimator.cancel();
+        if (scaleAnim != null) scaleAnim.cancel();
     }
 }

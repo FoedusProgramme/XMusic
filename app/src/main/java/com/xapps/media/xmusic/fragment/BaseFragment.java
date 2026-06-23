@@ -22,6 +22,7 @@ public class BaseFragment extends Fragment {
     }
 
     public void freeze(boolean b) {
+        if (getView() == null) return;
 		getView().findViewById(R.id.blocking_overlay).setClickable(b);
 		getView().findViewById(R.id.blocking_overlay).setFocusable(b);
 	}

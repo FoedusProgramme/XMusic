@@ -16,6 +16,7 @@ import com.xapps.media.xmusic.databinding.FragmentExperimentBinding;
 import com.xapps.media.xmusic.models.BottomSheetBehavior;
 import com.xapps.media.xmusic.utils.Log;
 import com.xapps.media.xmusic.utils.XUtils;
+import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +54,7 @@ public class ExperimentsFragment extends SubPrefsFragment {
                 exportLogs(getActivity());
                 break;
             case "show_bs" :
-                activity.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                activity.getBinding().expressiveBottomSheet.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
                 break;
             case "test_frag" :
                 openFragment(item.destinationFragment);

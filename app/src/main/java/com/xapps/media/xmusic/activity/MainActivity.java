@@ -15,6 +15,7 @@ import android.widget.*;
 import androidx.activity.*;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.*;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.*;
 import androidx.fragment.app.Fragment;
@@ -36,6 +37,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.controller.ActivityMediaController;
+import com.xapps.media.xmusic.activity.manager.BottomSheetBehaviorManager;
 import com.xapps.media.xmusic.callback.ActivityCallback;
 import com.xapps.media.xmusic.callback.CallbackInterface;
 import com.xapps.media.xmusic.common.PlaybackControlListener;
@@ -43,21 +45,25 @@ import com.xapps.media.xmusic.common.SongLoadListener;
 import com.xapps.media.xmusic.data.*;
 import com.xapps.media.xmusic.databinding.ActivityMainBinding;
 import com.xapps.media.xmusic.fragment.*;
+import com.xapps.media.xmusic.helper.BnvRadiusHelper;
 import com.xapps.media.xmusic.helper.ServiceCallback;
 import com.xapps.media.xmusic.helper.SongMetadataHelper;
 import com.xapps.media.xmusic.helper.SongSorter;
+import com.xapps.media.xmusic.helper.ViewPlacementHelper;
 import com.xapps.media.xmusic.lyric.*;
 import com.xapps.media.xmusic.models.*;
 import com.xapps.media.xmusic.service.PlayerService;
 import com.xapps.media.xmusic.service.XPlayerService;
 import com.xapps.media.xmusic.utils.*;
 import com.xapps.media.xmusic.viewmodel.MainActivityViewModel;
+import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
+import com.xapps.media.xmusic.widget.ModularScrimView;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 import kotlin.*;
 
-public class MainActivity extends BaseActivity implements ServiceCallback, PlaybackControlListener, ActivityCallback {
+public class MainActivity extends AppCompatActivity implements ServiceCallback, PlaybackControlListener, ActivityCallback {
 
     public MusicListFragment musicListFragment;
     public SearchFragment searchFragment;
@@ -79,17 +85,30 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     public BottomSheetBehavior bottomSheetBehavior;
     private HandlerThread handlerThread = new HandlerThread("BackgroundThread");
     public SquigglyProgress progressDrawable;
-    private int statusBarHeight, navBarHeight, bsbHeight, bottomSheetColor, tmpColor, playerSurface;
+    public int statusBarHeight, navBarHeight, bsbHeight, bottomSheetColor, tmpColor, playerSurface;
 	public int bnvHeight;
     private long lastClick;
-    private float currentSlideOffset, tmpY;
+    public float currentSlideOffset, tmpY;
     public OnBackPressedCallback callback, callback2, callback3;
     private TransitionSeekController controller;
     private CustomTarget<Drawable> coverTarget;
     private ValueAnimator colorAnimator;
     private Map<String, Integer> effectiveOldColors = new HashMap<>();
+    public BnvRadiusHelper helper;
+    
+    private BottomSheetBehaviorManager bsbManager;
+    
+    public UIState playerState = UIState.HIDDEN;
 	
 	private ActivityMediaController mController;
+    
+    public enum UIState {
+        HIDDEN,
+        DOCKED,
+        COLLAPSED,
+        MOVING,
+        EXPANDED
+    }
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
@@ -186,16 +205,31 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     private void initialize() {
         viewmodel = new ViewModelProvider(this).get(MainActivityViewModel.class);
         handler = new Handler(Looper.getMainLooper());
-        bottomSheetBehavior = BottomSheetBehavior.from(binding.miniPlayerBottomSheet);
+        //bottomSheetBehavior = BottomSheetBehavior.from(binding.miniPlayerBottomSheet);
 		ViewKt.doOnLayout(binding.bottomNavigation, v -> {
 			binding.bottomNavigation.setSelectedItemId(viewmodel.loadBNVPosition());
             bnvHeight = binding.bottomNavigation.getHeight() - XUtils.getNavigationBarHeight(context);
 			XUtils.increaseMargins(binding.musicProgress, 0, 0, 0, navBarHeight);
-			bottomSheetBehavior.setPeekHeight(binding.coversPager.getHeight() + binding.bottomNavigation.getHeight()/*bottomSheetBehavior.getPeekHeight() +*/ + navBarHeight);
+			binding.expressiveBottomSheet.setPeekHeight(binding.coversPager.getHeight() + XUtils.convertToPx(context, 18f) /*+ binding.bottomNavigation.getHeight()/*bottomSheetBehavior.getPeekHeight() + + navBarHeight*/);
+            binding.expressiveBottomSheet.setSheetBackgroundColor(MaterialColorUtils.colorSurfaceContainer);
+            int topRadius = binding.expressiveBottomSheet.getPeekHeight() / 2;
+            int bottomRadius = XUtils.convertToPx(context, 4f);
+            binding.expressiveBottomSheet.setFloatingCornerRadii(topRadius, topRadius, bottomRadius, bottomRadius);
+            binding.expressiveBottomSheet.setFloatingMargins(XUtils.convertToPx(context, 12f), binding.bottomNavigation.getHeight() - XUtils.getNavigationBarHeight(context) + XUtils.convertToPx(context, 4f));
+            
+            new ViewPlacementHelper(binding.bnvScrim, binding.Coordinator).setHeight(binding.bottomNavigation.getHeight() + binding.coversPager.getHeight()*3).setVerticalConstraint(ViewPlacementHelper.Vertical.BOTTOM_TO_BOTTOM, 0).attach();
+            binding.bnvScrim.setSolidColor(0x99000000);
+            binding.bnvScrim.setDirection(ModularScrimView.Direction.BOTTOM_TO_TOP);
+            binding.bnvScrim.setShapeMode(ModularScrimView.ShapeMode.LINEAR);
+            
+            helper = new BnvRadiusHelper(binding.bottomNavigation);
+            helper.animateTopCorners(topRadius, 300);
+            XUtils.increaseMargins(binding.bottomNavigation, 0, 0, 0, 0);
+            
 			return Unit.INSTANCE;
 		});
-        bottomSheetBehavior.setHideable(true);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        //bottomSheetBehavior.setHideable(true);
+        binding.expressiveBottomSheet.setState(ExpressiveSliderLayout.STATE_HIDDEN);
         handlerThread.start();
         Looper looper = handlerThread.getLooper();
         backgroundHandler = new Handler(looper);
@@ -203,10 +237,13 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         setupUI();
 		setupListeners();
         setupCallbacks();
+        bsbManager = new BottomSheetBehaviorManager(this);
+        bsbManager.setupCallbacks();
     }
     
     private void setupUI() {
         binding.currentSongTitle.setTypeface(binding.currentSongTitle.getTypeface(), Typeface.BOLD);
+        binding.expressiveBottomSheet.setupPredictiveBack(this);
         progressDrawable = new SquigglyProgress();
         progressDrawable.setWaveLength(100);
 		progressDrawable.setLineAmplitude(8);
@@ -216,21 +253,22 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
 		progressDrawable.setAnimate(true);
 		progressDrawable.setTint(MaterialColorUtils.colorPrimary);
         binding.songSeekbar.setProgressDrawable(progressDrawable);
-        binding.miniPlayerBottomSheet.setBackground(ContextCompat.getDrawable(this, R.drawable.rounded_corners_bottom_sheet));
 		bottomSheetColor = MaterialColorUtils.colorSurfaceContainer;
         binding.extendableLayout.setPadding(0, 0, 0, navBarHeight);
         XUtils.setMargins(binding.coversPager, 0, XUtils.getStatusBarHeight(this)*5, 0, 0);
-        bsbHeight = bottomSheetBehavior.getPeekHeight();
+        bsbHeight = binding.expressiveBottomSheet.getPeekHeight();
         loadSettings();
 	}
     
     public void setSong(int position, boolean ignored) {
         if (mediaController.getPlaybackState() == Player.STATE_BUFFERING) return;
         
+        floatBnv(true);
+        
         if (position == mediaController.getCurrentMediaItemIndex()) {
-            mediaController.seekTo(0);
+            mediaController.seekTo(position, 0);
             mediaController.play();
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            binding.expressiveBottomSheet.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
         }
 
         String songPath = RuntimeData.songs.get(position).path;
@@ -242,8 +280,58 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             mediaController.seekTo(position, 0);
             mediaController.play();
         }
+        binding.toggleView.forcePlayState();
         //mediaController.setPlayWhenReady(true);
     }
+    
+    private ValueAnimator bnvAnimator;
+private boolean isBaseCaptured = false;
+private int basePaddingBottom;
+private int baseMarginBottom;
+private boolean floating = false;
+
+public void floatBnv(boolean show) {
+    if (floating == show) return;
+    floating = show;
+    if (bnvAnimator != null) {
+        bnvAnimator.cancel();
+    }
+
+    final View v = binding.bottomNavigation;
+    ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+
+    if (!isBaseCaptured) {
+        basePaddingBottom = v.getPaddingBottom();
+        baseMarginBottom = lp.bottomMargin;
+        isBaseCaptured = true;
+    }
+
+    float start = show ? 0f : 1f;
+    float end = show ? 1f : 0f;
+
+    bnvAnimator = ValueAnimator.ofFloat(start, end);
+    bnvAnimator.setDuration(300);
+
+    bnvAnimator.addUpdateListener(a -> {
+        float f = (float) a.getAnimatedValue();
+
+        int newPadding = (int) (basePaddingBottom * (1f - f));
+        int newMargin = (int) (baseMarginBottom + basePaddingBottom * f);
+
+        v.setPadding(
+                v.getPaddingLeft(),
+                v.getPaddingTop(),
+                v.getPaddingRight(),
+                newPadding
+        );
+
+        lp.bottomMargin = newMargin;
+        v.setLayoutParams(lp);
+    });
+
+    bnvAnimator.start();
+}
+
     
     private static boolean samePlaylistByPath(MediaController controller, List<MediaItem> serviceItems) {
         int count = controller.getMediaItemCount();
@@ -363,7 +451,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                 }
                 binding.bottomNavigation.postDelayed(() -> {
 					syncPlayerUI(mediaController.getCurrentMediaItemIndex());
-                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    binding.expressiveBottomSheet.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
                     isBnvHidden = true;
                     HideBNV(validshow);
                 }, 100);
@@ -388,7 +476,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             updateAdapters(mediaController.getMediaItemCount() > 0? mediaController.getCurrentMediaItemIndex() : -1, mediaController.isPlaying());
             binding.bottomNavigation.postDelayed(() -> {
 				syncPlayerUI(mediaController.getCurrentMediaItemIndex());
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                binding.expressiveBottomSheet.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
                 isBnvHidden = true;
                 HideBNV(validshow);
             }, 100);
@@ -417,7 +505,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
 		});
         
         binding.miniPlayerBottomSheet.setOnClickListener(v -> {
-            if (bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            if (binding.expressiveBottomSheet.getState() != ExpressiveSliderLayout.STATE_EXPANDED) binding.expressiveBottomSheet.setState(ExpressiveSliderLayout.STATE_EXPANDED);
             binding.musicProgress.setAlpha(0f);
         });
         
@@ -537,138 +625,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     }
     
     private void setupCallbacks() {
-        bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-			@Override
-			public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if (binding.lyricsContainer.getVisibility() != View.GONE) return;
-                
-				if (newState == BottomSheetBehavior.STATE_DRAGGING) {
-                    innerBottomSheetBehavior.setDraggable(false);
-					binding.musicProgress.animate().alpha(0f).setDuration(100).start();
-                } else if (newState == BottomSheetBehavior.STATE_EXPANDED) {
-                     innerBottomSheetBehavior.setDraggable(true);
-                     binding.miniPlayerBottomSheet.animate().translationY(0).setDuration(10).start();
-				} else if (newState == BottomSheetBehavior.STATE_COLLAPSED || newState == BottomSheetBehavior.STATE_HIDDEN) {
-                    binding.fragmentsContainer.setRenderEffect(null);
-                    innerBottomSheetBehavior.setDraggable(false);
-                    if (isBNVHidden()) {
-                        binding.miniPlayerBottomSheet.animate().translationY(bnvHeight).setDuration(100).start();
-                    }
-					if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                        updateAdapters(-1, false);
-                        ColorPaletteUtils.lightColors = null;
-                        ColorPaletteUtils.darkColors = null;
-                        mediaController.stop();
-                        mediaController.clearMediaItems();
-						isBsInvisible = true;
-				    } else {
-						isBsInvisible = false;
-					}
-					binding.musicProgress.animate().alpha(1f).setDuration(100).start();
-                } else {
-                    innerBottomSheetBehavior.setDraggable(false);
-					isBsInvisible = false;
-				}
-			}
-				
-			@Override
-			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                if (binding.lyricsContainer.getVisibility() != View.GONE) return;
-                
-                currentSlideOffset = slideOffset;
-                if (isBNVHidden()) {
-                    binding.miniPlayerBottomSheet.setTranslationY(bnvHeight-bnvHeight*slideOffset);
-                } 
-				if (0f < slideOffset) {
-                    if (isBlurOn && XUtils.areBlursOrDynamicColorsSupported()) binding.fragmentsContainer.setRenderEffect(RenderEffect.createBlurEffect(25f*slideOffset, 25f*slideOffset, Shader.TileMode.CLAMP));
-				    binding.fragmentsContainer.setTranslationY(-XUtils.convertToPx(context, 75f)*slideOffset);
-				    binding.Scrim.setAlpha(slideOffset*0.8f);
-					binding.miniPlayerBottomSheet.setProgress(slideOffset);
-                    if (!isBNVHidden()) binding.bottomNavigation.setTranslationY(binding.bottomNavigation.getHeight()*slideOffset*2.5f);
-					if (slideOffset <= 0.05f) {
-						binding.miniPlayerDetailsLayout.setAlpha(1f - slideOffset*20);
-						if (isAnimated) {
-							isAnimated = false;
-                        }
-                    } else {
-                        if (!isAnimated) {
-                            binding.miniPlayerDetailsLayout.animate().alpha(0f).setDuration(80).start();
-							isAnimated = true;
-						}
-					}
-					if (slideOffset >= 0.5f) {
-                        callback.setEnabled(true);
-						isColorAnimated = false;
-						Drawable background = binding.miniPlayerBottomSheet.getBackground();
-					    tmpColor = XUtils.interpolateColor(bottomSheetColor, playerSurface, slideOffset*2 - 1f);
-						((GradientDrawable) background).setColor(tmpColor);
-                        Drawable background2 = binding.extendableLayout.getBackground();
-						((GradientDrawable) background2).setColor(tmpColor);
-						binding.songSeekbar.setEnabled(true);
-					} else {
-                        if (!isCallbackValid) callback.setEnabled(false);
-						if (!isColorAnimated) {
-							isColorAnimated = true;
-							XUtils.animateColor(tmpColor, bottomSheetColor, animation -> {
-								int animatedColor = (int) animation.getAnimatedValue();
-								Drawable background = binding.miniPlayerBottomSheet.getBackground();
-								((GradientDrawable) background).setColor(animatedColor);
-								Drawable background2 = binding.extendableLayout.getBackground();
-								((GradientDrawable) background2).setColor(animatedColor);
-                            });
-                        }
-                        binding.songSeekbar.setEnabled(false);
-				    }
-				} else {
-                    XUtils.animateColor(tmpColor, bottomSheetColor, animation -> {
-						int animatedColor = (int) animation.getAnimatedValue();
-						Drawable background = binding.miniPlayerBottomSheet.getBackground();
-						((GradientDrawable) background).setColor(animatedColor);
-						    
-                    });
-                }
-			}
-		});
         
-        innerBottomSheetBehavior = BottomSheetBehavior.from(binding.extendableLayout);
-        innerBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-        innerBottomSheetBehavior.setDraggable(true);
-        
-        innerBottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-			@Override
-			public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
-                    bottomSheetBehavior.setDraggable(true);
-                    callback.setEnabled(true);
-                    callback2.setEnabled(false);
-                } else {
-                    bottomSheetBehavior.setDraggable(false);
-                    callback.setEnabled(false);
-                    callback2.setEnabled(true);
-                }
-            }
-            
-            @Override
-			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                float prog = 1f - slideOffset;
-                binding.extendableLayout.setTranslationY(statusBarHeight*slideOffset);
-                
-                Drawable background = binding.extendableLayout.getBackground();
-                int color = XUtils.interpolateColor(LiveColors.surface, LiveColors.surfaceContainer, slideOffset);
-				((GradientDrawable) background).setColor(color);
-                if (slideOffset >= 0f) {
-                    if (slideOffset > 0f) {
-                        bottomSheetBehavior.setDraggable(false);
-                        callback.setEnabled(false);
-                        callback2.setEnabled(true);
-                    } else {
-                        bottomSheetBehavior.setDraggable(true);
-                        callback.setEnabled(true);
-                        callback2.setEnabled(false);
-                    }
-                }
-            }
-        });
         
         callback3 = new OnBackPressedCallback(false) {
             @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
@@ -694,7 +651,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                     
                 }).start();
                 binding.xlyricsView.animate().translationY(300f).setDuration(140).start();
-                bottomSheetBehavior.setDraggable(true);
+                // bottomSheetBehavior.setDraggable(true); TODO : add setDraggable() in ExpressiveSliderLayout
                 innerBottomSheetBehavior.setDraggable(true);
                 callback3.setEnabled(false);
                 callback.setEnabled(true);
@@ -750,7 +707,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
             @Override
             public void handleOnBackStarted(BackEventCompat backEvent) {
-                isCallbackValid = bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED;
+                isCallbackValid = binding.expressiveBottomSheet.getState() == ExpressiveSliderLayout.STATE_EXPANDED;
             }
 
             @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
@@ -777,7 +734,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
             }
         };
 
-        getOnBackPressedDispatcher().addCallback(this, callback);
+        //getOnBackPressedDispatcher().addCallback(this, callback);
     }
 
     public void loadSongs() {
@@ -915,10 +872,10 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
 
         final long requestId = ++metadataRequestId;
 
-        binding.songInfoText.animate()
+        /*binding.songInfoText.animate()
             .alpha(0f)
             .setDuration(100)
-            .start();
+            .start();*/
 
         metadataExecutor.execute(() -> {
 
@@ -973,11 +930,11 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
                     : finalMime + " • " + finalSampleRate;
 
                 binding.songInfoText.setText(text);
-                binding.songInfoText.setAlpha(0f);
+                /*binding.songInfoText.setAlpha(0f);
                 binding.songInfoText.animate()
                     .alpha(1f)
                     .setDuration(120)
-                    .start();
+                    .start();*/
             });
         });
     }
@@ -1000,26 +957,43 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     }
     
     public void HideBNV(boolean hide) {
-        if (isBnvHidden == hide || binding == null) return;
-        isBnvHidden = hide;
-        android.view.animation.Interpolator interpolator = new PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f);
-		ViewKt.doOnLayout(binding.bottomNavigation, v -> {
-		    if (hide) {
-                binding.bottomNavigation.animate().alpha(0.5f).translationY(binding.bottomNavigation.getHeight()).setDuration(300).setInterpolator(interpolator).start();
-                binding.miniPlayerBottomSheet.animate().translationY(bnvHeight).setDuration(300).setInterpolator(interpolator).start();
-			    if (MusicListFragment.fab != null) MusicListFragment.fab.hide();
-            } else {
-                int extraInt = XUtils.convertToPx(context, 25);
-                if (bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) { 
-                    binding.miniPlayerBottomSheet.animate().translationY(0).setDuration(300).setInterpolator(interpolator).start();
-                }
-                binding.bottomNavigation.animate().translationY(0).alpha(1f).setDuration(300).setInterpolator(interpolator).start();
-			    if (MusicListFragment.fab != null) MusicListFragment.fab.show();
-            }
-			return Unit.INSTANCE;
-		});
-    }
+    if (isBnvHidden == hide || binding == null) return;
+    isBnvHidden = hide;
+    android.view.animation.Interpolator interpolator = new android.view.animation.PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f);
     
+    ViewKt.doOnLayout(binding.bottomNavigation, v -> {
+        if (hide) {
+            binding.bottomNavigation.animate().alpha(0.5f).translationY(binding.bottomNavigation.getHeight() + XUtils.getNavigationBarHeight(context)).setDuration(300).setInterpolator(interpolator).start();
+            
+            /*android.animation.ValueAnimator marginAnim = android.animation.ValueAnimator.ofInt(0, binding.bottomNavigation.getHeight());
+            marginAnim.addUpdateListener(animation -> binding.expressiveBottomSheet.setFloatingMargins(XUtils.convertToPx(context, 12f), binding.bottomNavigation.getHeight() - binding.bottomNavigation.getPaddingBottom() + XUtils.convertToPx(context, 4f) - (int) animation.getAnimatedValue()));
+            marginAnim.setDuration(300).setInterpolator(interpolator);
+            marginAnim.start();*/
+
+            if (MusicListFragment.fab != null) MusicListFragment.fab.hide();
+        } else {
+            /*android.animation.ValueAnimator marginAnim = android.animation.ValueAnimator.ofInt(binding.expressiveBottomSheet.getFloatingMargin("bottom"), binding.bottomNavigation.getHeight() + (floating? XUtils.getNavigationBarHeight(context) : 0) + XUtils.convertToPx(context, 4f));
+            marginAnim.addUpdateListener(animation -> binding.expressiveBottomSheet.setFloatingMargins(XUtils.convertToPx(context, 12f), (int) animation.getAnimatedValue()));
+            marginAnim.setDuration(300).setInterpolator(interpolator);
+            marginAnim.start();*/
+
+            binding.bottomNavigation.animate().translationY(0).alpha(1f).setDuration(300).setInterpolator(interpolator).start();
+            if (MusicListFragment.fab != null) MusicListFragment.fab.show();
+        }
+        android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofFloat(hide? XUtils.convertToPx(context, 4f) : binding.expressiveBottomSheet.getPeekHeight() / 2f, hide? binding.expressiveBottomSheet.getPeekHeight() / 2f : XUtils.convertToPx(context, 4f));
+        animator.setDuration(300);
+        animator.setInterpolator(interpolator);
+        animator.addUpdateListener(animation -> {
+            float currentValue = (float) animation.getAnimatedValue();
+            binding.expressiveBottomSheet.setFloatingCornerRadii(binding.expressiveBottomSheet.getPeekHeight() / 2f, binding.expressiveBottomSheet.getPeekHeight() / 2f, currentValue, currentValue);
+        });
+        animator.start();
+
+        return Unit.INSTANCE;
+    });
+}
+
+        
     public void HideBNVOnly(boolean hide) {
         if (isBnvHidden == hide || binding == null) return;
         isBnvHidden = hide;
@@ -1030,10 +1004,10 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
 			    if (MusicListFragment.fab != null) MusicListFragment.fab.hide();
             } else {
                 int extraInt = XUtils.convertToPx(context, 25);
-                if (bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) { 
+                if (binding.expressiveBottomSheet.getState() != ExpressiveSliderLayout.STATE_EXPANDED) { 
                 }
                 binding.bottomNavigation.animate().translationY(0).alpha(1f).setDuration(300).setInterpolator(interpolator).start();
-			    if (MusicListFragment.fab != null) MusicListFragment.fab.show();
+			   // if (MusicListFragment.fab != null) MusicListFragment.fab.show();
             }
 			return Unit.INSTANCE;
 		});
@@ -1043,7 +1017,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         android.view.animation.Interpolator interpolator = new PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f);
         if (isPlayerHidden == b || binding == null) return;
         isPlayerHidden = b;
-        bottomSheetBehavior.setDraggable(!b);
+        //bottomSheetBehavior.setDraggable(!b); TODO : add setDraggable() in ExpressiveSliderLayout
         HideBNVOnly(b);
         ViewKt.doOnLayout(binding.bottomNavigation, v -> {
             if (b) {
@@ -1093,7 +1067,6 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         Drawable favBg  = binding.favoriteButton.getBackground();
         Drawable saveBg = binding.saveButton.getBackground();
         Drawable prevBg = binding.previousButton.getBackground();
-        GradientDrawable background = (GradientDrawable) binding.miniPlayerBottomSheet.getBackground();
         
         Drawable d = binding.extendableLayout.getBackground();
         GradientDrawable gd = (GradientDrawable) d;
@@ -1148,7 +1121,7 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
         
             playerSurface = is;
             
-            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) background.setColor(playerSurface);
+            if (binding.expressiveBottomSheet.getState() == ExpressiveSliderLayout.STATE_EXPANDED) binding.expressiveBottomSheet.setSheetBackgroundColor(playerSurface);
             binding.lyricsContainer.setBackgroundColor(playerSurface);
             
             d3.setColor(isc);
@@ -1229,7 +1202,6 @@ public class MainActivity extends BaseActivity implements ServiceCallback, Playb
     
     @Override
     public void onProgressChanged(long progress) {
-        long pp = mediaController.getCurrentPosition();
         if (seekbarFree) runOnUiThread(() -> updateProgress(progress));
         runOnUiThread(() -> binding.xlyricsView.onProgress((int) progress));
     }

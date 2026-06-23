@@ -42,6 +42,7 @@ import com.xapps.media.xmusic.models.BottomSheetBehavior;
 import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.service.PlayerService;
 import com.xapps.media.xmusic.utils.*;
+import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
 import com.xapps.media.xmusic.widget.VuMeterView;
 import java.util.*;
 import java.util.ArrayList;
@@ -112,8 +113,8 @@ public class MusicListFragment extends BaseFragment {
             lastSpacing = XUtils.convertToPx(getActivity(), 5f) + activity.coversPager.getHeight()*2 + activity.bottomNavigation.getHeight()*2 ;
             binding.songsList.addItemDecoration(new BottomSpacingDecoration(lastSpacing));
             binding.songsList.setLayoutManager(new LinearLayoutManager(getContext()));
-            FabPlacementHelper helper = new FabPlacementHelper(binding.shuffleButton, activity.miniPlayerBottomSheet, activity.bottomNavigation, binding.songsList);
-			helper.wireUp(getViewLifecycleOwner());
+            /*FabPlacementHelper helper = new FabPlacementHelper(binding.shuffleButton, activity.expressiveBottomSheet, activity.bottomNavigation, binding.songsList);
+			helper.wireUp(getViewLifecycleOwner());*/
 			return Unit.INSTANCE;
         });
         
@@ -235,7 +236,7 @@ public class MusicListFragment extends BaseFragment {
 
 		    binding.item.setOnClickListener(v -> {  
                 if (a.getController() == null ) return;  
-                if (a.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_SETTLING || a.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_DRAGGING) return;  
+                if (activity.expressiveBottomSheet.getState() == ExpressiveSliderLayout.STATE_SETTLING || activity.expressiveBottomSheet.getState() == ExpressiveSliderLayout.STATE_DRAGGING) return;  
                 long currentTime = System.currentTimeMillis();  
                 if (currentTime - lastClickTime < DEBOUNCE_MS) {  
                     return;  

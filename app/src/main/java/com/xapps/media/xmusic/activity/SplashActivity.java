@@ -17,7 +17,7 @@ public class SplashActivity extends AppCompatActivity {
         if (!XUtils.areAllPermsGranted(this)) {
             startActivity(new Intent(this, WelcomeActivity.class));
         } else {
-            startActivity(new Intent(this, MainActivity.class));
+            startActivity(new Intent(this, RootActivity.class));
         }
         finish();
     }

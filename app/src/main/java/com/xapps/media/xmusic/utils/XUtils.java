@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Interpolator;
 import android.graphics.Paint;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
@@ -71,6 +72,35 @@ public class XUtils {
 		params.setMargins(left, top, right, bottom);
 		view.setLayoutParams(params);
 	}
+    
+    public static void animateMarginsTo(View view, int left, int top, int right, int bottom, long duration, android.view.animation.Interpolator interpolator) {
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        int initialTop = params.topMargin;
+        int initialBottom = params.bottomMargin;
+        int initialLeft = params.leftMargin;
+        int initialRight = params.rightMargin;
+        
+        int diffTop = top - initialTop;
+        int diffBottom = bottom - initialBottom;
+        int diffLeft = left - initialLeft;
+        int diffRight = right - initialRight;
+        
+        android.view.animation.Interpolator interpolator2 = new android.view.animation.PathInterpolator(0.4f, 0.0f, 0.2f, 1.0f);
+        
+        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+		animator.setDuration(duration);
+        animator.setInterpolator(interpolator != null? interpolator : interpolator2);
+		animator.addUpdateListener(animation -> {
+			float progress = (float) animation.getAnimatedValue();
+			params.leftMargin = (int) (initialLeft + progress * diffLeft);
+			params.topMargin = (int) (initialTop + progress * diffTop);
+			params.rightMargin = (int) (initialRight + progress * diffRight);
+			params.bottomMargin = (int) (initialBottom + progress * diffBottom);
+			view.setLayoutParams(params);
+		});
+		
+		animator.start();
+    }
 	
 	public static void increaseMargins(View view, int increaseLeft, int increaseTop, int increaseRight, int increaseBottom) {
 		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();

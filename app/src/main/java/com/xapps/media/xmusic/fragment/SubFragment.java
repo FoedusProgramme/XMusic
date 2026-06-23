@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import com.xapps.media.xmusic.activity.MainActivity;
 import com.xapps.media.xmusic.models.BottomSheetBehavior;
+import com.xapps.media.xmusic.utils.XUtils;
 
 public class SubFragment extends BaseFragment {
 	
@@ -34,14 +35,17 @@ public class SubFragment extends BaseFragment {
 			public void onBackStackChangeCancelled() {
 				if (!valid) return;
 				ma.getBinding().bottomNavigation.animate().translationY(bnvHeight).alpha(0.5f).setDuration(100).start();
-				ma.getBinding().miniPlayerBottomSheet.animate().translationY(ma.bnvHeight).setDuration(100).start();
+				android.animation.ValueAnimator marginAnim = android.animation.ValueAnimator.ofInt(ma.getBinding().expressiveBottomSheet.getFloatingMargin("bottom"), /*XUtils.getNavigationBarHeight(getActivity()) + */XUtils.convertToPx(getActivity(), 4f));
+                marginAnim.addUpdateListener(animation -> ma.getBinding().expressiveBottomSheet.setFloatingMargins(XUtils.convertToPx(getActivity(), 12f), (int) animation.getAnimatedValue()));
+                marginAnim.setDuration(100);
+                marginAnim.start();
             }
 			
 			@Override
 			public void onBackStackChangeProgressed(BackEventCompat backEventCompat) {
 				if (!valid) return;
 				ma.getBinding().bottomNavigation.setTranslationY(bnvHeight*(1f-backEventCompat.getProgress()));
-				ma.getBinding().miniPlayerBottomSheet.setTranslationY(ma.bnvHeight*(1f-backEventCompat.getProgress()));
+                ma.getBinding().expressiveBottomSheet.setFloatingMargins(XUtils.convertToPx(getActivity(), 12f), Math.round(XUtils.convertToPx(getActivity(), 4f) + (bnvHeight-XUtils.getNavigationBarHeight(getActivity()))*(backEventCompat.getProgress())));
 				ma.getBinding().bottomNavigation.setAlpha(0.5f+(0.5f*backEventCompat.getProgress()));
             }
 

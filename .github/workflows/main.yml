@@ -90,11 +90,12 @@ jobs:
           path: app/build/outputs/apk/preview/preview-armeabi-v7a-*.apk
 
   send_preview_apks:
-    name: Send Preview APKs
-    runs-on: ubuntu-latest
-    needs: build_preview_apk
-    environment: Release
-    steps:
+  name: Send Preview APKs
+  runs-on: ubuntu-latest
+  needs: build_preview_apk
+  environment: Release
+  if: github.ref == 'refs/heads/preview'
+  steps:
       - name: Download arm64 apk
         uses: actions/download-artifact@v4
         with:

@@ -51,7 +51,7 @@
 
             <CustomAttribute
                 motion:attributeName="radius"
-                motion:customDimension="8dp" />
+                motion:customDimension="22.5dp" />
             
         </Constraint>
         <Constraint
