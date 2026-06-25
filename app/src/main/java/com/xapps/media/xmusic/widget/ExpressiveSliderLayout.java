@@ -67,16 +67,19 @@ public class ExpressiveSliderLayout extends FrameLayout {
     private int sheetBackgroundColor = Color.parseColor("#1C1B1F");
     
     private boolean isDraggable = true;
+    private boolean isValidBack = false;
 
     private final OnBackPressedCallback backCallback = new OnBackPressedCallback(false) {
         @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
         @Override
         public void handleOnBackStarted(@NonNull BackEventCompat backEvent) {
+            isValidBack = currentState == STATE_EXPANDED;
         }
 
         @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
         @Override
         public void handleOnBackProgressed(@NonNull BackEventCompat backEvent) {
+            if (!isValidBack) return;
             float progress = backEvent.getProgress();
             float slideOffset = Math.max(0f, 1f - progress);
             
@@ -95,12 +98,14 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
         @Override
         public void handleOnBackPressed() {
+            if (!isValidBack) return;
             setState(STATE_COLLAPSED);
         }
 
         @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
         @Override
         public void handleOnBackCancelled() {
+            if (!isValidBack) return;
             setState(STATE_EXPANDED);
         }
     };

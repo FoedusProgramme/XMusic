@@ -4,6 +4,7 @@ public final class CallbackInterface {
 
     private static ActivityCallback activityCallback;
     private static ServiceCallback serviceCallback;
+    private static FragmentCallback mlfCallback, searchFragmentCallback, settingsFragmentCallback;
 
     private CallbackInterface() {
     }
@@ -17,9 +18,51 @@ public final class CallbackInterface {
             activityCallback = null;
         }
     }
+    
+    public static void setMlFragCallback(FragmentCallback callback) {
+        mlfCallback = callback;
+    }
+
+    public static void clearMlFragCallback(FragmentCallback callback) {
+        if (mlfCallback == callback) {
+            mlfCallback = null;
+        }
+    }
+    
+    public static void setSgFragCallback(FragmentCallback callback) {
+        settingsFragmentCallback = callback;
+    }
+
+    public static void clearSgFragCallback(FragmentCallback callback) {
+        if (settingsFragmentCallback == callback) {
+            settingsFragmentCallback = null;
+        }
+    }
+    
+    public static void setSrFragCallback(FragmentCallback callback) {
+        searchFragmentCallback = callback;
+    }
+
+    public static void clearSrFragCallback(FragmentCallback callback) {
+        if (searchFragmentCallback == callback) {
+            searchFragmentCallback = null;
+        }
+    }
 
     public static ActivityCallback activity() {
         return activityCallback;
+    }
+    
+    public static FragmentCallback mlFrag() {
+        return mlfCallback;
+    }
+    
+    public static FragmentCallback sgFrag() {
+        return settingsFragmentCallback;
+    }
+    
+    public static FragmentCallback srFrag() {
+        return searchFragmentCallback;
     }
 
     public static void setServiceCallback(ServiceCallback callback) {

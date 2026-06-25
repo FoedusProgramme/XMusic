@@ -18,5 +18,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "XMusic"
 include ':app'

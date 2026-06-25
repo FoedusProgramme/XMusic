@@ -1,7 +1,6 @@
 package com.xapps.media.xmusic.fragment;
 
 import android.content.ComponentName;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -12,22 +11,15 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewKt;
-import androidx.fragment.app.Fragment;
 import androidx.transition.ChangeBounds;
 import androidx.transition.Fade;
 import androidx.transition.TransitionManager;
 import androidx.transition.TransitionSet;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.transition.MaterialSharedAxis;
 import com.rtugeek.android.colorseekbar.thumb.DefaultThumbDrawer;
-import com.rtugeek.android.colorseekbar.thumb.ThumbDrawer;
 import com.xapps.media.xmusic.LauncherAlt;
 import com.xapps.media.xmusic.LauncherDefault;
-import com.xapps.media.xmusic.activity.MainActivity;
+import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.databinding.FragmentAppearanceBinding;
 import com.xapps.media.xmusic.utils.XUtils;
@@ -37,13 +29,13 @@ import kotlin.Unit;
 public class AppearanceFragment extends SubFragment {
     
     private FragmentAppearanceBinding binding;
-    private MainActivity activity;
+    private RootActivity activity;
         
     @NonNull
 	@Override
 	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 		binding = FragmentAppearanceBinding.inflate(inflater, container, false);
-        activity = (MainActivity) getActivity();
+        activity = (RootActivity) getActivity();
 		setupUI();
         setupListeners();
 		return binding.getRoot();
@@ -98,7 +90,7 @@ public class AppearanceFragment extends SubFragment {
     private void setupListeners() {
         binding.toolbar.setNavigationOnClickListener(v -> {
             getActivity().getOnBackPressedDispatcher().onBackPressed();
-			activity.HideBNV(false);
+			//activity.HideBNV(false);
         });
         binding.secondPref.setOnClickListener(v -> {
             binding.secondSwitch.setChecked(!binding.secondSwitch.isChecked());
@@ -124,7 +116,7 @@ public class AppearanceFragment extends SubFragment {
             binding.applyButton.setEnabled(binding.colorSeekBar.getProgress() != DataManager.getCustomColor());
         });
         binding.icon1.setOnClickListener(v -> {
-            activity.showInfoDialog("Experimental feature", R.drawable.ic_test_tube, "This is a feature that's still under testing and might be unstable or buggy for some users.", "OK");
+            activity.showInfoDialog("Experimental feature", R.drawable.ic_test_tube, "This is a feature that's still under testing and might be unstable or buggy for some users.", "OK", activity.getBinding().Coordinator);
         });
         binding.systemTheme.setOnClickListener(v -> {
             DataManager.setThemeMode(0);

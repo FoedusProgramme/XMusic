@@ -1,0 +1,58 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/motion_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:padding="8dp">
+
+    <com.appbroker.roundedimageview.RoundedImageView
+        android:id="@+id/cover"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:scaleType="centerCrop"
+        android:elevation="4dp"
+        app:srcCompat="@drawable/placeholder"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <com.xapps.media.xmusic.widget.MarqueeTextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Test this should be technically very long so it can scroll"
+        app:layout_constraintStart_toEndOf="@id/cover"
+        app:layout_constraintEnd_toStartOf="@id/action"
+        app:layout_constraintTop_toTopOf="@id/cover"
+        app:layout_constraintBottom_toTopOf="@id/subtitle"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <com.xapps.media.xmusic.widget.MarqueeTextView
+        android:id="@+id/subtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Test this should be technically very long so it can scroll"
+        app:layout_constraintStart_toEndOf="@id/cover"
+        app:layout_constraintEnd_toStartOf="@id/action"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintBottom_toBottomOf="@id/cover" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        style="@style/Widget.Material3Expressive.Button.IconButton.Filled"
+        app:icon="@drawable/ic_pause"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

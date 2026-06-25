@@ -39,9 +39,11 @@ android {
 
     sourceSets {
         main {
+            manifest.srcFile "src/main/AndroidManifest.xml"
             java.srcDirs += "src/extra/java"
         }
     }
+
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -112,7 +114,6 @@ android {
 dependencies {
     implementation libs.taglib
     implementation libs.glide
-    implementation libs.gson
     implementation libs.material
     implementation libs.transition
     implementation libs.fragment

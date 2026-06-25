@@ -1,0 +1,74 @@
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?colorSurfaceContainer"
+    android:orientation="vertical">
+    <com.xapps.media.xmusic.widget.SpringOverScrollLayout
+        android:id="@+id/swipe_refresh_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:background="?colorSurfaceContainer"
+        android:transitionGroup="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <FrameLayout
+            android:id="@+id/indicatorContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true">
+            <com.xapps.media.xmusic.widget.CustomLoadingIndicator
+                android:id="@+id/indicator"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_gravity="center"
+                android:visibility="invisible" />
+        </FrameLayout>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/songsList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:transitionGroup="true"
+            android:overScrollMode="never" />
+    </com.xapps.media.xmusic.widget.SpringOverScrollLayout>
+    <LinearLayout
+        android:id="@+id/empty_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:gravity="center_horizontal"
+        android:visibility="visible">
+        <com.google.android.material.loadingindicator.LoadingIndicator
+            android:id="@+id/loading_indicator"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            style="@style/Widget.Material3.LoadingIndicator.Contained" />
+        <ImageView
+            android:id="@+id/empty_picture"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/box"
+            android:tint="?colorOutline"
+            android:visibility="invisible" />
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_marginTop="25dp"
+            android:text="Nothing to see here"
+            android:textSize="22sp"
+            android:textColor="?colorOnSurface"
+            android:visibility="invisible" />
+    </LinearLayout>
+    <FrameLayout
+        android:id="@+id/blocking_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#00000000"
+        android:clickable="false"
+        android:focusable="false" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

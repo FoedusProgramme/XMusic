@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/item"
     android:padding="12dp"
-    android:background="@drawable/rv_ripple_top"
+    android:background="@drawable/rv_ripple_top_inverse"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <FrameLayout

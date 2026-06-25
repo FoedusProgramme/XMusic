@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements ServiceCallback, 
     }
     
     public void setupControllerListener() {
-		mController.setupListener(this);
+		//mController.setupListener(this);
     }
     
     @Override
