@@ -44,7 +44,6 @@ android {
         }
     }
 
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -53,9 +52,10 @@ android {
     signingConfigs {
         release {
             def base64Key = getSecret("KEYSTORE_BASE64")
-            def tmpFile = layout.buildDirectory.file("tmp_keystore.jks").get().asFile
+            def tmpFile = file("build/tmp_keystore.jks")
             tmpFile.parentFile.mkdirs()
             tmpFile.bytes = Base64.decoder.decode(base64Key)
+            
             storeFile tmpFile
             storePassword getSecret("KEYSTORE_PASSWORD")
             keyAlias getSecret("KEY_ALIAS")
@@ -80,6 +80,8 @@ android {
         }
 
         preview {
+            initWith release
+            matchingFallbacks = ["release", "debug"]
             debuggable false
             minifyEnabled false
             shrinkResources false
@@ -135,16 +137,12 @@ dependencies {
     }
 
     implementation libs.colorseekbar
-    implementation libs.graphics.shapes
-    implementation libs.marquee
-    implementation libs.jaudiotagger
     implementation libs.lottie
     implementation libs.aboutlibraries.core
 
     implementation(name: "fastscroller", ext: "aar")
     implementation(name: "roundedimageview", ext: "aar")
 }
-
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += [

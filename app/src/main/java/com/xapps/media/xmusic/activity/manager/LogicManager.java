@@ -172,4 +172,15 @@ public class LogicManager {
         float clampedOffset = Math.max(0f, offset);
         binding.collapsedPlayer.motionRoot.setAlpha(Math.max(0f, 1f-clampedOffset));
     }
+
+    public void handleProgress(long progress) {
+        if (true) activity.runOnUiThread(() -> updateProgress(progress));
+        activity.runOnUiThread(() -> binding.expandedPlayer.xlyricsView.onProgress((int) progress));
+    }
+
+    public void updateProgress(long position) {
+        binding.collapsedPlayer.musicProgress.setProgressCompat((int) position, true);
+        binding.expandedPlayer.songSeekbar.setProgress((int) position, false);
+        binding.expandedPlayer.currentDurationText.setText(XUtils.millisecondsToDuration(position));
+    }
 }

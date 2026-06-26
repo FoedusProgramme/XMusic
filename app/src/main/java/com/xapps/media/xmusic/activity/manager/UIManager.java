@@ -9,12 +9,17 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.view.animation.PathInterpolator;
 import android.widget.SeekBar;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewKt;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -23,7 +28,9 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import com.google.android.material.transition.MaterialFadeThrough;
 import com.google.android.material.transition.MaterialSharedAxis;
 import com.xapps.media.xmusic.activity.RootActivity;
+import com.xapps.media.xmusic.callback.CallbackInterface;
 import com.xapps.media.xmusic.data.LiveColors;
+import com.xapps.media.xmusic.data.RuntimeData;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
 import com.xapps.media.xmusic.databinding.LayoutPlayerCollapsedBinding;
 import com.xapps.media.xmusic.fragment.SettingsFragment;
@@ -32,8 +39,11 @@ import com.xapps.media.xmusic.utils.ColorPaletteUtils;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 import com.xapps.media.xmusic.utils.XUtils;
 import com.xapps.media.xmusic.widget.*;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import kotlin.Unit;
 
 public class UIManager {
@@ -58,6 +68,12 @@ public class UIManager {
     public int bnvNeededMargin, playerNeededMargin, tabsNeededMargin, playerDockedNeededMargin;
     
     private int layoutState = LAYOUT_STATE_FULL;
+    
+    private volatile long metadataRequestId;
+    
+    private Handler handler = new Handler(Looper.getMainLooper());
+    
+    private final ExecutorService metadataExecutor = Executors.newSingleThreadExecutor();
     
     public boolean tabsHidden, bnvHidden, playerDocked, playerHidden;
     
@@ -96,7 +112,7 @@ public class UIManager {
 
     private void setupDimensions() {
         int sideMargins = XUtils.convertToPx(activity, 8f);
-        peekHeight = XUtils.convertToPx(activity, 64f);
+        peekHeight = XUtils.convertToPx(activity, 64f) + binding.collapsedPlayer.musicProgress.getHeight();
         binding.miniPlayer.setPeekHeight(peekHeight);
         
         ViewKt.doOnLayout(binding.bottomNavigation, v -> {
@@ -130,7 +146,7 @@ public class UIManager {
     private void setupShapes() {
         int cornerRadius = XUtils.convertToPx(activity, 12f);
         binding.miniPlayer.setFloatingCornerRadii(cornerRadius, cornerRadius, cornerRadius, cornerRadius);
-        binding.collapsedPlayer.cover.setRadius(8f);
+        binding.collapsedPlayer.cover.setRadius(XUtils.convertToPx(activity, 8f));
     }
 
     private void setupInitialState() {
@@ -150,9 +166,6 @@ public class UIManager {
         binding.tabLayout.addTab("Browse");
         
         binding.viewpager.setAdapter(new PagerAdapter(activity));
-        
-        binding.collapsedPlayer.cover.setPivotX(0f);
-        binding.collapsedPlayer.cover.setPivotY(0f);
         
         binding.containerRoot.setClipChildren(false);
         binding.miniPlayer.setClipChildren(false);
@@ -295,7 +308,7 @@ public class UIManager {
         setLayoutState(state);
     }
 
-    // -------------------------------- ]
+    // --------------- Fragments Viewpager Adapter ----------------- ]
 
     public class PagerAdapter extends FragmentStateAdapter {
 
@@ -315,7 +328,7 @@ public class UIManager {
         }
     }
 
-    // COLOR ANIMATION LOGIC -------------
+    // PLAYER ANIMATION AND UPDATES LOGIC -------------
 
     public void updateColors() {
         if (ColorPaletteUtils.lightColors == null && ColorPaletteUtils.darkColors == null) return;
@@ -354,7 +367,7 @@ public class UIManager {
         
         GradientDrawable d3 = (GradientDrawable) binding.expandedPlayer.songInfoLayout.getBackground();
         
-        SeekBar seekbar = binding.expandedPlayer.songSeekbar;
+        XSeekbar seekbar = binding.expandedPlayer.songSeekbar;
         
         
         ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
@@ -398,20 +411,24 @@ public class UIManager {
         
             playerSurface = is;
             
-            if (binding.miniPlayer.getState() == ExpressiveSliderLayout.STATE_EXPANDED) binding.miniPlayer.setSheetBackgroundColor(playerSurface);
+            binding.miniPlayer.setSheetBackgroundColor(playerSurface);
             binding.expandedPlayer.lyricsContainer.setBackgroundColor(playerSurface);
             
             d3.setColor(isc);
             
-            seekbar.setThumbTintList(ColorStateList.valueOf(ip)); 
-            //progressDrawable.setTint(ip);
-            
-            /*binding.lyricsButton.setIconTint(ColorStateList.valueOf(isOledTheme? 0xffbdbdbd : iosc));
-            binding.lyricsButton.setRippleColor(ColorStateList.valueOf(io));*/
+            seekbar.setColor(ip); 
+       
+            binding.collapsedPlayer.action.setRippleColor(ColorStateList.valueOf(ColorUtils.setAlphaComponent(io, 100)));
+            binding.collapsedPlayer.action.setIconTint(binding.collapsedPlayer.action.getRippleColor());
+            binding.collapsedPlayer.action.setBackgroundColor(ip);
             
             binding.expandedPlayer.artistBigTitle.setTextColor(iosc);
             binding.expandedPlayer.songBigTitle.setTextColor(ios);
-            binding.expandedPlayer.currentDurationText.setTextColor(iosc);
+            
+            binding.collapsedPlayer.title.setTextColor(ios);
+            binding.collapsedPlayer.subtitle.setTextColor(io);
+            
+            binding.collapsedPlayer.title.setTextColor(iosc);
             binding.expandedPlayer.totalDurationText.setTextColor(iosc);
             binding.expandedPlayer.songInfoText.setTextColor(iosc);
         });
@@ -439,5 +456,181 @@ public class UIManager {
     
     }
 
+    public void updateContent(boolean isResuming) {
+        if (activity.getController() == null) return;
+        int position = activity.getController().getCurrentMediaItemIndex();
+        if (position >= 0 && RuntimeData.songs.size() > 0 && position < RuntimeData.songs.size()) syncPlayerUI(position, isResuming);
+    }
 
+    public void syncPlayerUI(int position, boolean isResuming) {
+        updateMaxValue(position, isResuming);
+        updateCoverPager(position);
+
+        if (!isResuming) {
+            binding.expandedPlayer.artistBigTitle.animate().alpha(0f).translationX(-20f).setDuration(100).start();
+            binding.expandedPlayer.songBigTitle.animate().alpha(0f).translationX(-20f).setDuration(100).start();
+            binding.expandedPlayer.totalDurationText.animate().alpha(0f).translationX(-20f).setDuration(100).start();
+            binding.expandedPlayer.currentDurationText.animate().alpha(0f).translationX(-20f).setDuration(100).start();
+
+            handler = new Handler(Looper.getMainLooper());
+
+            handler.postDelayed(() -> {
+                updateTexts(position, isResuming);
+                updateSongInfoLayout(position);
+
+                binding.expandedPlayer.totalDurationText.setTranslationX(20f);
+                binding.expandedPlayer.currentDurationText.setTranslationX(20f);
+                binding.expandedPlayer.songBigTitle.setTranslationX(20f);
+                binding.expandedPlayer.artistBigTitle.setTranslationX(20f);
+            }, 110);
+
+            handler.postDelayed(() -> {
+                binding.expandedPlayer.artistBigTitle.animate().alpha(1f).translationX(0f).setDuration(120).start();
+                binding.expandedPlayer.songBigTitle.animate().alpha(1f).translationX(0f).setDuration(120).start();
+                binding.expandedPlayer.currentDurationText.animate().alpha(1f).translationX(0f).setDuration(120).start();
+                binding.expandedPlayer.totalDurationText.animate().alpha(1f).translationX(0f).setDuration(120).start();
+            }, 120);
+
+        } else {
+            updateTexts(position, isResuming);
+            updateSongInfoLayout(position);
+        }
+    }
+
+    public void updateMaxValue(int pos, boolean isRestoring) {
+        if (RuntimeData.songs.size() > 0 && activity.getController() != null) {
+            int p = activity.getController().getCurrentMediaItemIndex();
+			if (pos == -1) return;
+            int max = (int) RuntimeData.songs.get(pos == -1? p : pos).duration;
+            binding.expandedPlayer.songSeekbar.setMax(max);
+            binding.collapsedPlayer.musicProgress.setMax(max);
+        } else if (isRestoring) {
+            int p = CallbackInterface.service().getCurrentPosition();
+			if (p == -1) return;
+            int max = (int) RuntimeData.songs.get(pos == -1? p : pos).duration;
+            binding.expandedPlayer.songSeekbar.setMax(max);
+            binding.collapsedPlayer.musicProgress.setMax(max);
+        }
+    }
+
+    public void updateTexts(int pos, boolean isRestoring) {
+        if (RuntimeData.songs.size() > 0 && activity.getController() != null) {
+            if (pos == -1) return;
+            binding.expandedPlayer.totalDurationText.setText(RuntimeData.songs.get(pos).getFormattedDuration());
+            binding.expandedPlayer.artistBigTitle.setText(RuntimeData.songs.get(pos).artist);
+            binding.expandedPlayer.songBigTitle.setText(RuntimeData.songs.get(pos).title);
+            binding.collapsedPlayer.title.setText(RuntimeData.songs.get(pos).title);
+            binding.collapsedPlayer.subtitle.setText(RuntimeData.songs.get(pos).artist);
+    
+        } else if (isRestoring && CallbackInterface.service() != null && CallbackInterface.service().isAnythingPlaying()) {
+            int p = CallbackInterface.service().getCurrentPosition();
+            if (p == -1) return;
+    
+            binding.expandedPlayer.totalDurationText.setText(RuntimeData.songs.get(p).getFormattedDuration());
+            binding.expandedPlayer.artistBigTitle.setText(RuntimeData.songs.get(p).artist);
+            binding.expandedPlayer.songBigTitle.setText(RuntimeData.songs.get(p).title);
+            binding.collapsedPlayer.title.setText(RuntimeData.songs.get(p).title);
+            binding.collapsedPlayer.subtitle.setText(RuntimeData.songs.get(p).artist);
+        }
+    }
+
+    private void updateSongInfoLayout(int pos) {
+        if (RuntimeData.songs.isEmpty()) return;
+        
+        int index = -1;
+
+        if (pos == -1) {
+            if (CallbackInterface.service() != null) {
+                index = CallbackInterface.service().getCurrentPosition();
+                if (index == -1) return;
+            } else {
+                return;
+            }
+        }
+
+        final String path;
+
+        try {
+            path = RuntimeData.songs.get(index).path;
+        } catch (IndexOutOfBoundsException e) {
+            return;
+        }
+
+        final long requestId = ++metadataRequestId;
+
+        binding.expandedPlayer.songInfoText.animate()
+            .alpha(0f)
+            .setDuration(100)
+            .start();
+
+        metadataExecutor.execute(() -> {
+
+            String mime = "Unknown";
+            int kbps = -1;
+            String sampleRate = "Unknown";
+
+            try {
+                mime = XUtils.getAudioCodec(
+                    activity,
+                    Uri.fromFile(new File(path))
+                );
+
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                mmr.setDataSource(path);
+
+                String br = mmr.extractMetadata(
+                        MediaMetadataRetriever.METADATA_KEY_BITRATE
+                );
+
+                String sr = mmr.extractMetadata(
+                        MediaMetadataRetriever.METADATA_KEY_SAMPLERATE
+                );
+
+                mmr.release();
+
+                if (br != null) {
+                    kbps = Math.abs(Integer.parseInt(br) / 1000);
+                }
+
+                if (sr != null) {
+                int hz = Integer.parseInt(sr);
+                    sampleRate = hz >= 1000
+                        ? (hz / 1000f) + " kHz"
+                        : hz + " Hz";
+                }
+
+            } catch (Exception ignored) { }
+
+            final String finalMime = mime;
+            final int finalKbps = kbps;
+            final String finalSampleRate = sampleRate;
+
+            binding.expandedPlayer.songInfoText.post(() -> {
+
+                if (requestId != metadataRequestId) {
+                    return;
+                }
+
+                String text = finalKbps > 0
+                    ? finalMime + " • " + finalKbps + " kbps • " + finalSampleRate
+                    : finalMime + " • " + finalSampleRate;
+
+                binding.expandedPlayer.songInfoText.setText(text);
+                binding.expandedPlayer.songInfoText.setAlpha(0f);
+                binding.expandedPlayer.songInfoText.animate()
+                    .alpha(1f)
+                    .setDuration(120)
+                    .start();
+            });
+        });
+    }
+
+    private void updateCoverPager(int index) {
+        if (RuntimeData.songs.isEmpty()) return;
+		if (activity.isDestroyed() || activity.isFinishing()) return;
+        
+        Uri cover = RuntimeData.songs.get(index).getArtworkUri();
+        binding.expandedPlayer.coversPager.load(cover);
+        binding.collapsedPlayer.cover.load(cover);
+    }
 }

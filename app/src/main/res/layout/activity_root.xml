@@ -83,8 +83,7 @@
             android:id="@+id/container_root"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:background="#ffffff" >
+            android:orientation="vertical" >
 
             <include
                 android:id="@+id/collapsed_player"

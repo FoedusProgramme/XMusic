@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.1"
+agp = "9.2.1"
 taglib = "1.0.6"
 glide = "5.0.3"
 gson = "2.13.1"
@@ -20,7 +20,7 @@ graphicsShapes = "1.1.0"
 marquee = "1.0.0"
 jaudiotagger = "2.3.14"
 lottie = "6.7.1"
-aboutlibraries = "13.0.0"
+aboutlibraries = "15.0.2"
 
 [libraries]
 taglib = { group = "io.github.kyant0", name = "taglib", version.ref = "taglib" }

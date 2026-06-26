@@ -353,6 +353,15 @@ public class ExpressiveSliderLayout extends FrameLayout {
             sheetView.setClickable(true);
         }
     }
+    
+    @Override
+public void requestLayout() {
+    if (currentState == STATE_DRAGGING || currentState == STATE_SETTLING) {
+        return;
+    }
+    super.requestLayout();
+}
+    
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {

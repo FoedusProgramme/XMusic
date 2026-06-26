@@ -5,10 +5,6 @@ import android.os.Looper;
 
 import android.os.ParcelFileDescriptor;
 import com.kyant.taglib.TagLib;
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.tag.FieldKey;
-import org.jaudiotagger.tag.Tag;
 
 import java.io.File;
 import java.io.FileInputStream;

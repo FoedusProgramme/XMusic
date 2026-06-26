@@ -90,4 +90,16 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
     public void onColorsChanged() {
         runOnUiThread(() -> uiManager.updateColors());
     }
+
+    @Override 
+    public void onSongChanged() {
+        runOnUiThread(() -> {
+            uiManager.updateContent(false);
+        });
+    }
+
+    @Override
+    public void onProgressChanged(long progress) {
+        logicManager.handleProgress(progress);
+    }
 }

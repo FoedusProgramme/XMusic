@@ -126,7 +126,10 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
                             statsAnalyzer.startAnalysis(RuntimeData.songs.get(player.getCurrentMediaItemIndex()));
                         }
                     }
-                    genColors(player.getCurrentMediaItemIndex());
+                    if (player.getPlaybackState() != Player.STATE_IDLE) {
+                        genColors(player.getCurrentMediaItemIndex());
+                        CallbackInterface.activity().onSongChanged();
+                    } 
                     if (player.getMediaItemCount() > 0) saveResumeState();
                 }
                                 
@@ -273,38 +276,32 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
     public void saveState() {
         saveResumeState();
     }
-
-    private long lastExecutionTime = 0;
-
-private final Runnable progressUpdater = new Runnable() {
+    
     @Override
-    public void run() {
-        long currentTime = System.currentTimeMillis();
-        if (lastExecutionTime != 0) {
-            android.util.Log.d("PlayerDebug", "Loop Delta: " + (currentTime - lastExecutionTime) + "ms");
-        }
-        lastExecutionTime = currentTime;
-
-        currentProgress = player.getCurrentPosition();
-        android.util.Log.d("PlayerDebug", "Position fetched: " + currentProgress + "ms");
-
-        if (CallbackInterface.activity() != null) {
-            CallbackInterface.activity().onProgressChanged(currentProgress);
-        }
-
-        playerHandler.postDelayed(this, 10);
+    public int getCurrentPosition() {
+        return currentPosition;
     }
-};
 
+    private final Runnable progressUpdater = new Runnable() {
+        @Override
+        public void run() {
+            long currentTime = System.currentTimeMillis();
+            currentProgress = player.getCurrentPosition();
+            if (CallbackInterface.activity() != null) {
+                CallbackInterface.activity().onProgressChanged(currentProgress);
+            }
 
+            playerHandler.postDelayed(this, 10);
+        }
+    };
 
-    /*private final Runnable periodicSaveRunnable = new Runnable() {
+    private final Runnable periodicSaveRunnable = new Runnable() {
         @Override
         public void run() {
             if (player.getMediaItemCount() > 0) saveResumeState();
             playerHandler.postDelayed(this, 5000);
         }
-    };*/
+    };
 
     private void startUpdates() {
         if (handlerRunning) return;
@@ -319,14 +316,14 @@ private final Runnable progressUpdater = new Runnable() {
     }
 
     private void startPeriodicSave() {
-        /*if (saveHandlerRunning) return;
+        if (saveHandlerRunning) return;
         if (playerHandler != null) playerHandler.postDelayed(periodicSaveRunnable, 10000);
-        saveHandlerRunning = true;*/
+        saveHandlerRunning = true;
     }
 
     private void stopPeriodicSave() {
-        /*if (!saveHandlerRunning) return;
+        if (!saveHandlerRunning) return;
         if (playerHandler != null) playerHandler.removeCallbacks(periodicSaveRunnable);
-        saveHandlerRunning = false;*/
+        saveHandlerRunning = false;
     }
 }

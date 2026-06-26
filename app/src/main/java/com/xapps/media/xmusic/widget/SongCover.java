@@ -21,6 +21,9 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.card.MaterialCardView;
+
+import com.xapps.media.xmusic.R;
+
 import java.io.File;
 
 public class SongCover extends MaterialCardView {
@@ -150,7 +153,8 @@ public class SongCover extends MaterialCardView {
         };
 
         Glide.with(getContext())
-                .load(model)
+                .load(model == null? R.drawable.placeholder : model)
+                .error(R.drawable.placeholder)
                 .override(Target.SIZE_ORIGINAL)
                 .centerCrop()
                 .into(glideTarget);

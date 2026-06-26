@@ -7,8 +7,7 @@
     android:clickable="true"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    android:clipToOutline="true"
-    android:background="?android:colorBackground">
+    android:clipToOutline="true">
 
     <com.xapps.media.xmusic.widget.SongCover
         android:id="@+id/covers_pager"
@@ -84,7 +83,7 @@
         app:layout_constraintTop_toTopOf="@+id/song_big_title"
         app:layout_constraintBottom_toBottomOf="@+id/artist_big_title" />
 
-    <SeekBar
+    <com.xapps.media.xmusic.widget.XSeekbar
         android:id="@+id/song_seekbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -95,7 +94,6 @@
         android:focusable="false"
         android:focusableInTouchMode="false"
         android:progress="0"
-        android:thumb="@drawable/seekbar_thumb"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/current_duration_text"

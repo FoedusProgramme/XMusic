@@ -5,16 +5,16 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clipChildren="false"
-    android:clipToPadding="false"
-    android:padding="8dp">
+    android:clipToPadding="false">
 
-    <com.appbroker.roundedimageview.RoundedImageView
+    <com.xapps.media.xmusic.widget.SongCover
         android:id="@+id/cover"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:scaleType="centerCrop"
         android:elevation="4dp"
-        app:srcCompat="@drawable/placeholder"
+        android:layout_margin="8dp"
+        android:src="@drawable/placeholder"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
@@ -23,9 +23,10 @@
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
         android:text="Test this should be technically very long so it can scroll"
+        android:textSize="20sp"
         app:layout_constraintStart_toEndOf="@id/cover"
         app:layout_constraintEnd_toStartOf="@id/action"
         app:layout_constraintTop_toTopOf="@id/cover"
@@ -38,6 +39,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        android:textSize="16sp"
         android:text="Test this should be technically very long so it can scroll"
         app:layout_constraintStart_toEndOf="@id/cover"
         app:layout_constraintEnd_toStartOf="@id/action"
@@ -53,6 +55,20 @@
         app:icon="@drawable/ic_pause"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/music_progress"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:progress="0"
+        app:indicatorColor="?attr/colorPrimary"
+        app:trackColor="@android:color/transparent"
+        app:trackStopIndicatorSize="0dp"
+        app:trackThickness="2dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

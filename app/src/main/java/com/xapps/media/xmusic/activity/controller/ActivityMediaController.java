@@ -69,6 +69,7 @@ public class ActivityMediaController {
                     //activity.floatBnv(true);
 					ActivityRootBinding binding = activity.getBinding();
                     int position = controller.getCurrentMediaItemIndex();
+                    
                     //activity.updateAdapters(position, controller.isPlaying());
                     //activity.progressDrawable.setAnimate(true);
                     //if (!binding.toggleView.isAnimating() && controller.isPlaying()) binding.toggleView.startAnimation();

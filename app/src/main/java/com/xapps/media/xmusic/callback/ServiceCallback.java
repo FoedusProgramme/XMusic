@@ -50,4 +50,8 @@ public interface ServiceCallback {
     default boolean isPlaying() {
         return false;
     }
+
+    default int getCurrentPosition() {
+        return -1;
+    }
 }
