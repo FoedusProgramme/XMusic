@@ -418,9 +418,9 @@ public class UIManager {
             
             seekbar.setColor(ip); 
        
-            binding.collapsedPlayer.action.setRippleColor(ColorStateList.valueOf(ColorUtils.setAlphaComponent(io, 100)));
-            binding.collapsedPlayer.action.setIconTint(binding.collapsedPlayer.action.getRippleColor());
+            binding.collapsedPlayer.action.setIconTint(ColorStateList.valueOf(iop));
             binding.collapsedPlayer.action.setBackgroundColor(ip);
+            binding.collapsedPlayer.action.setRippleColor(ColorStateList.valueOf(ColorUtils.setAlphaComponent(io, 100)));
             
             binding.expandedPlayer.artistBigTitle.setTextColor(iosc);
             binding.expandedPlayer.songBigTitle.setTextColor(ios);
@@ -428,7 +428,6 @@ public class UIManager {
             binding.collapsedPlayer.title.setTextColor(ios);
             binding.collapsedPlayer.subtitle.setTextColor(io);
             
-            binding.collapsedPlayer.title.setTextColor(iosc);
             binding.expandedPlayer.totalDurationText.setTextColor(iosc);
             binding.expandedPlayer.songInfoText.setTextColor(iosc);
         });

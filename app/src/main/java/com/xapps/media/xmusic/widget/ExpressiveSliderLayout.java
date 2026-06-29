@@ -74,6 +74,7 @@ public class ExpressiveSliderLayout extends FrameLayout {
         @Override
         public void handleOnBackStarted(@NonNull BackEventCompat backEvent) {
             isValidBack = currentState == STATE_EXPANDED;
+            if (isValidBack) dispatchState(STATE_DRAGGING);
         }
 
         @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
