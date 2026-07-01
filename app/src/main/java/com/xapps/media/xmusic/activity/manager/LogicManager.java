@@ -1,6 +1,9 @@
 package com.xapps.media.xmusic.activity.manager;
 
+import android.os.*;
 import android.content.ComponentName;
+import android.widget.*;
+import android.view.*;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.media3.common.MediaItem;
@@ -28,9 +31,8 @@ public class LogicManager {
     private MediaController mediaController;
     private SessionToken sessionToken;
     private ActivityMediaController controller;
-
-    private boolean test1 = false;
-    private boolean test2 = true;
+    
+    private boolean isUserSeeking;
 
     public LogicManager(RootActivity activity, UIManager uiManager) {
         this.activity = activity;
@@ -44,47 +46,60 @@ public class LogicManager {
     }
 
     private void setupListeners() {
-        binding.bottomButton.setOnClickListener(
-                v -> {
-                    if (test1) {
-                        if (test2) {
-                            uiManager.setLayoutState(UIManager.LAYOUT_STATE_EXPOSE_TABS_BNV);
-                        } else {
-                            uiManager.setLayoutState(UIManager.LAYOUT_STATE_FULL);
-                        }
-                        test1 = false;
-                        binding.bottomButton.setText("Show Player");
-                    } else {
-                        if (test2) {
-                            uiManager.setLayoutState(UIManager.LAYOUT_STATE_EXPOSE_FULL);
-                        } else {
-                            uiManager.setLayoutState(UIManager.LAYOUT_STATE_EXPOSE_PLAYER_ONLY);
-                        }
-                        test1 = true;
-                        binding.bottomButton.setText("Hide Player");
+        binding.collapsedPlayer.cover.addOnLayoutChangeListener(
+                (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    if (left != oldLeft
+                            || top != oldTop
+                            || right != oldRight
+                            || bottom != oldBottom) {
+
+                        binding.collapsedPlayer.cover.captureCollapsedBounds();
                     }
                 });
 
-        binding.topButton.setOnClickListener(
-                v -> {
-                    if (test2) {
-                        if (test1) {
-                            uiManager.setLayoutState(UIManager.LAYOUT_STATE_EXPOSE_PLAYER_ONLY);
-                        } else {
-                            uiManager.setLayoutState(UIManager.LAYOUT_STATE_FULL);
-                        }
-                        test2 = false;
-                        binding.topButton.setText("Expand Card");
-                    } else {
-                        if (test1) {
-                            uiManager.setLayoutState(UIManager.LAYOUT_STATE_EXPOSE_FULL);
-                        } else {
-                            uiManager.setLayoutState(UIManager.LAYOUT_STATE_EXPOSE_TABS_BNV);
-                        }
-                        test2 = true;
-                        binding.topButton.setText("Collapse Card");
+        binding.maximumSizeView.addOnLayoutChangeListener(
+                (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    if (left != oldLeft
+                            || top != oldTop
+                            || right != oldRight
+                            || bottom != oldBottom) {
+
+                        int size = binding.maximumSizeView.getMaximumSize();
+
+                        View v2 = binding.maximumSizeView;
+						int leftNow = v2.getLeft();
+						int topNow = v2.getTop();
+						int x = leftNow + (v2.getWidth() - size) / 2;
+                        
+                        binding.collapsedPlayer.cover.setExpandedBounds(x, topNow, x + size, topNow + size);
+                        
+                        binding.collapsedPlayer.cover.setExpansionProgress(Math.max(0f, binding.miniPlayer.getSlideOffset()));
                     }
                 });
+                
+        binding.expandedPlayer.songSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+   		 @Override
+   		 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				binding.expandedPlayer.currentDurationText.setText(XUtils.millisecondsToDuration(seekBar.getProgress()));
+   		 }
+
+   		 @Override
+   		 public void onStartTrackingTouch(SeekBar seekBar) {
+       		 isUserSeeking = true;
+   		 }
+
+    		@Override
+   		 public void onStopTrackingTouch(SeekBar seekBar) {
+       		 new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    isUserSeeking = false;
+                }, 100);
+        		mediaController.seekTo(seekBar.getProgress());
+    		}
+		});        
+        
+        // ----- THIS PREVENTS SEEKBAR FROM STEALING FOCUS IN PLAYER SHEET
+        
+        binding.expandedPlayer.songSeekbar.setOnClickListener(v -> {});
     }
 
     private void setupCallbacks() {
@@ -108,7 +123,9 @@ public class LogicManager {
                     @Override
                     public void onSlide(float offset) {
                         binding.layoutScrim.setAlpha(Math.max(0f, offset) * 0.7f);
+                        uiManager.updateTopProgress(Math.max(0f, offset));
                         updateImageSize(offset);
+                        binding.collapsedPlayer.cover.setExpansionProgress(Math.max(0f, offset));
                     }
                 });
     }
@@ -152,6 +169,7 @@ public class LogicManager {
             mediaController.seekTo(position, 0);
             mediaController.play();
         }
+        CallbackInterface.service().regenColors(position);
         binding.expandedPlayer.toggleView.forcePlayState();
     }
 
@@ -183,7 +201,7 @@ public class LogicManager {
     private void updateImageSize(float offset) {
         float clampedOffset = Math.max(0f, offset);
         // binding.collapsedPlayer.motionRoot.setAlpha(Math.max(0f, 1f - clampedOffset));
-        binding.collapsedPlayer.motionRoot.setProgress(clampedOffset);
+        // binding.collapsedPlayer.motionRoot.setProgress(clampedOffset);
     }
 
     public void handleProgress(long progress) {
@@ -193,7 +211,6 @@ public class LogicManager {
 
     public void updateProgress(long position) {
         binding.collapsedPlayer.musicProgress.setProgressCompat((int) position, true);
-        binding.expandedPlayer.songSeekbar.setProgress((int) position, false);
-        binding.expandedPlayer.currentDurationText.setText(XUtils.millisecondsToDuration(position));
+        if (!isUserSeeking) binding.expandedPlayer.songSeekbar.setProgress((int) position, false);
     }
 }

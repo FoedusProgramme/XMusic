@@ -1,10 +1,9 @@
-<androidx.constraintlayout.motion.widget.MotionLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/motion_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:layoutDescription="@xml/cover_scene"
     android:clipChildren="false"
     android:clipToPadding="false">
 
@@ -14,53 +13,57 @@
         android:layout_height="48dp"
         android:scaleType="centerCrop"
         android:elevation="4dp"
-        android:layout_margin="8dp"
+        android:layout_margin="4dp"
         android:src="@drawable/placeholder"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <TextView
+        app:layout_constraintTop_toTopOf="parent" />
+        
+    <View 
+    	android:id="@+id/placement_helper" 
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+ 
+    <com.xapps.media.xmusic.widget.MarqueeTextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:text="Test this should be technically very long so it can scroll"
-        android:textSize="20sp"
-        android:ellipsize="end"
-        android:singleLine="true"
-        app:layout_constraintStart_toEndOf="@id/cover"
+        android:textSize="18sp"
+        app:layout_constraintStart_toEndOf="@id/placement_helper"
         app:layout_constraintEnd_toStartOf="@id/action"
-        app:layout_constraintTop_toTopOf="@id/cover"
+        app:layout_constraintTop_toTopOf="@id/placement_helper"
         app:layout_constraintBottom_toTopOf="@id/subtitle"
         app:layout_constraintVertical_chainStyle="packed" />
 
-    <TextView
+    <com.xapps.media.xmusic.widget.MarqueeTextView
         android:id="@+id/subtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:textSize="16sp"
-        android:ellipsize="end"
-        android:singleLine="true"
+        android:textSize="15sp"
         android:text="Test this should be technically very long so it can scroll"
-        app:layout_constraintStart_toEndOf="@id/cover"
+        app:layout_constraintStart_toEndOf="@id/placement_helper"
         app:layout_constraintEnd_toStartOf="@id/action"
         app:layout_constraintTop_toBottomOf="@id/title"
-        app:layout_constraintBottom_toBottomOf="@id/cover" />
+        app:layout_constraintBottom_toBottomOf="@id/placement_helper" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/action"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="24dp"
         style="@style/Widget.Material3Expressive.Button.IconButton.Filled"
         app:icon="@drawable/ic_pause"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toTopOf="@id/title"
+        app:layout_constraintBottom_toBottomOf="@id/subtitle"
+        app:layout_constraintVertical_bias="0.5"/>
 
     <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/music_progress"
@@ -71,9 +74,10 @@
         app:trackColor="@android:color/transparent"
         app:trackStopIndicatorSize="0dp"
         app:trackThickness="2dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/placement_helper"/>
 
-</androidx.constraintlayout.motion.widget.MotionLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

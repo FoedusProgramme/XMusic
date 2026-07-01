@@ -18,7 +18,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.xapps.media.xmusic.activity.MainActivity;
+import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.service.resume.ResumeSong;
@@ -45,7 +45,7 @@ public class SessionManager {
         this.manager = manager;
         player = manager.getPlayer();
         MediaLibraryService.MediaLibrarySession.Builder builder = new MediaLibraryService.MediaLibrarySession.Builder(context, manager.getPlayer(), new MediaSessionCallback());
-        Intent intent = new Intent(context, MainActivity.class);
+        Intent intent = new Intent(context, RootActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent sessionActivity = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         builder.setId("XMusicMediaSession").setSessionActivity(sessionActivity);

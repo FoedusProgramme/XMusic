@@ -23,7 +23,7 @@ public interface ServiceCallback {
         
     }
     
-    default void regenColors() {
+    default void regenColors(int position) {
         
     }
     

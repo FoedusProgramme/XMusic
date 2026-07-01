@@ -2,7 +2,7 @@ package com.xapps.media.xmusic.callback;
 
 public interface ActivityCallback {
 
-    default void onSongChanged() {
+    default void onSongChanged(int position) {
         
     }
 

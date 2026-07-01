@@ -1,5 +1,5 @@
 
-# 🎵 XMusic
+# XMusic
 
 ##### A Material 3 Expressive Music player for Android built with pure Java
 
@@ -10,7 +10,7 @@
 
 ---
 
-## ✨ Features (Detailed)
+## Features (Detailed)
 ---
 ### Core Playback
 
@@ -66,7 +66,7 @@
 - [ ] Finish settings screen
 - [ ] Add more features to the now Playing UI
 - [ ] Add a contextual menu for songs
-- [ ] Make a functional search fragment 
+- [x] Make a functional search fragment 
 - [ ] Idk
 ---
 
@@ -78,23 +78,23 @@
 
 ---
 
-## ⬇️ Download the app
+## Download the app
 - You can get Latest XMusic build via [GitHub Actions](https://github.com/Yamenher/XMusic/actions) or via the [dedicated topic](https://t.me/XMusicCommunity/4) in our telegram community.
 
 ---
 
-## 📱 Minimum Requirements
+## Minimum Requirements
 
 - Android 8.0 (API 26) or higher
 - Local audio files stored on device
 - A brain (for reporting bugs)
 ---
 
-## ⚠️ Important Notice
+## Important Notice
 - The app is still WIP (Work In Progress) and is far away from a stable release, that's why you might notice a lot of bugs, missing features, and some instability problems, but **Don't worry,** everything will worked on in the near future.
 ---
 
-## 🐛 Report bugs
+## Report bugs
 If you run into bugs, crashes, or weird behavior that clearly wasn’t supposed to happen (looking at you, OEMs) :
 
 - **GitHub Issues**  
@@ -110,7 +110,7 @@ Note : “App broken” is not a bug report.
 
 ---
 
-## Q&A
+## Q & A
 
 **Q: Is XMusic free?**  
 A: Yes. Completely free. No ads, no subscriptions, no hidden nonsense.
@@ -140,7 +140,7 @@ A: If you think this feature will be useful for a lot of people, feel free to su
 A: You can tell.
 
 ---
-## 🤝 Credits & Special Thanks
+## Credits & Special Thanks
 * [Nick](https://github.com/nift4) For the precious advices and help he provided for me when I needed help.
 * **Oto music, PixelPlayer and Gramophone Devs** - For the UI inspiration and feedback.
 * **All Testers, Especially [MACİT ELCİBİN](https://t.me/Macitelc)** for testing new builds, trying out buggy features, and reporting every single bug and helping me *break* the app to improve it :P
@@ -148,12 +148,12 @@ A: You can tell.
 
 ---
 
-## 📜 License
+## License
 Distributed under the **GNU General Public License v3.0**. See [LICENSE](https://github.com/Yamenher/XMusic/blob/main/LICENSE) for more information.
 
 ---
 
-## ✉️ Contact
+## Contact
 
 For inquiries or support, reach out at:  
 hermassiyamen@gmail.com

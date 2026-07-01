@@ -111,7 +111,7 @@ public class ActivityMediaController {
             
             @Override
             public void onPositionDiscontinuity(Player.PositionInfo positionInfo, Player.PositionInfo positionInfo2, int i) {
-                //activity.updateProgress(controller.getCurrentPosition());
+                activity.onProgressChanged(controller.getCurrentPosition());
             }            
             
             @Override

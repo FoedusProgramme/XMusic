@@ -114,7 +114,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
                                         activityCallback.onPlaybackStateChanged(player.isPlaying());
 
                                     if (state == Player.STATE_READY) {
-                                        genColors(player.getCurrentMediaItemIndex());
+                                        // genColors(player.getCurrentMediaItemIndex());
                                         startUpdates();
                                     }
 
@@ -126,8 +126,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
                                 }
 
                                 @Override
-                                public void onMediaItemTransition(
-                                        @Nullable MediaItem mediaItem, int reason) {
+                                public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                                     if (mediaItem == null || mediaItem.localConfiguration == null) {
                                         statsAnalyzer.stopAnalysis();
                                     } else {
@@ -139,8 +138,8 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
                                                             player.getCurrentMediaItemIndex()));
                                         }
                                     }
+                                    CallbackInterface.activity().onSongChanged(player.getCurrentMediaItemIndex());
                                     if (player.getPlaybackState() != Player.STATE_IDLE) {
-                                        CallbackInterface.activity().onSongChanged();
                                         genColors(player.getCurrentMediaItemIndex());
                                     }
                                     if (player.getMediaItemCount() > 0) saveResumeState();
@@ -298,8 +297,8 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
     }
 
     @Override
-    public void regenColors() {
-        genColors(currentPosition);
+    public void regenColors(int position) {
+        genColors(position == -1 ? currentPosition : position);
     }
 
     @Override

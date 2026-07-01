@@ -9,48 +9,17 @@
             android:layout_height="48dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
+            android:elevation="8dp"
             android:layout_marginBottom="8dp"
             motion:layout_constraintStart_toStartOf="parent"
             motion:layout_constraintTop_toTopOf="parent"
-            motion:layout_constraintBottom_toBottomOf="parent" />
-
-        <Constraint
-            android:id="@+id/title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="64dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="0dp"
-            android:layout_marginBottom="0dp"
-            motion:layout_constraintStart_toStartOf="parent"
-            motion:layout_constraintEnd_toStartOf="@id/action"
-            motion:layout_constraintTop_toTopOf="parent"
-            motion:layout_constraintBottom_toTopOf="@id/subtitle"
-            motion:layout_constraintVertical_chainStyle="packed" />
-
-        <Constraint
-            android:id="@+id/subtitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="64dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="0dp"
-            android:layout_marginBottom="0dp"
-            motion:layout_constraintStart_toStartOf="parent"
-            motion:layout_constraintEnd_toStartOf="@id/action"
-            motion:layout_constraintTop_toBottomOf="@id/title"
-            motion:layout_constraintBottom_toBottomOf="parent" />
-
-        <Constraint
-            android:id="@+id/action"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="0dp"
-            android:layout_marginBottom="0dp"
-            motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintTop_toTopOf="parent"
-            motion:layout_constraintBottom_toBottomOf="parent" />
+            motion:layout_constraintBottom_toBottomOf="parent" >
+            
+            <CustomAttribute
+                motion:attributeName="cornerRadius"
+                motion:customDimension="8dp" />
+                
+        </Constraint>       
 
     </ConstraintSet>
 
@@ -60,10 +29,11 @@
    		 android:id="@+id/cover"
   		  android:layout_width="0dp"
    		 android:layout_height="0dp"
-  		  android:layout_marginStart="8dp"
-  		  android:layout_marginEnd="8dp"
+  		  android:layout_marginStart="16dp"
+  		  android:layout_marginEnd="16dp"
   		  android:layout_marginTop="8dp"
    		 android:layout_marginBottom="8dp"
+            android:elevation="8dp"
   		  motion:layout_constraintStart_toStartOf="parent"
   		  motion:layout_constraintEnd_toEndOf="parent"
    		 motion:layout_constraintTop_toTopOf="parent"
@@ -72,35 +42,13 @@
   		  motion:layout_constraintVertical_weight="1"
   		  motion:layout_constraintHorizontal_weight="1"
    		 motion:layout_constrainedHeight="true"
-   		 motion:layout_constrainedWidth="true" />
+   		 motion:layout_constrainedWidth="true" >
             
-            <Constraint
-            android:id="@+id/title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="64dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="0dp"
-            android:layout_marginBottom="0dp"
-            motion:layout_constraintStart_toStartOf="parent"
-            motion:layout_constraintEnd_toStartOf="@id/action"
-            motion:layout_constraintTop_toTopOf="parent"
-            motion:layout_constraintBottom_toTopOf="@id/subtitle"
-            motion:layout_constraintVertical_chainStyle="packed" />
-
-
-        <Constraint
-            android:id="@+id/subtitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="64dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="0dp"
-            android:layout_marginBottom="0dp"
-            motion:layout_constraintStart_toStartOf="parent"
-            motion:layout_constraintEnd_toStartOf="@id/action"
-            motion:layout_constraintTop_toBottomOf="@id/title"
-            motion:layout_constraintBottom_toBottomOf="parent" />
+            <CustomAttribute
+                motion:attributeName="cornerRadius"
+                motion:customDimension="16dp" />
+                
+        </Constraint>        
 
     </ConstraintSet>
 

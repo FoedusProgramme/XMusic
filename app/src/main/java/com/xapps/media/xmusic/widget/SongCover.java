@@ -5,34 +5,55 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
+import android.graphics.Outline;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
 import android.view.animation.PathInterpolator;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
-import com.google.android.material.card.MaterialCardView;
-
 import com.xapps.media.xmusic.R;
+import com.xapps.media.xmusic.utils.XUtils;
 
 import java.io.File;
 
-public class SongCover extends MaterialCardView {
+public class SongCover extends FrameLayout {
+
+    private final Rect collapsedBounds = new Rect();
+    private final Rect expandedBounds = new Rect();
+    private final Rect currentChildBounds = new Rect();
+
+    private int collapsedCenterX;
+    private int collapsedCenterY;
+    private int collapsedSize;
+
+    private int expandedCenterX;
+    private int expandedCenterY;
+    private int expandedSize;
 
     private AppCompatImageView innerImageView;
     private Drawable previousDrawable;
     private ValueAnimator animator;
     private float transitionProgress = 1f;
     private CustomTarget<Drawable> glideTarget;
+    private boolean isManualGeometry = false;
+
+    private int collapsedMargin = -1;
 
     public SongCover(Context context) {
         super(context);
@@ -50,71 +71,163 @@ public class SongCover extends MaterialCardView {
     }
 
     private void init(Context context, AttributeSet attrs) {
-        setCardElevation(0f);
-        setCardBackgroundColor(Color.TRANSPARENT);
-        setStrokeWidth(0);
+        setClipChildren(false);
+        setClipToPadding(false);
 
-        innerImageView = new AppCompatImageView(context) {
-            @Override
-            protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-                super.onSizeChanged(w, h, oldw, oldh);
-                if (previousDrawable != null) {
-                    previousDrawable.setBounds(0, 0, w, h);
-                }
-            }
+        collapsedMargin = XUtils.convertToPx(context, 8f);
 
-            @Override
-            protected void onDraw(Canvas canvas) {
-                if (transitionProgress < 1f && previousDrawable != null) {
-                    canvas.save();
-                    float previousAlphaProgress = Math.max(0f, 1f - (transitionProgress * 2f));
-                    float previousScale = 1f + (0.1f * transitionProgress);
-                    int prevAlpha = (int) (255 * previousAlphaProgress);
-                    canvas.scale(previousScale, previousScale, getWidth() / 2f, getHeight() / 2f);
-                    previousDrawable.setAlpha(prevAlpha);
-                    previousDrawable.draw(canvas);
-                    canvas.restore();
-
-                    canvas.save();
-                    float currentAlphaProgress = Math.max(0f, (transitionProgress - 0.5f) * 2f);
-                    float currentScale = 0.9f + (0.1f * transitionProgress);
-                    int currAlpha = (int) (255 * currentAlphaProgress);
-                    canvas.scale(currentScale, currentScale, getWidth() / 2f, getHeight() / 2f);
-                    if (getDrawable() != null) {
-                        getDrawable().mutate().setAlpha(currAlpha);
+        innerImageView =
+                new AppCompatImageView(context) {
+                    @Override
+                    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+                        super.onSizeChanged(w, h, oldw, oldh);
+                        if (previousDrawable != null) {
+                            previousDrawable.setBounds(0, 0, w, h);
+                        }
                     }
-                    super.onDraw(canvas);
-                    canvas.restore();
-                } else {
-                    if (getDrawable() != null) {
-                        getDrawable().mutate().setAlpha(255);
+
+                    @Override
+                    protected void onDraw(Canvas canvas) {
+                        if (transitionProgress < 1f && previousDrawable != null) {
+                            canvas.save();
+
+                            float previousAlpha = Math.max(0f, 1f - transitionProgress * 2f);
+                            float previousScale = 1f + 0.1f * transitionProgress;
+
+                            previousDrawable.setAlpha((int) (255 * previousAlpha));
+
+                            canvas.scale(
+                                    previousScale,
+                                    previousScale,
+                                    getWidth() / 2f,
+                                    getHeight() / 2f);
+
+                            previousDrawable.draw(canvas);
+                            canvas.restore();
+
+                            canvas.save();
+
+                            float currentAlpha = Math.max(0f, (transitionProgress - 0.5f) * 2f);
+                            float currentScale = 0.9f + 0.1f * transitionProgress;
+
+                            if (getDrawable() != null) {
+                                getDrawable().mutate().setAlpha((int) (255 * currentAlpha));
+                            }
+
+                            canvas.scale(
+                                    currentScale, currentScale, getWidth() / 2f, getHeight() / 2f);
+
+                            super.onDraw(canvas);
+                            canvas.restore();
+                        } else {
+                            if (getDrawable() != null) {
+                                getDrawable().mutate().setAlpha(255);
+                            }
+                            super.onDraw(canvas);
+                        }
                     }
-                    super.onDraw(canvas);
-                }
-            }
-        };
+                };
 
         innerImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        addView(innerImageView, params);
+
+        addView(
+                innerImageView,
+                new LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         if (attrs != null) {
-            int[] attrsArray = {android.R.attr.src};
-            TypedArray ta = context.obtainStyledAttributes(attrs, attrsArray);
-            Drawable srcDrawable = ta.getDrawable(0);
-            if (srcDrawable != null) {
-                innerImageView.setImageDrawable(srcDrawable);
+            TypedArray ta = context.obtainStyledAttributes(attrs, new int[] {android.R.attr.src});
+            Drawable src = ta.getDrawable(0);
+            if (src != null) {
+                innerImageView.setImageDrawable(src);
             }
             ta.recycle();
         }
 
         animator = ValueAnimator.ofFloat(0f, 1f);
         animator.setDuration(350);
-        animator.setInterpolator(new PathInterpolator(0.4f, 0.0f, 0.2f, 1f));
-        animator.addUpdateListener(animation -> {
-            transitionProgress = (float) animation.getAnimatedValue();
-            innerImageView.invalidate();
-        });
+        animator.setInterpolator(new PathInterpolator(0.4f, 0f, 0.2f, 1f));
+
+        animator.addUpdateListener(
+                animation -> {
+                    transitionProgress = (float) animation.getAnimatedValue();
+                    innerImageView.invalidate();
+                });
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        if (isManualGeometry && !currentChildBounds.isEmpty()) {
+            if (innerImageView != null) {
+                innerImageView.layout(
+                        currentChildBounds.left,
+                        currentChildBounds.top,
+                        currentChildBounds.right,
+                        currentChildBounds.bottom);
+            }
+        } else {
+            super.onLayout(changed, left, top, right, bottom);
+        }
+    }
+
+    public void captureCollapsedBounds() {
+        collapsedBounds.set(getLeft(), getTop(), getRight(), getBottom());
+
+        collapsedCenterX = collapsedBounds.centerX();
+        collapsedCenterY = collapsedBounds.centerY();
+        collapsedSize = Math.min(collapsedBounds.width(), collapsedBounds.height());
+
+        if (collapsedMargin == -1) {
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) getLayoutParams();
+            collapsedMargin = lp.leftMargin;
+        }
+    }
+
+    public void setCollapsedBounds(int left, int top, int right, int bottom) {
+        collapsedBounds.set(left, top, right, bottom);
+
+        collapsedCenterX = collapsedBounds.centerX();
+        collapsedCenterY = collapsedBounds.centerY();
+        collapsedSize = Math.min(collapsedBounds.width(), collapsedBounds.height());
+    }
+
+    public void setExpandedBounds(int left, int top, int right, int bottom) {
+        expandedBounds.set(left, top, right, bottom);
+
+        expandedCenterX = expandedBounds.centerX();
+        expandedCenterY = expandedBounds.centerY();
+        expandedSize = Math.min(expandedBounds.width(), expandedBounds.height());
+    }
+
+    public void setExpansionProgress(float progress) {
+        isManualGeometry = true;
+
+        int centerX = lerp(collapsedCenterX, expandedCenterX, progress);
+        int centerY = lerp(collapsedCenterY, expandedCenterY, progress);
+        int size = lerp(collapsedSize, expandedSize, progress);
+
+        int half = size / 2;
+        int left = centerX - half;
+        int top = centerY - half;
+
+        currentChildBounds.set(left, top, left + size, top + size);
+
+        if (innerImageView != null) {
+            innerImageView.layout(
+                    left - Math.round(collapsedMargin * progress),
+                    top - Math.round(collapsedMargin * progress),
+                    left + size,
+                    top + size);
+        }
+    }
+
+    public void releaseManualGeometry() {
+        isManualGeometry = false;
+        requestLayout();
+    }
+
+    private static int lerp(int start, int end, float progress) {
+        return Math.round(start + (end - start) * progress);
     }
 
     public void load(Uri uri) {
@@ -138,22 +251,25 @@ public class SongCover extends MaterialCardView {
             Glide.with(getContext()).clear(glideTarget);
         }
 
-        glideTarget = new CustomTarget<Drawable>() {
-            @Override
-            public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                setImage(resource);
-            }
+        glideTarget =
+                new CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(
+                            @NonNull Drawable resource,
+                            @Nullable Transition<? super Drawable> transition) {
+                        setImage(resource);
+                    }
 
-            @Override
-            public void onLoadCleared(@Nullable Drawable placeholder) {
-                if (placeholder != null) {
-                    setImageWithoutAnimation(placeholder);
-                }
-            }
-        };
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        if (placeholder != null) {
+                            setImageWithoutAnimation(placeholder);
+                        }
+                    }
+                };
 
         Glide.with(getContext())
-                .load(model == null? R.drawable.placeholder : model)
+                .load(model == null ? R.drawable.placeholder : model)
                 .error(R.drawable.placeholder)
                 .override(Target.SIZE_ORIGINAL)
                 .centerCrop()
@@ -162,13 +278,17 @@ public class SongCover extends MaterialCardView {
 
     public void setImage(Drawable drawable) {
         Drawable current = innerImageView.getDrawable();
+
         if (current != null && drawable != null && current != drawable) {
             if (current.getConstantState() != null) {
                 previousDrawable = current.getConstantState().newDrawable().mutate();
-                previousDrawable.setBounds(0, 0, innerImageView.getWidth(), innerImageView.getHeight());
+
+                previousDrawable.setBounds(
+                        0, 0, innerImageView.getWidth(), innerImageView.getHeight());
             } else {
                 previousDrawable = current;
             }
+
             transitionProgress = 0f;
             animator.cancel();
             animator.start();
@@ -176,15 +296,12 @@ public class SongCover extends MaterialCardView {
             transitionProgress = 1f;
             previousDrawable = null;
         }
+
         innerImageView.setImageDrawable(drawable);
     }
 
     public void setImage(Bitmap bitmap) {
-        if (bitmap != null) {
-            setImage(new BitmapDrawable(getResources(), bitmap));
-        } else {
-            setImage((Drawable) null);
-        }
+        setImage(bitmap == null ? null : new BitmapDrawable(getResources(), bitmap));
     }
 
     public void setImageWithoutAnimation(Drawable drawable) {
@@ -195,15 +312,19 @@ public class SongCover extends MaterialCardView {
     }
 
     public void setImageWithoutAnimation(Bitmap bitmap) {
-        if (bitmap != null) {
-            setImageWithoutAnimation(new BitmapDrawable(getResources(), bitmap));
-        } else {
-            setImageWithoutAnimation((Drawable) null);
-        }
+        setImageWithoutAnimation(
+                bitmap == null ? null : new BitmapDrawable(getResources(), bitmap));
     }
 
-    public void setCornerRadius(float radius) {
-        setRadius(radius);
+    public void setRadius(float radius) {
+        innerImageView.setOutlineProvider(
+                new ViewOutlineProvider() {
+                    @Override
+                    public void getOutline(View view, Outline outline) {
+                        outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radius);
+                    }
+                });
+        innerImageView.setClipToOutline(radius > 0);
     }
 
     public void setScaleType(ImageView.ScaleType scaleType) {

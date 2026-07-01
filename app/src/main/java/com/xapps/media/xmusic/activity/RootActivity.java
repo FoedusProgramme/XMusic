@@ -1,9 +1,13 @@
 package com.xapps.media.xmusic.activity;
 
+import android.content.res.Configuration;
 import android.os.*;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.media3.session.MediaController;
 import androidx.media3.session.SessionToken;
+
 import com.xapps.media.xmusic.activity.manager.LogicManager;
 import com.xapps.media.xmusic.activity.manager.UIManager;
 import com.xapps.media.xmusic.callback.ActivityCallback;
@@ -11,6 +15,7 @@ import com.xapps.media.xmusic.callback.CallbackInterface;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
 import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
+
 import java.util.ArrayList;
 
 public class RootActivity extends BaseActivity implements ActivityCallback {
@@ -18,7 +23,7 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
     private UIManager uiManager;
     private LogicManager logicManager;
     private MediaController mediaController;
-        
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,27 +31,28 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
         setContentView(binding.getRoot());
         init();
     }
-    
-    @Override 
+
+    @Override
     public void onStart() {
         super.onStart();
         CallbackInterface.setActivityCallback(this);
-        logicManager.initController(this, controller -> {
-                mediaController = controller;
-                //progressDrawable.setAnimate(controller.isPlaying());
-                //setupControllerListener();
-            },
-            e -> showInfoDialog("Error", 0, e.toString(), "OK", binding.Coordinator),
-            this::restoreStateIfPossible
-        );
+        logicManager.initController(
+                this,
+                controller -> {
+                    mediaController = controller;
+                    // progressDrawable.setAnimate(controller.isPlaying());
+                    // setupControllerListener();
+                },
+                e -> showInfoDialog("Error", 0, e.toString(), "OK", binding.Coordinator),
+                this::restoreStateIfPossible);
     }
-    
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         CallbackInterface.clearActivityCallback(this);
         mediaController.release();
-		mediaController = null;
+        mediaController = null;
     }
 
     private void init() {
@@ -64,7 +70,7 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
         logicManager.playSong(position);
         uiManager.hideComponents(false, uiManager.bnvHidden, uiManager.tabsHidden);
     }
-    
+
     @Override
     public void onPlaybackStateChanged(boolean isPlaying) {
         logicManager.updateVumeters(isPlaying);
@@ -78,24 +84,22 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
         if (CallbackInterface.service() != null) CallbackInterface.service().updateSongs();
     }
 
-    public void restoreStateIfPossible() {
-        
-    }
+    public void restoreStateIfPossible() {}
 
-    public void loadSettings() {
-        
-    }
-    
+    public void loadSettings() {}
+
     @Override
     public void onColorsChanged() {
         runOnUiThread(() -> uiManager.updateColors());
     }
 
-    @Override 
-    public void onSongChanged() {
-        runOnUiThread(() -> {
-            uiManager.updateContent(false);
-        });
+    @Override
+    public void onSongChanged(int position) {
+        runOnUiThread(
+                () -> {
+                    uiManager.updateContent(position, false);
+                });
+                if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateActiveItem(position);
     }
 
     @Override

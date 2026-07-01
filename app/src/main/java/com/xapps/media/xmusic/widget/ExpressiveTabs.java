@@ -28,9 +28,9 @@ import java.util.List;
 
 public class ExpressiveTabs extends HorizontalScrollView {
 
-    public static final int ACTIVE_BG_COLOR = MaterialColorUtils.colorPrimary;
-    public static final int INACTIVE_BG_COLOR = MaterialColorUtils.colorSurfaceContainer;
-    public static final int ACTIVE_TEXT_COLOR = MaterialColorUtils.colorOnPrimary;
+    public static final int ACTIVE_BG_COLOR = MaterialColorUtils.colorPrimaryContainer;
+    public static final int INACTIVE_BG_COLOR = Color.TRANSPARENT;
+    public static final int ACTIVE_TEXT_COLOR = MaterialColorUtils.colorOnPrimaryContainer;
     public static final int INACTIVE_TEXT_COLOR = MaterialColorUtils.colorOutline;
 
     public interface OnTabSelectedListener {
@@ -151,7 +151,7 @@ public class ExpressiveTabs extends HorizontalScrollView {
                     @Override
                     public void setValue(ExpressiveTab tab, float value) {
                         tab.currentGrad = value;
-                        tab.setFontVariationSettings("'ROND' 100, 'wght' " + value);
+                        tab.setFontVariationSettings("'wght' " + value);
                     }
                 };
 
@@ -169,17 +169,17 @@ public class ExpressiveTabs extends HorizontalScrollView {
                 setTypeface(typeface);
             }
             
-            setFontVariationSettings("'ROND' 100, 'wght' 400");
+            setFontVariationSettings("'wght' 500");
 
             GradientDrawable drawable = new GradientDrawable();
             drawable.setShape(GradientDrawable.RECTANGLE);
             drawable.setColor(currentBgColor);
-            drawable.setCornerRadius(1000f);
+            drawable.setCornerRadius(32f);
             setBackground(drawable);
             
             setPadding(sideMargin, verticalMargin, sideMargin, verticalMargin);
             setTextColor(currentTextColor);
-            setTextSize(22f);
+            setTextSize(16f);
             setGravity(Gravity.CENTER);
             setClickable(true);
             setFocusable(true);
