@@ -42,7 +42,7 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
                 this,
                 controller -> {
                     mediaController = controller;
-                    // progressDrawable.setAnimate(controller.isPlaying());
+                    binding.collapsedPlayer.songSeekbar.setAnimate(controller.isPlaying());
                     // setupControllerListener();
                 },
                 e -> showInfoDialog("Error", 0, e.toString(), "OK", binding.Coordinator),
