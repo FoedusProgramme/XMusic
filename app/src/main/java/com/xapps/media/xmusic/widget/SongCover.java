@@ -209,16 +209,25 @@ public class SongCover extends FrameLayout {
         int half = size / 2;
         int left = centerX - half;
         int top = centerY - half;
+        
+        int marginOffset = Math.round(collapsedMargin * progress);
 
-        currentChildBounds.set(left, top, left + size, top + size);
+		currentChildBounds.set(
+        	left - marginOffset,
+       	 top - marginOffset,
+      	  left + size,
+      	  top + size
+        );
 
-        if (innerImageView != null) {
-            innerImageView.layout(
-                    left - Math.round(collapsedMargin * progress),
-                    top - Math.round(collapsedMargin * progress),
-                    left + size,
-                    top + size);
-        }
+		if (innerImageView != null) {
+   		 innerImageView.layout(
+          	  currentChildBounds.left,
+        	    currentChildBounds.top,
+         	   currentChildBounds.right,
+         	   currentChildBounds.bottom
+            );
+            
+		}
     }
 
     public void releaseManualGeometry() {

@@ -1107,12 +1107,12 @@ public void floatBnv(boolean show) {
             binding.xlyricsView.setLyricColor(ios, io);
 			binding.placeholderLyricsText.setTextColor(ios);
 			
-			
+			/*
             
             binding.nextButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
             binding.favoriteButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
             binding.saveButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
-            binding.previousButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
+            binding.previousButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);*/
             
             nextBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
             favBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));

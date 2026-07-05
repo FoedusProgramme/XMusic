@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.media3.session.MediaController;
 import androidx.media3.session.SessionToken;
 
+import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.manager.LogicManager;
 import com.xapps.media.xmusic.activity.manager.UIManager;
 import com.xapps.media.xmusic.callback.ActivityCallback;
@@ -16,6 +17,7 @@ import com.xapps.media.xmusic.databinding.ActivityRootBinding;
 import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 
+import java.lang.Override;
 import java.util.ArrayList;
 
 public class RootActivity extends BaseActivity implements ActivityCallback {
@@ -46,6 +48,18 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
                 e -> showInfoDialog("Error", 0, e.toString(), "OK", binding.Coordinator),
                 this::restoreStateIfPossible);
     }
+    
+    @Override
+    public void onResume() {
+        super.onResume();
+        uiManager.updateContent(-1, true);
+    }
+    
+    @Override
+	public void onConfigurationChanged(@NonNull Configuration newConfig) {
+   	 super.onConfigurationChanged(newConfig);
+        uiManager.restoreCoverExpansion();
+	}
 
     @Override
     public void onDestroy() {
@@ -74,6 +88,8 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
     @Override
     public void onPlaybackStateChanged(boolean isPlaying) {
         logicManager.updateVumeters(isPlaying);
+        binding.expandedPlayer.songSeekbar.setAnimate(isPlaying);
+        binding.collapsedPlayer.action.setIconResource(isPlaying? R.drawable.ic_pause : R.drawable.ic_play);
     }
 
     public MediaController getController() {

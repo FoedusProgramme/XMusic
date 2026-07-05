@@ -34,7 +34,7 @@ public class TestFragment extends BaseFragment {
             return Unit.INSTANCE;
         });
         binding.test.setupPredictiveBack(activity);
-        binding.test.addSliderCallback(new ExpressiveSliderLayout.SliderCallback() {
+        /*binding.test.addSliderCallback(new ExpressiveSliderLayout.SliderCallback() {
             @Override
             public void onStateChanged(int state) {
                 binding.test.getPredictiveBackCallback().setEnabled(state == ExpressiveSliderLayout.STATE_EXPANDED);
@@ -44,7 +44,7 @@ public class TestFragment extends BaseFragment {
             public void onSlide(float offset) {
                 binding.miniPlayerBottomSheet.setProgress(Math.max(0f, Math.min(1f, offset)));
             }
-        });
+        });*/
         binding.test.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
     }
 }

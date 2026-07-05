@@ -70,6 +70,10 @@ public class XSeekbar extends AppCompatSeekBar {
         setProgressTintList(ColorStateList.valueOf(color));
         setProgressBackgroundTintList(ColorStateList.valueOf(backgroundColor));
     }
+    
+    public void setAnimate(boolean b) {
+        if (expressiveTrack != null) expressiveTrack.setAnimate(b);
+    }
 
     public void setStyle(int style) {
         if (materialThumb == null) {

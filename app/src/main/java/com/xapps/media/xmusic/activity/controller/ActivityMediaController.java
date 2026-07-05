@@ -72,8 +72,8 @@ public class ActivityMediaController {
                     
                     //activity.updateAdapters(position, controller.isPlaying());
                     //activity.progressDrawable.setAnimate(true);
-                    //if (!binding.toggleView.isAnimating() && controller.isPlaying()) binding.toggleView.startAnimation();
-                    //if (binding.toggleView.isAnimating() && !(controller.getPlaybackState() == Player.STATE_READY || controller.getPlaybackState() == Player.STATE_BUFFERING)) binding.toggleView.stopAnimation();
+                    if (!binding.expandedPlayer.toggleView.isAnimating() && controller.isPlaying()) binding.expandedPlayer.toggleView.startAnimation();
+                    if (binding.expandedPlayer.toggleView.isAnimating() && !(controller.getPlaybackState() == Player.STATE_READY || controller.getPlaybackState() == Player.STATE_BUFFERING)) binding.expandedPlayer.toggleView.stopAnimation();
                     //PlayerService.currentPosition = position;
                     //activity.seekbarFree = false;
                     /*binding.currentDurationText.setText(XUtils.millisecondsToDuration(0));
@@ -118,11 +118,11 @@ public class ActivityMediaController {
             public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
                 if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST || reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM) {
                     if (playWhenReady) {
-                        //activity.getBinding().toggleView.startAnimation();
-                        //activity.progressDrawable.setAnimate(true);
+                        activity.getBinding().expandedPlayer.toggleView.startAnimation();
+                        activity.getBinding().expandedPlayer.songSeekbar.setAnimate(true);
                     } else {
-                        //activity.getBinding().toggleView.stopAnimation();
-                        //activity.progressDrawable.setAnimate(false);
+                        activity.getBinding().expandedPlayer.toggleView.stopAnimation();
+                        activity.getBinding().expandedPlayer.songSeekbar.setAnimate(false);
                     }
                 }
             }
@@ -130,8 +130,8 @@ public class ActivityMediaController {
 			@Override
             public void onPlaybackStateChanged(int playbackState) {
                 if (playbackState == Player.STATE_ENDED) {
-					//activity.getBinding().toggleView.stopAnimation();
-					//activity.progressDrawable.setAnimate(false);
+					activity.getBinding().expandedPlayer.toggleView.stopAnimation();
+					activity.getBinding().expandedPlayer.songSeekbar.setAnimate(false);
                 } else if (playbackState == Player.STATE_IDLE) {
                     CallbackInterface.mlFrag().updateActiveItem(-1);
                 }

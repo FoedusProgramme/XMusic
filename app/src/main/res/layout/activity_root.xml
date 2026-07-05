@@ -90,6 +90,7 @@
         android:elevation="0dp"
         app:menu="@menu/bnv_menu"
         app:labelVisibilityMode="selected"
+        app:paddingBottomSystemWindowInsets="false"
         app:itemTextAppearanceActive="@style/BoldStyleBNV" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

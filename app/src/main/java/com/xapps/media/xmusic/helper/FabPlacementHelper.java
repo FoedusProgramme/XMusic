@@ -49,7 +49,7 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
 
     @Override
     public void onCreate(@NonNull LifecycleOwner owner) {
-        sheetCallback = new ExpressiveSliderLayout.SliderCallback() {
+        /*sheetCallback = new ExpressiveSliderLayout.SliderCallback() {
             @Override
             public void onStateChanged(int newState) {
                 if (newState == ExpressiveSliderLayout.STATE_COLLAPSED || newState == ExpressiveSliderLayout.STATE_HIDDEN) {
@@ -75,7 +75,7 @@ public class FabPlacementHelper implements DefaultLifecycleObserver {
                     }
                 }
             }
-        };
+        };*/
 
         if (recyclerView != null) {
             scrollListener = new RecyclerView.OnScrollListener() {

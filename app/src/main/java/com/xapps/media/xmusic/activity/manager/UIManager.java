@@ -21,7 +21,7 @@ import android.view.animation.PathInterpolator;
 import android.widget.SeekBar;
 
 import androidx.core.graphics.ColorUtils;
-import androidx.core.view.ViewKt;
+import androidx.core.view.*;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.transition.TransitionManager;
@@ -117,35 +117,50 @@ public class UIManager {
 
     private void setupDimensions() {
         int sideMargins = XUtils.convertToPx(activity, 8f);
-        
-        ViewKt.doOnLayout(binding.collapsedPlayer.musicProgress, v -> {
-            peekHeight = XUtils.convertToPx(activity, 64f) + binding.collapsedPlayer.musicProgress.getHeight();
-        	binding.miniPlayer.setPeekHeight(peekHeight);
-            
-            return Unit.INSTANCE;
-        });
+
+        ViewKt.doOnLayout(
+                binding.collapsedPlayer.musicProgress,
+                v -> {
+                    peekHeight =
+                            XUtils.convertToPx(activity, 64f)
+                                    + binding.collapsedPlayer.musicProgress.getHeight();
+                    binding.miniPlayer.setPeekHeight(peekHeight);
+
+                    return Unit.INSTANCE;
+                });
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNavigation, null);
 
         ViewKt.doOnLayout(
                 binding.bottomNavigation,
                 v -> {
                     int bottomMargin =
                             XUtils.convertToPx(activity, 16f)
-                                    + binding.bottomNavigation.getHeight()
-                                    - XUtils.getNavigationBarHeight(activity);
+                                    + binding.bottomNavigation.getHeight();
                     binding.miniPlayer.setFloatingMargins(sideMargins, bottomMargin);
 
                     playerNeededMargin =
                             binding.miniPlayer.getPeekHeight()
                                     + XUtils.convertToPx(activity, 24f)
-                                    + binding.bottomNavigation.getHeight();
+                                    + binding.bottomNavigation.getHeight()
+                                    + XUtils.getNavigationBarHeight(activity);
                     playerDockedNeededMargin =
                             binding.miniPlayer.getPeekHeight()
                                     + XUtils.convertToPx(activity, 40f)
                                     + XUtils.getNavigationBarHeight(activity);
                     bnvNeededMargin =
-                            binding.bottomNavigation.getHeight() + XUtils.convertToPx(activity, 8f);
+                            binding.bottomNavigation.getHeight()
+                                    + XUtils.getNavigationBarHeight(activity)
+                                    + XUtils.convertToPx(activity, 8f);
 
                     bnvHeight = binding.bottomNavigation.getHeight();
+
+                    binding.bottomNavigation.setPadding(
+                            binding.bottomNavigation.getPaddingLeft(),
+                            binding.bottomNavigation.getPaddingTop(),
+                            binding.bottomNavigation.getPaddingTop(),
+                            binding.bottomNavigation.getPaddingBottom()
+                                    + XUtils.getNavigationBarHeight(activity));
 
                     ViewKt.doOnLayout(
                             binding.tabLayout,
@@ -199,26 +214,6 @@ public class UIManager {
 
         binding.containerRoot.setClipChildren(false);
         binding.collapsedPlayer.motionRoot.setClipChildren(false);
-                
-                
-                /*binding.miniPlayer.addOnLayoutChangeListener(
-        (v, left, top, right, bottom,
-         oldLeft, oldTop, oldRight, oldBottom) -> {
-
-            int width = right - left;
-            int height = bottom - top;
-
-            int oldWidth = oldRight - oldLeft;
-            int oldHeight = oldBottom - oldTop;
-
-            if (width != oldWidth || height != oldHeight) {
-                ViewKt.doOnLayout(binding.expandedPlayer.expandedPlayerLayout, v2 -> {
-                    updateGeometry();
-                    
-                    return Unit.INSTANCE;
-                });
-            }
-        });*/
     }
 
     // [ -------------- Layout State management methods ----------
@@ -443,7 +438,7 @@ public class UIManager {
 
         @Override
         public int getItemCount() {
-            return 2;
+            return 1;
         }
     }
 
@@ -505,7 +500,7 @@ public class UIManager {
         Drawable prevBg = binding.expandedPlayer.previousButton.getBackground();
 
         GradientDrawable d3 =
-                (GradientDrawable) binding.expandedPlayer.songInfoLayout.getBackground();
+                (GradientDrawable) binding.expandedPlayer.songInfoText.getBackground();
 
         XSeekbar seekbar = binding.expandedPlayer.songSeekbar;
 
@@ -540,12 +535,10 @@ public class UIManager {
                     binding.expandedPlayer.xlyricsView.setLyricColor(ios, io);
                     binding.expandedPlayer.placeholderLyricsText.setTextColor(ios);
 
-                    binding.expandedPlayer.nextButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
-                    binding.expandedPlayer.favoriteButton.setColorFilter(
-                            it, PorterDuff.Mode.SRC_IN);
-                    binding.expandedPlayer.saveButton.setColorFilter(it, PorterDuff.Mode.SRC_IN);
-                    binding.expandedPlayer.previousButton.setColorFilter(
-                            it, PorterDuff.Mode.SRC_IN);
+                    binding.expandedPlayer.nextButton.setIconColorFilter(it);
+                    binding.expandedPlayer.favoriteButton.setIconColorFilter(it);
+                    binding.expandedPlayer.saveButton.setIconColorFilter(it);
+                    binding.expandedPlayer.previousButton.setIconColorFilter(it);
 
                     nextBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
                     favBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
@@ -572,8 +565,8 @@ public class UIManager {
 
                     binding.collapsedPlayer.title.setTextColor(ios);
                     binding.collapsedPlayer.subtitle.setTextColor(io);
-                    
-					binding.expandedPlayer.currentDurationText.setTextColor(iosc);
+
+                    binding.expandedPlayer.currentDurationText.setTextColor(iosc);
                     binding.expandedPlayer.totalDurationText.setTextColor(iosc);
                     binding.expandedPlayer.songInfoText.setTextColor(iosc);
                 });
@@ -609,9 +602,15 @@ public class UIManager {
             if (activity.getController() == null) return;
             else position = activity.getController().getCurrentMediaItemIndex();
         }
-        
+
         if (position >= 0 && RuntimeData.songs.size() > 0 && position < RuntimeData.songs.size())
             syncPlayerUI(position, isResuming);
+
+        if (isResuming && CallbackInterface.service() != null) {
+            if (CallbackInterface.service().isPlaying())
+                binding.expandedPlayer.toggleView.forcePlayState();
+            else binding.expandedPlayer.toggleView.forcePauseState();
+        }
     }
 
     public void syncPlayerUI(int position, boolean isResuming) {
@@ -621,6 +620,7 @@ public class UIManager {
         binding.collapsedPlayer.subtitle.setText(RuntimeData.songs.get(position).artist);
 
         if (!isResuming) {
+
             binding.expandedPlayer
                     .artistBigTitle
                     .animate()
@@ -650,12 +650,14 @@ public class UIManager {
                     .setDuration(100)
                     .start();
 
+            if (!isResuming)
+                binding.expandedPlayer.songInfoText.animate().alpha(0f).setDuration(100).start();
+
             handler = new Handler(Looper.getMainLooper());
 
             handler.postDelayed(
                     () -> {
-                        updateTexts(position, isResuming);
-                        updateSongInfoLayout(position);
+                        updateSongInfoLayout(position, true);
 
                         binding.expandedPlayer.totalDurationText.setTranslationX(20f);
                         binding.expandedPlayer.currentDurationText.setTranslationX(20f);
@@ -664,42 +666,9 @@ public class UIManager {
                     },
                     110);
 
-            handler.postDelayed(
-                    () -> {
-                        binding.expandedPlayer
-                                .artistBigTitle
-                                .animate()
-                                .alpha(1f)
-                                .translationX(0f)
-                                .setDuration(120)
-                                .start();
-                        binding.expandedPlayer
-                                .songBigTitle
-                                .animate()
-                                .alpha(1f)
-                                .translationX(0f)
-                                .setDuration(120)
-                                .start();
-                        binding.expandedPlayer
-                                .currentDurationText
-                                .animate()
-                                .alpha(1f)
-                                .translationX(0f)
-                                .setDuration(120)
-                                .start();
-                        binding.expandedPlayer
-                                .totalDurationText
-                                .animate()
-                                .alpha(1f)
-                                .translationX(0f)
-                                .setDuration(120)
-                                .start();
-                    },
-                    120);
-
         } else {
             updateTexts(position, false);
-            updateSongInfoLayout(position);
+            updateSongInfoLayout(position, !isResuming);
         }
     }
 
@@ -740,7 +709,7 @@ public class UIManager {
         }
     }
 
-    private void updateSongInfoLayout(int pos) {
+    private void updateSongInfoLayout(int pos, boolean animate) {
         if (RuntimeData.songs.isEmpty()) return;
 
         int index = -1;
@@ -752,6 +721,8 @@ public class UIManager {
             } else {
                 return;
             }
+        } else {
+            index = pos;
         }
 
         final String path;
@@ -759,12 +730,11 @@ public class UIManager {
         try {
             path = RuntimeData.songs.get(index).path;
         } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
             return;
         }
 
         final long requestId = ++metadataRequestId;
-
-        binding.expandedPlayer.songInfoText.animate().alpha(0f).setDuration(100).start();
 
         metadataExecutor.execute(
                 () -> {
@@ -795,7 +765,8 @@ public class UIManager {
                             sampleRate = hz >= 1000 ? (hz / 1000f) + " kHz" : hz + " Hz";
                         }
 
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
 
                     final String finalMime = mime;
@@ -818,13 +789,44 @@ public class UIManager {
                                                 : finalMime + " • " + finalSampleRate;
 
                                 binding.expandedPlayer.songInfoText.setText(text);
-                                binding.expandedPlayer.songInfoText.setAlpha(0f);
+                                updateTexts(pos, !animate);
+                                binding.miniPlayer.forceRequestLayout();
+
                                 binding.expandedPlayer
-                                        .songInfoText
+                                        .artistBigTitle
                                         .animate()
                                         .alpha(1f)
+                                        .translationX(0f)
                                         .setDuration(120)
                                         .start();
+                                binding.expandedPlayer
+                                        .songBigTitle
+                                        .animate()
+                                        .alpha(1f)
+                                        .translationX(0f)
+                                        .setDuration(120)
+                                        .start();
+                                binding.expandedPlayer
+                                        .currentDurationText
+                                        .animate()
+                                        .alpha(1f)
+                                        .translationX(0f)
+                                        .setDuration(120)
+                                        .start();
+                                binding.expandedPlayer
+                                        .totalDurationText
+                                        .animate()
+                                        .alpha(1f)
+                                        .translationX(0f)
+                                        .setDuration(120)
+                                        .start();
+                                if (animate)
+                                    binding.expandedPlayer
+                                            .songInfoText
+                                            .animate()
+                                            .alpha(1f)
+                                            .setDuration(120)
+                                            .start();
                             });
                 });
     }
@@ -834,7 +836,6 @@ public class UIManager {
         if (activity.isDestroyed() || activity.isFinishing()) return;
 
         Uri cover = RuntimeData.songs.get(index).getArtworkUri();
-        // binding.expandedPlayer.coversPager.load(cover);
         binding.collapsedPlayer.cover.load(cover);
     }
 
@@ -843,8 +844,13 @@ public class UIManager {
         binding.collapsedPlayer.subtitle.setAlpha(Math.max(0f, 1f - progress * 5));
         binding.collapsedPlayer.action.setAlpha(Math.max(0f, 1f - progress * 5));
         binding.collapsedPlayer.musicProgress.setAlpha(Math.max(0f, 1f - progress * 20));
-
-       /* binding.collapsedPlayer.cover.setTranslationY(
-                XUtils.getStatusBarHeight(activity) * progress);*/
+    }
+    
+    public void restoreCoverExpansion() {
+        ViewKt.doOnLayout(binding.collapsedPlayer.cover, v -> {
+            binding.collapsedPlayer.cover.setExpansionProgress(binding.miniPlayer.getSlideOffset());
+            
+            return Unit.INSTANCE;
+        });
     }
 }

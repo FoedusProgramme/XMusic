@@ -24,7 +24,7 @@ public class BottomSheetBehaviorManager {
 	}
 
     public void setupCallbacks() {
-		binding.expressiveBottomSheet.addSliderCallback(new ExpressiveSliderLayout.SliderCallback() {
+		/*binding.expressiveBottomSheet.addSliderCallback(new ExpressiveSliderLayout.SliderCallback() {
 			@Override
 			public void onStateChanged(int newState) {
                 if (binding.lyricsContainer.getVisibility() != View.GONE) return;
@@ -112,7 +112,7 @@ public class BottomSheetBehaviorManager {
                     });
                 }
 			}
-		});
+		});*/
         
         activity.innerBottomSheetBehavior = BottomSheetBehavior.from(binding.extendableLayout);
         activity.innerBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);

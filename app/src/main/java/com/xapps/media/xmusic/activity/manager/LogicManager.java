@@ -11,6 +11,7 @@ import androidx.media3.common.Player;
 import androidx.media3.session.MediaController;
 import androidx.media3.session.SessionToken;
 
+import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.activity.controller.ActivityMediaController;
 import com.xapps.media.xmusic.callback.CallbackInterface;
@@ -100,6 +101,44 @@ public class LogicManager {
         // ----- THIS PREVENTS SEEKBAR FROM STEALING FOCUS IN PLAYER SHEET
         
         binding.expandedPlayer.songSeekbar.setOnClickListener(v -> {});
+        
+        binding.expandedPlayer.previousButton.setOnHoldListener(R.drawable.ic_rewind_10, () -> {
+            mediaController.seekTo(mediaController.getCurrentPosition() - 10000);
+        });
+        
+        binding.expandedPlayer.nextButton.setOnHoldListener(R.drawable.ic_fast_forward_10, () -> {
+            mediaController.seekTo(mediaController.getCurrentPosition() + 10000);
+        });
+        
+        binding.expandedPlayer.previousButton.setOnClickListener(v -> {
+            mediaController.seekToPrevious();
+        });
+        
+        binding.expandedPlayer.nextButton.setOnClickListener(v -> {
+            mediaController.seekToNext();
+        });
+        
+        binding.expandedPlayer.toggleView.setExtraOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View _view) {
+				if (!binding.expandedPlayer.toggleView.isAnimating()) {
+                    mediaController.pause();
+                    binding.expandedPlayer.songSeekbar.setAnimate(false);
+				} else {
+                    mediaController.play();
+                    binding.expandedPlayer.songSeekbar.setAnimate(true);
+				}
+			}
+		});
+        
+        binding.collapsedPlayer.action.setOnClickListener(v -> {
+            if (mediaController.isPlaying()) {
+                mediaController.pause();
+            } else {
+                mediaController.play();
+            }
+            binding.collapsedPlayer.action.setIconResource(mediaController.isPlaying()? R.drawable.ic_pause : R.drawable.ic_play);
+        });
     }
 
     private void setupCallbacks() {
@@ -118,6 +157,12 @@ public class LogicManager {
                             mediaController.stop();
                             // mediaController.clearMediaItems();
                         }
+                    }
+                    
+                    @Override
+                    public void onSwipe(boolean toRight) {
+                        if (!toRight) mediaController.seekToNext();
+                        else mediaController.seekToPrevious();
                     }
 
                     @Override
@@ -200,8 +245,6 @@ public class LogicManager {
 
     private void updateImageSize(float offset) {
         float clampedOffset = Math.max(0f, offset);
-        // binding.collapsedPlayer.motionRoot.setAlpha(Math.max(0f, 1f - clampedOffset));
-        // binding.collapsedPlayer.motionRoot.setProgress(clampedOffset);
     }
 
     public void handleProgress(long progress) {

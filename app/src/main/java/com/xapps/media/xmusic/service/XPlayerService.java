@@ -147,8 +147,8 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
 
                                 @Override
                                 public void onIsPlayingChanged(boolean playing) {
-                                    isPlaying = playing;
                                     currentPosition = player.getCurrentMediaItemIndex();
+                                    isPlaying = playing;
                                     ActivityCallback activityCallback =
                                             CallbackInterface.activity();
                                     if (activityCallback != null)

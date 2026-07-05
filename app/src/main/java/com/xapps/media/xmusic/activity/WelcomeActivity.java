@@ -132,7 +132,7 @@ public class WelcomeActivity extends AppCompatActivity {
                             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                                 DataManager.setDataInitialized();
                                 Intent i = new Intent();
-                                i.setClass(WelcomeActivity.this, MainActivity.class);
+                                i.setClass(WelcomeActivity.this, RootActivity.class);
                                 startActivity(i);
                                 finish();
                             }, 1000);
