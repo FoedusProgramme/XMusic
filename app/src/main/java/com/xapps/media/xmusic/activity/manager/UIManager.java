@@ -550,7 +550,7 @@ public class UIManager {
                     binding.miniPlayer.setSheetBackgroundColor(playerSurface);
                     binding.expandedPlayer.lyricsContainer.setBackgroundColor(playerSurface);
 
-                    d3.setColor(isc);
+                    binding.expandedPlayer.songInfoLayout.setColor(isc);
 
                     binding.collapsedPlayer.musicProgress.setIndicatorColor(ip);
                     seekbar.setColor(ip);
@@ -774,60 +774,76 @@ public class UIManager {
                     final String finalSampleRate = sampleRate;
 
                     binding.expandedPlayer.songInfoText.post(
-                            () -> {
-                                if (requestId != metadataRequestId) {
-                                    return;
-                                }
+        () -> {
+            if (requestId != metadataRequestId) {
+                return;
+            }
 
-                                String text =
-                                        finalKbps > 0
-                                                ? finalMime
-                                                        + " • "
-                                                        + finalKbps
-                                                        + " kbps • "
-                                                        + finalSampleRate
-                                                : finalMime + " • " + finalSampleRate;
+            String text =
+                    finalKbps > 0
+                            ? finalMime
+                                    + " • "
+                                    + finalKbps
+                                    + " kbps • "
+                                    + finalSampleRate
+                            : finalMime + " • " + finalSampleRate;
 
-                                binding.expandedPlayer.songInfoText.setText(text);
-                                updateTexts(pos, !animate);
-                                binding.miniPlayer.forceRequestLayout();
+            binding.expandedPlayer.songInfoText.setText(text);
+            
+            float effectiveWidth = Math.min(
+        binding.expandedPlayer.songInfoText.getPaint()
+                .measureText(binding.expandedPlayer.songInfoText.getText().toString())
+                + binding.expandedPlayer.songInfoText.getPaddingLeft()
+                + binding.expandedPlayer.songInfoText.getPaddingRight(),
+        binding.expandedPlayer.songInfoText.getWidth()
+);
 
-                                binding.expandedPlayer
-                                        .artistBigTitle
-                                        .animate()
-                                        .alpha(1f)
-                                        .translationX(0f)
-                                        .setDuration(120)
-                                        .start();
-                                binding.expandedPlayer
-                                        .songBigTitle
-                                        .animate()
-                                        .alpha(1f)
-                                        .translationX(0f)
-                                        .setDuration(120)
-                                        .start();
-                                binding.expandedPlayer
-                                        .currentDurationText
-                                        .animate()
-                                        .alpha(1f)
-                                        .translationX(0f)
-                                        .setDuration(120)
-                                        .start();
-                                binding.expandedPlayer
-                                        .totalDurationText
-                                        .animate()
-                                        .alpha(1f)
-                                        .translationX(0f)
-                                        .setDuration(120)
-                                        .start();
-                                if (animate)
-                                    binding.expandedPlayer
-                                            .songInfoText
-                                            .animate()
-                                            .alpha(1f)
-                                            .setDuration(120)
-                                            .start();
-                            });
+binding.expandedPlayer.songInfoLayout.update(effectiveWidth);
+            
+            
+            updateTexts(pos, !animate);
+
+            binding.expandedPlayer.songInfoText.post(() -> {
+                //binding.miniPlayer.forceRequestLayout();
+            });
+
+            binding.expandedPlayer
+                    .artistBigTitle
+                    .animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(120)
+                    .start();
+            binding.expandedPlayer
+                    .songBigTitle
+                    .animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(120)
+                    .start();
+            binding.expandedPlayer
+                    .currentDurationText
+                    .animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(120)
+                    .start();
+            binding.expandedPlayer
+                    .totalDurationText
+                    .animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(120)
+                    .start();
+            if (animate)
+                binding.expandedPlayer
+                        .songInfoText
+                        .animate()
+                        .alpha(1f)
+                        .setDuration(120)
+                        .start();
+        });
+
                 });
     }
 

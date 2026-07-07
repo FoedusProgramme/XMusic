@@ -88,8 +88,6 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
     private boolean isDraggable = true;
     private boolean isValidBack = false;
-    private boolean isInitialized = false;
-    private boolean forceRequestLayout = false;
 
     private final OnBackPressedCallback backCallback =
             new OnBackPressedCallback(false) {
@@ -313,7 +311,9 @@ public class ExpressiveSliderLayout extends FrameLayout {
         return this.currentState;
     }
 
-    private void settleWithSpring(int targetTop, int targetState, float initialVelocity) {
+    private void settleWithSpring(int targetTop, int state, float initialVelocity) {
+        this.targetState = state;
+
         if (settleSpringAnim != null && settleSpringAnim.isRunning()) {
             settleSpringAnim.cancel();
         }
@@ -350,7 +350,10 @@ public class ExpressiveSliderLayout extends FrameLayout {
         settleSpringAnim.addEndListener(
                 (animation, canceled, value, velocity) -> {
                     if (!canceled) {
-                        dispatchState(targetState);
+                        dispatchState(this.targetState);
+                        if (this.targetState == STATE_COLLAPSED || this.targetState == STATE_EXPANDED) {
+                            requestLayout();
+                        }
                     }
                 });
 
@@ -401,23 +404,6 @@ public class ExpressiveSliderLayout extends FrameLayout {
     }
 
     @Override
-    public void requestLayout() {
-        if ((currentState == STATE_DRAGGING
-                || currentState == STATE_SETTLING
-                || currentState == STATE_EXPANDED) && !forceRequestLayout) {
-            return;
-        }
-
-        super.requestLayout();
-    }
-    
-    public void forceRequestLayout() {
-        forceRequestLayout = true;
-        requestLayout();
-        forceRequestLayout = false;
-    }
-
-    @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         int previousTop = sheetView != null ? sheetView.getTop() : 0;
 
@@ -431,6 +417,7 @@ public class ExpressiveSliderLayout extends FrameLayout {
             expandedTop = 0;
             hiddenTop = getHeight();
             collapsedTop = hiddenTop - actualPeekHeight - actualBottomMargin;
+            
             if (currentState == STATE_SETTLING
                     && settleSpringAnim != null
                     && settleSpringAnim.isRunning()) {

@@ -143,29 +143,26 @@
         android:background="@drawable/circle_shape"
         android:src="@drawable/icon_skip_next_outline"
         android:tint="?attr/colorOnSurface" />
+        
+    <com.xapps.media.xmusic.widget.PillBackgroundView
+        	android:id="@+id/song_info_layout"
+            android:layout_width="match_parent"
+      	  android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/song_info_text"
+            app:layout_constraintTop_toTopOf="@+id/song_info_text" />             
 
-    <LinearLayout
-        android:id="@+id/song_info_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/frame"
-        android:layout_marginBottom="16dp">
-
-        <TextView
+    <TextView
             android:id="@+id/song_info_text"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#BDBDBD"
             android:textSize="12sp"
             android:textStyle="bold"
+            android:gravity="center"
             android:paddingVertical="5dp"
+            app:layout_constraintBottom_toTopOf="@+id/frame"
             android:paddingHorizontal="12dp"
-            android:background="@drawable/pill_rounded"
             android:text="Unknown" />
-    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/frame"

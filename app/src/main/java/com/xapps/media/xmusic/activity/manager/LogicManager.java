@@ -21,6 +21,7 @@ import com.xapps.media.xmusic.service.XPlayerService;
 import com.xapps.media.xmusic.utils.XUtils;
 import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
 
+import java.lang.CharSequence;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -200,10 +201,6 @@ public class LogicManager {
 
     public void playSong(int position) {
         if (mediaController.getPlaybackState() == Player.STATE_BUFFERING) return;
-
-        if (position == mediaController.getCurrentMediaItemIndex()) {
-            mediaController.seekBack();
-        }
 
         String songPath = RuntimeData.songs.get(position).path;
         // loadLyrics(songPath);
