@@ -22,12 +22,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     private void initTheme() {
-        EdgeToEdge.enable(this);
-        if (Build.VERSION.SDK_INT >= 29) getWindow().setNavigationBarContrastEnforced(false);
-        XUtils.updateTheme();
-        XUtils.applyDynamicColors(this, DataManager.isOledThemeEnabled());
-        if (XUtils.isDarkMode(this) && DataManager.isOledThemeEnabled())getTheme().applyStyle(R.style.ThemeOverlay_XMusic_OLED, true);
-        MaterialColorUtils.initColors(this);
+        
     }
 
     public void showInfoDialog(String title, int icon, String Desc, String button, View rootLayout) {

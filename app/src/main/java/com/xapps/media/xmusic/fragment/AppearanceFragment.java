@@ -81,7 +81,7 @@ public class AppearanceFragment extends SubFragment {
             
         }
         ViewKt.doOnLayout(activity.getBinding().bottomNavigation, v -> {
-            binding.mainContainer.setPadding(binding.mainContainer.getPaddingRight(), binding.mainContainer.getPaddingTop(), binding.mainContainer.getPaddingLeft(), activity.getBinding().bottomNavigation.getHeight()*2);
+            binding.mainContainer.setPadding(binding.mainContainer.getPaddingRight(), binding.mainContainer.getPaddingTop(), binding.mainContainer.getPaddingLeft(), binding.mainContainer.getPaddingLeft());
             return Unit.INSTANCE;
         });
         
@@ -90,11 +90,12 @@ public class AppearanceFragment extends SubFragment {
     private void setupListeners() {
         binding.toolbar.setNavigationOnClickListener(v -> {
             getActivity().getOnBackPressedDispatcher().onBackPressed();
-			//activity.HideBNV(false);
+			activity.getUIManager().hideBnv(false);
         });
         binding.secondPref.setOnClickListener(v -> {
             binding.secondSwitch.setChecked(!binding.secondSwitch.isChecked());
             DataManager.setCustomColorsEnabled(binding.secondSwitch.isChecked());
+            activity.getUIManager().saveState();
             getActivity().recreate();
         });
         binding.blurPref.setOnClickListener(v -> {
@@ -105,11 +106,13 @@ public class AppearanceFragment extends SubFragment {
         binding.oldePref.setOnClickListener(v -> {
             binding.oledSwitch.setChecked(!binding.oledSwitch.isChecked());
             DataManager.setOledTheme(binding.oledSwitch.isChecked());
+            activity.getUIManager().saveState();
             getActivity().recreate();
         });
         binding.firstPref.setOnClickListener(v -> {
             binding.firstSwitch.setChecked(!binding.firstSwitch.isChecked());
             DataManager.setDynamicColorsEnabled(binding.firstSwitch.isChecked());
+            activity.getUIManager().saveState();
             getActivity().recreate();
         });
         binding.colorSeekBar.setOnColorChangeListener((progress, color) -> {
@@ -119,20 +122,24 @@ public class AppearanceFragment extends SubFragment {
             activity.showInfoDialog("Experimental feature", R.drawable.ic_test_tube, "This is a feature that's still under testing and might be unstable or buggy for some users.", "OK", activity.getBinding().Coordinator);
         });
         binding.systemTheme.setOnClickListener(v -> {
+            activity.getUIManager().saveState();
             DataManager.setThemeMode(0);
             XUtils.setThemeMode("auto");
         });
         binding.darkTheme.setOnClickListener(v -> {
+            activity.getUIManager().saveState();
             DataManager.setThemeMode(1);
             XUtils.setThemeMode("dark");
         });
         binding.lightTheme.setOnClickListener(v -> {
+            activity.getUIManager().saveState();
             DataManager.setThemeMode(2);
             XUtils.setThemeMode("light");
         });
         binding.applyButton.setOnClickListener(v -> {
             DataManager.setProgress(binding.colorSeekBar.getProgress());
             DataManager.setCustomColor(XUtils.normalizeColor(binding.colorSeekBar.getColor()));
+            activity.getUIManager().saveState();
             getActivity().recreate();
         });
         binding.iconPref.setOnClickListener(v -> {

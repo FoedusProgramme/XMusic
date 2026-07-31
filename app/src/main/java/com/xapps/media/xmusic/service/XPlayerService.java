@@ -9,6 +9,7 @@ import android.os.ParcelFileDescriptor;
 
 import androidx.annotation.Nullable;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.session.DefaultMediaNotificationProvider;
 import androidx.media3.session.MediaLibraryService;
@@ -123,6 +124,8 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
                                         saveResumeState();
                                         stopPeriodicSave();
                                     }
+                                    
+                                    if (activityCallback != null) CallbackInterface.activity().updateState();
                                 }
 
                                 @Override
@@ -138,7 +141,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
                                                             player.getCurrentMediaItemIndex()));
                                         }
                                     }
-                                    CallbackInterface.activity().onSongChanged(player.getCurrentMediaItemIndex());
+                                    if (CallbackInterface.activity() != null) CallbackInterface.activity().onSongChanged(player.getCurrentMediaItemIndex());
                                     if (player.getPlaybackState() != Player.STATE_IDLE) {
                                         genColors(player.getCurrentMediaItemIndex());
                                     }
@@ -161,6 +164,15 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
                                         statsAnalyzer.pauseAnalysis();
                                         stopPeriodicSave();
                                         saveResumeState();
+                                    }
+                                }
+                                
+                                @Override
+                                public void onPlayerError(PlaybackException error) {
+                                    android.util.Log.e("XMusicError", "Player Exception Caught", error);
+                                    Throwable cause = error.getCause();
+                                    if (cause != null) {
+                                        android.util.Log.e("XMusicError", "Underlying Cause", cause);
                                     }
                                 }
                             });
@@ -288,7 +300,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
 
     @Override
     public boolean isAnythingPlaying() {
-        return mediaItems != null && mediaItems.isEmpty() && !isIdle;
+        return player.getMediaItemCount() > 0 && player.getCurrentMediaItemIndex() != -1 && !isIdle;
     }
 
     @Override

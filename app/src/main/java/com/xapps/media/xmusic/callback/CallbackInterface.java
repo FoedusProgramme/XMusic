@@ -4,7 +4,7 @@ public final class CallbackInterface {
 
     private static ActivityCallback activityCallback;
     private static ServiceCallback serviceCallback;
-    private static FragmentCallback mlfCallback, searchFragmentCallback, settingsFragmentCallback;
+    private static FragmentCallback mlfCallback, searchFragmentCallback, settingsFragmentCallback, subFragmentCallback;
 
     private CallbackInterface() {
     }
@@ -48,9 +48,21 @@ public final class CallbackInterface {
             searchFragmentCallback = null;
         }
     }
+    
+    public static void setSubFragmentCallback(FragmentCallback callback) {
+        subFragmentCallback = callback;
+    }
+    
+    public static void clearSubFragmentCallback(FragmentCallback callback) {
+        if (callback == subFragmentCallback) subFragmentCallback = null;
+    }
 
     public static ActivityCallback activity() {
         return activityCallback;
+    }
+    
+    public static FragmentCallback subFrag() {
+        return subFragmentCallback;
     }
     
     public static FragmentCallback mlFrag() {

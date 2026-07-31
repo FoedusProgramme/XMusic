@@ -13,6 +13,7 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Trace;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.AnimationUtils;
@@ -24,23 +25,31 @@ import androidx.core.graphics.ColorUtils;
 import androidx.core.view.*;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.transition.TransitionManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import com.google.android.material.transition.MaterialFadeThrough;
 import com.google.android.material.transition.MaterialSharedAxis;
+
+import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.callback.CallbackInterface;
+import com.xapps.media.xmusic.common.PlaybackControlListener;
+import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.data.LiveColors;
 import com.xapps.media.xmusic.data.RuntimeData;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
 import com.xapps.media.xmusic.databinding.LayoutPlayerCollapsedBinding;
 import com.xapps.media.xmusic.fragment.SettingsFragment;
 import com.xapps.media.xmusic.fragment.SongsListFragment;
+import com.xapps.media.xmusic.lyric.LyricsExtractor;
+import com.xapps.media.xmusic.lyric.LyricsParser;
 import com.xapps.media.xmusic.utils.ColorPaletteUtils;
 import com.xapps.media.xmusic.utils.Log;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 import com.xapps.media.xmusic.utils.XUtils;
+import com.xapps.media.xmusic.viewmodel.MainActivityViewModel;
 import com.xapps.media.xmusic.widget.*;
 
 import kotlin.Unit;
@@ -51,7 +60,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class UIManager {
+public class UIManager implements PlaybackControlListener {
 
     private RootActivity activity;
     private ActivityRootBinding binding;
@@ -82,9 +91,9 @@ public class UIManager {
 
     public boolean tabsHidden, bnvHidden, playerDocked, playerHidden;
 
-    private boolean isOledTheme;
+    private boolean isOledTheme, isBlurOn;
 
-    public int peekHeight;
+    public int peekHeight, sideMargins, bottomMargin, dockedMargin;
 
     private Interpolator interpolator;
 
@@ -95,10 +104,13 @@ public class UIManager {
     private int playerSurface, bottomSheetColor;
 
     private Map<String, Integer> effectiveOldColors = new HashMap<>();
+    
+    public MainActivityViewModel viewModel;
 
     public UIManager(RootActivity activity) {
         this.activity = activity;
         this.binding = activity.getBinding();
+        viewModel = new ViewModelProvider(activity).get(MainActivityViewModel.class);
     }
 
     public void initUI() {
@@ -116,7 +128,7 @@ public class UIManager {
     }
 
     private void setupDimensions() {
-        int sideMargins = XUtils.convertToPx(activity, 8f);
+        sideMargins = XUtils.convertToPx(activity, 8f);
 
         ViewKt.doOnLayout(
                 binding.collapsedPlayer.musicProgress,
@@ -134,10 +146,9 @@ public class UIManager {
         ViewKt.doOnLayout(
                 binding.bottomNavigation,
                 v -> {
-                    int bottomMargin =
+                    bottomMargin =
                             XUtils.convertToPx(activity, 16f)
                                     + binding.bottomNavigation.getHeight();
-                    binding.miniPlayer.setFloatingMargins(sideMargins, bottomMargin);
 
                     playerNeededMargin =
                             binding.miniPlayer.getPeekHeight()
@@ -161,13 +172,9 @@ public class UIManager {
                             binding.bottomNavigation.getPaddingTop(),
                             binding.bottomNavigation.getPaddingBottom()
                                     + XUtils.getNavigationBarHeight(activity));
-
-                    ViewKt.doOnLayout(
-                            binding.tabLayout,
-                            v2 -> {
-                                setLayoutState(LAYOUT_STATE_EXPOSE_TABS_BNV, true);
-                                return Unit.INSTANCE;
-                            });
+                
+                
+                    binding.expandedPlayer.actionsContainer.setPadding(0, 0, 0, XUtils.getNavigationBarHeight(activity));
 
                     return Unit.INSTANCE;
                 });
@@ -214,154 +221,305 @@ public class UIManager {
 
         binding.containerRoot.setClipChildren(false);
         binding.collapsedPlayer.motionRoot.setClipChildren(false);
+        
+        loadSettings();
     }
 
     // [ -------------- Layout State management methods ----------
 
-    public void setLayoutState(int state) {
-        setLayoutState(state, true);
+    public void setLayoutState(int state, String root) {
+        setLayoutState(state, true, root);
     }
 
-    public void setLayoutState(int state, boolean animate) {
-        if (layoutState == state) return;
-        if (state > 7 || state < 0) throw new IllegalArgumentException("Invalid state int");
+    public void setLayoutState(int state, boolean animate, String root) {
+        Trace.beginSection("UM:setLayoutState:" + root);
+        try {
+            // XUtils.showMessage(activity, "state changed by: " + root);  // DEBUG ONLY
 
-        int duration = animate ? ANIMATION_DURATION_NORMAL : 0;
+            if (layoutState == state) return;
+            if (state > 7 || state < 0) throw new IllegalArgumentException("Invalid state int");
 
-        layoutState = state;
-        switch (state) {
-            case LAYOUT_STATE_EXPOSE_PLAYER:
-                dockPlayerInternal(false, animate);
-                hideBnvInternal(false, animate);
-                hideTabsInternal(true, animate);
-                hidePlayerInternal(false);
-                XUtils.animateMarginsTo(
+            int duration = animate ? ANIMATION_DURATION_NORMAL : 0;
+
+            layoutState = state;
+            switch (state) {
+                case LAYOUT_STATE_EXPOSE_PLAYER:
+                    dockPlayerInternal(false, animate);
+                    hideBnvInternal(false, animate);
+                    hideTabsInternal(true, animate);
+                    hidePlayerInternal(false);
+                    XUtils.animateMarginsTo(
                         binding.rootCard, 0, 0, 0, playerNeededMargin, duration, interpolator);
-                break;
+                    XUtils.animateMarginsTo(
+                        binding.searchCard, 0, 0, 0, playerNeededMargin, duration, interpolator);
+                    XUtils.animateMarginsTo(
+                        binding.settingsCard, 0, 0, 0, playerNeededMargin, duration, interpolator);
+                    break;
 
-            case LAYOUT_STATE_EXPOSE_BNV:
-                hideBnvInternal(false, animate);
-                hideTabsInternal(true, animate);
-                hidePlayerInternal(true);
-                XUtils.animateMarginsTo(
-                        binding.rootCard, 0, 0, 0, bnvNeededMargin, duration, interpolator);
-                break;
+                case LAYOUT_STATE_EXPOSE_BNV:
+                    hideBnvInternal(false, animate);
+                    hideTabsInternal(true, animate);
+                    hidePlayerInternal(true);
+                    XUtils.animateMarginsTo(
+                            binding.rootCard, 0, 0, 0, bnvNeededMargin, duration, interpolator);
+                    XUtils.animateMarginsTo(
+                            binding.searchCard, 0, 0, 0, bnvNeededMargin, duration, interpolator);
+                    XUtils.animateMarginsTo(
+                            binding.settingsCard, 0, 0, 0, bnvNeededMargin, duration, interpolator);
+                    break;
 
-            case LAYOUT_STATE_FULL:
-                hideBnvInternal(true, animate);
-                hideTabsInternal(true, animate);
-                hidePlayerInternal(true);
-                XUtils.animateMarginsTo(binding.rootCard, 0, 0, 0, 0, duration, interpolator);
-                break;
+                case LAYOUT_STATE_FULL:
+                    hideBnvInternal(true, animate);
+                    hideTabsInternal(true, animate);
+                    hidePlayerInternal(true);
+                    XUtils.animateMarginsTo(binding.rootCard, 0, 0, 0, 0, duration, interpolator);
+                    XUtils.animateMarginsTo(binding.searchCard, 0, 0, 0, 0, duration, interpolator);
+                    XUtils.animateMarginsTo(binding.settingsCard, 0, 0, 0, 0, duration, interpolator);
+                    break;
 
-            case LAYOUT_STATE_EXPOSE_FULL:
-                hideBnvInternal(false, animate);
-                hideTabsInternal(false, animate);
-                hidePlayerInternal(false);
-                XUtils.animateMarginsTo(
-                        binding.rootCard,
-                        0,
-                        tabsNeededMargin,
-                        0,
-                        playerNeededMargin,
-                        duration,
-                        interpolator);
-                dockPlayerInternal(false, animate);
-                break;
+                case LAYOUT_STATE_EXPOSE_FULL:
+                    hideBnvInternal(false, animate);
+                    hideTabsInternal(false, animate);
+                    hidePlayerInternal(false);
+                    XUtils.animateMarginsTo(
+                            binding.rootCard,
+                            0,
+                            tabsNeededMargin,
+                            0,
+                            bnvNeededMargin,
+                            duration,
+                            interpolator);
+                    XUtils.animateMarginsTo(
+                            binding.searchCard,
+                            0,
+                            0,
+                            0,
+                            playerNeededMargin,
+                            duration,
+                            interpolator);
+                    XUtils.animateMarginsTo(
+                            binding.settingsCard,
+                            0,
+                            0,
+                            0,
+                            playerNeededMargin,
+                            duration,
+                            interpolator);        
+                    dockPlayerInternal(false, animate);
+                    break;
 
-            case LAYOUT_STATE_EXPOSE_TABS_BNV:
-                hideBnvInternal(false, animate);
-                hideTabsInternal(false, animate);
-                hidePlayerInternal(true);
-                XUtils.animateMarginsTo(
-                        binding.rootCard,
-                        0,
-                        tabsNeededMargin,
-                        0,
-                        bnvNeededMargin,
-                        duration,
-                        interpolator);
-                break;
+                case LAYOUT_STATE_EXPOSE_TABS_BNV:
+                    hideBnvInternal(false, animate);
+                    hideTabsInternal(false, animate);
+                    hidePlayerInternal(true);
+                    XUtils.animateMarginsTo(
+                            binding.rootCard,
+                            0,
+                            tabsNeededMargin,
+                            0,
+                            bnvNeededMargin,
+                            duration,
+                            interpolator);
+                    XUtils.animateMarginsTo(
+                            binding.searchCard,
+                            0,
+                            0,
+                            0,
+                            bnvNeededMargin,
+                            duration,
+                            interpolator);        
+                    XUtils.animateMarginsTo(
+                            binding.settingsCard,
+                            0,
+                            0,
+                            0,
+                            bnvNeededMargin,
+                            duration,
+                            interpolator);                
+                    break;
 
-            case LAYOUT_STATE_EXPOSE_PLAYER_ONLY:
-                hideBnvInternal(true, animate);
-                hideTabsInternal(true, animate);
-                hidePlayerInternal(false);
-                XUtils.animateMarginsTo(
-                        binding.rootCard,
-                        0,
-                        0,
-                        0,
-                        playerDockedNeededMargin,
-                        duration,
-                        interpolator);
-                dockPlayerInternal(true, animate);
-                break;
+                case LAYOUT_STATE_EXPOSE_PLAYER_ONLY:
+                    hideBnvInternal(true, animate);
+                    hideTabsInternal(true, animate);
+                    hidePlayerInternal(false);
+                    XUtils.animateMarginsTo(
+                            binding.rootCard,
+                            0,
+                            0,
+                            0,
+                            playerDockedNeededMargin,
+                            duration,
+                            interpolator);
+                    XUtils.animateMarginsTo(
+                            binding.searchCard,
+                            0,
+                            0,
+                            0,
+                            playerDockedNeededMargin,
+                            duration,
+                            interpolator);      
+                    XUtils.animateMarginsTo(
+                            binding.settingsCard,
+                            0,
+                            0,
+                            0,
+                            playerDockedNeededMargin,
+                            duration,
+                            interpolator);        
+                    dockPlayerInternal(true, animate);
+                    break;
 
-            case LAYOUT_STATE_EXPOSE_TABS:
-                hideBnvInternal(true, animate);
-                hideTabsInternal(false, animate);
-                hidePlayerInternal(true);
-                XUtils.animateMarginsTo(
-                        binding.rootCard, 0, tabsNeededMargin, 0, 0, duration, interpolator);
-                break;
+                case LAYOUT_STATE_EXPOSE_TABS:
+                    hideBnvInternal(true, animate);
+                    hideTabsInternal(false, animate);
+                    hidePlayerInternal(true);
+                    XUtils.animateMarginsTo(
+                            binding.rootCard, 0, tabsNeededMargin, 0, 0, duration, interpolator);
+                    XUtils.animateMarginsTo(
+                            binding.searchCard, 0, 0, 0, 0, duration, interpolator);        
+                    XUtils.animateMarginsTo(
+                            binding.settingsCard, 0, 0, 0, 0, duration, interpolator);        
+                    break;
 
-            case LAYOUT_STATE_EXPOSE_PLAYER_TABS:
-                hideBnvInternal(true, animate);
-                hideTabsInternal(false, animate);
-                hidePlayerInternal(false);
-                XUtils.animateMarginsTo(
-                        binding.rootCard,
-                        0,
-                        tabsNeededMargin,
-                        0,
-                        playerDockedNeededMargin,
-                        duration,
-                        interpolator);
-                break;
+                case LAYOUT_STATE_EXPOSE_PLAYER_TABS:
+                    hideBnvInternal(true, animate);
+                    hideTabsInternal(false, animate);
+                    hidePlayerInternal(false);
+                    XUtils.animateMarginsTo(
+                            binding.rootCard,
+                            0,
+                            tabsNeededMargin,
+                            0,
+                            playerDockedNeededMargin,
+                            duration,
+                            interpolator);
+                    XUtils.animateMarginsTo(
+                            binding.searchCard,
+                            0,
+                            0,
+                            0,
+                            playerDockedNeededMargin,
+                            duration,
+                            interpolator);        
+                    XUtils.animateMarginsTo(
+                            binding.settingsCard,
+                            0,
+                            0,
+                            0,
+                            playerDockedNeededMargin,
+                            duration,
+                            interpolator);        
+                    break;
+            }
+        } finally {
+            Trace.endSection();
         }
+    }
+    
+    public void hideBnv(boolean b) {
+        hideBnv(b, true);
+    }
+    
+    public void hideBnv(boolean b, boolean animate) {
+        if (playerHidden) {
+            hideBnvInternal(b, animate);
+        } else {
+            hideBnvInternal(b, animate);
+            dockPlayerInternal(b, animate);
+        }
+        computeState();
+    }
+
+    private void computeState() {
+        if (!playerHidden) {
+            if (!bnvHidden && !tabsHidden) layoutState = LAYOUT_STATE_EXPOSE_FULL;
+            else if (!bnvHidden && tabsHidden) layoutState = LAYOUT_STATE_EXPOSE_PLAYER;
+            else if (bnvHidden && !tabsHidden) layoutState = LAYOUT_STATE_EXPOSE_PLAYER_TABS;
+            else layoutState = LAYOUT_STATE_EXPOSE_PLAYER_ONLY;
+        } else {
+            if (!bnvHidden && !tabsHidden) layoutState = LAYOUT_STATE_EXPOSE_TABS_BNV;
+            else if (!bnvHidden && tabsHidden) layoutState = LAYOUT_STATE_EXPOSE_BNV;
+            else if (bnvHidden && !tabsHidden) layoutState = LAYOUT_STATE_EXPOSE_TABS;
+            else layoutState = LAYOUT_STATE_FULL;
+        }
+    }
+
+    private void resyncState() {
+        playerHidden =
+                (layoutState == LAYOUT_STATE_FULL
+                        || layoutState == LAYOUT_STATE_EXPOSE_TABS
+                        || layoutState == LAYOUT_STATE_EXPOSE_BNV
+                        || layoutState == LAYOUT_STATE_EXPOSE_TABS_BNV);
+
+        bnvHidden =
+                (layoutState == LAYOUT_STATE_FULL
+                        || layoutState == LAYOUT_STATE_EXPOSE_TABS
+                        || layoutState == LAYOUT_STATE_EXPOSE_PLAYER_ONLY
+                        || layoutState == LAYOUT_STATE_EXPOSE_PLAYER_TABS);
+
+        tabsHidden =
+                (layoutState == LAYOUT_STATE_FULL
+                        || layoutState == LAYOUT_STATE_EXPOSE_BNV
+                        || layoutState == LAYOUT_STATE_EXPOSE_PLAYER
+                        || layoutState == LAYOUT_STATE_EXPOSE_PLAYER_ONLY);
     }
 
     private void hideBnvInternal(boolean hide, boolean animate) {
         bnvHidden = hide;
-        binding.bottomNavigation
-                .animate()
-                .scaleX(hide ? 0.85f : 1f)
-                .scaleY(hide ? 0.85f : 1f)
-                .translationY(hide ? 15 : 0)
-                .alpha(hide ? 0f : 1f)
-                .setDuration(animate ? ANIMATION_DURATION_NORMAL : ANIMATION_DURATION_INSTANT)
-                .withStartAction(
-                        () -> {
-                            if (!hide) binding.bottomNavigation.setVisibility(View.VISIBLE);
-                        })
-                .withEndAction(
-                        () -> {
-                            if (hide) binding.bottomNavigation.setVisibility(View.GONE);
-                        })
-                .setInterpolator(interpolator)
-                .start();
+        if (animate) {
+            binding.bottomNavigation
+                    .animate()
+                    .scaleX(hide ? 0.85f : 1f)
+                    .scaleY(hide ? 0.85f : 1f)
+                    .translationY(hide ? 15 : 0)
+                    .alpha(hide ? 0f : 1f)
+                    .setDuration(ANIMATION_DURATION_NORMAL)
+                    .withStartAction(
+                            () -> {
+                                if (!hide) binding.bottomNavigation.setEnabled(true);
+                            })
+                    .withEndAction(
+                            () -> {
+                                if (hide) binding.bottomNavigation.setEnabled(false);
+                            })
+                    .setInterpolator(interpolator)
+                    .start();
+        } else {
+            binding.bottomNavigation.setScaleX(hide ? 0.85f : 1f);
+            binding.bottomNavigation.setScaleY(hide ? 0.85f : 1f);
+            binding.bottomNavigation.setTranslationY(hide ? 15 : 0);
+            binding.bottomNavigation.setAlpha(hide ? 0f : 1f);
+            binding.bottomNavigation.setEnabled(!hide);
+        }
     }
 
     private void hideTabsInternal(boolean hide, boolean animate) {
         tabsHidden = hide;
-        binding.tabLayout
-                .animate()
-                .scaleX(hide ? 0.85f : 1f)
-                .scaleY(hide ? 0.85f : 1f)
-                .translationY(hide ? -15 : 0)
-                .alpha(hide ? 0f : 1f)
-                .setDuration(animate ? ANIMATION_DURATION_NORMAL : ANIMATION_DURATION_INSTANT)
-                .withStartAction(
-                        () -> {
-                            if (!hide) binding.tabLayout.setVisibility(View.VISIBLE);
-                        })
-                .withEndAction(
-                        () -> {
-                            if (hide) binding.tabLayout.setVisibility(View.GONE);
-                        })
-                .setInterpolator(interpolator)
-                .start();
+        if (animate) {
+            binding.tabLayout
+                    .animate()
+                    .scaleX(hide ? 0.85f : 1f)
+                    .scaleY(hide ? 0.85f : 1f)
+                    .translationY(hide ? -15 : 0)
+                    .alpha(hide ? 0f : 1f)
+                    .setDuration(ANIMATION_DURATION_NORMAL)
+                    .withStartAction(
+                            () -> {
+                                if (!hide) binding.tabLayout.setEnabled(true);
+                            })
+                    .withEndAction(
+                            () -> {
+                                if (hide) binding.tabLayout.setEnabled(false);
+                            })
+                    .setInterpolator(interpolator)
+                    .start();
+        } else {
+            binding.tabLayout.setScaleX(hide ? 0.85f : 1f);
+            binding.tabLayout.setScaleY(hide ? 0.85f : 1f);
+            binding.tabLayout.setTranslationY(hide ? -15 : 0);
+            binding.tabLayout.setAlpha(hide ? 0f : 1f);
+            binding.tabLayout.setEnabled(!hide);
+        }
     }
 
     private void hidePlayerInternal(boolean hide) {
@@ -373,53 +531,72 @@ public class UIManager {
     }
 
     private void dockPlayerInternal(boolean dock, boolean animate) {
-        if (dock == playerDocked) return;
         playerDocked = dock;
-        int bottomMargin =
-                XUtils.convertToPx(activity, 16f)
-                        + bnvHeight
-                        - XUtils.getNavigationBarHeight(activity);
+        int bottomMargin = XUtils.convertToPx(activity, 16f) + bnvHeight - XUtils.getNavigationBarHeight(activity);
+        dockedMargin = bottomMargin;
 
-        ValueAnimator animator =
-                ValueAnimator.ofInt(
-                        binding.miniPlayer.getFloatingMargin("bottom"),
-                        dock
-                                ? XUtils.getNavigationBarHeight(activity)
-                                : XUtils.convertToPx(activity, 8f)
-                                        + bnvHeight
-                                        - XUtils.getNavigationBarHeight(activity));
-        animator.setDuration(animate ? ANIMATION_DURATION_NORMAL : ANIMATION_DURATION_INSTANT);
-        animator.setInterpolator(interpolator);
-        animator.addUpdateListener(
-                animation -> {
-                    int margin = (int) animation.getAnimatedValue();
-                    binding.miniPlayer.setFloatingMargins(XUtils.convertToPx(activity, 8f), margin);
-                });
+        int targetMargin = dock 
+            ? XUtils.getNavigationBarHeight(activity) 
+            : XUtils.convertToPx(activity, 16f) + bnvHeight;
 
-        animator.start();
+        if (animate) {
+            ValueAnimator animator = ValueAnimator.ofInt(binding.miniPlayer.getFloatingMargin("bottom"), targetMargin);
+            animator.setInterpolator(interpolator);
+            animator.addUpdateListener(animation -> {
+                binding.miniPlayer.setFloatingMargins(XUtils.convertToPx(activity, 8f), (int) animation.getAnimatedValue());
+            });
+            animator.start();
+        } else {
+            binding.miniPlayer.setFloatingMargins(XUtils.convertToPx(activity, 8f), targetMargin);
+        }
     }
+
 
     public void onPlayerHidden() {
         dockPlayerInternal(false, false);
         if (bnvHidden && tabsHidden) {
-            setLayoutState(LAYOUT_STATE_FULL);
+            setLayoutState(LAYOUT_STATE_FULL, "onPlayerHidden");
         } else if (!bnvHidden && tabsHidden) {
-            setLayoutState(LAYOUT_STATE_EXPOSE_BNV);
+            setLayoutState(LAYOUT_STATE_EXPOSE_BNV, "onPlayerHidden");
         } else if (bnvHidden && !tabsHidden) {
-            setLayoutState(LAYOUT_STATE_EXPOSE_TABS);
+            setLayoutState(LAYOUT_STATE_EXPOSE_TABS, "onPlayerHidden");
         } else if (!bnvHidden && !tabsHidden) {
-            setLayoutState(LAYOUT_STATE_EXPOSE_TABS_BNV);
+            setLayoutState(LAYOUT_STATE_EXPOSE_TABS_BNV, "onPlayerHidden");
         } else {
             throw new IllegalStateException(
                     "onPlayerHidden was without handling layout state : "
                             + String.valueOf(binding.miniPlayer.getState()));
         }
+        
+        activity.getLogicManager().sgfState = activity.getLogicManager().sgfState == LAYOUT_STATE_EXPOSE_BNV? LAYOUT_STATE_FULL : LAYOUT_STATE_EXPOSE_PLAYER_ONLY;
+        activity.getLogicManager().srfState = activity.getLogicManager().srfState == LAYOUT_STATE_EXPOSE_BNV? LAYOUT_STATE_FULL : LAYOUT_STATE_EXPOSE_PLAYER_ONLY;
+        
     }
 
-    public void hideComponents(boolean hidePlayer, boolean hideBnv, boolean hideTabs) {
-        int state = (!hidePlayer ? 4 : 0) | (!hideBnv ? 2 : 0) | (!hideTabs ? 1 : 0);
-
-        setLayoutState(state);
+    public void hideComponents(boolean hidePlayer, boolean hideBnv, boolean hideTabs, String fragment) {
+        int state;
+        
+        if (!hidePlayer) {
+            if (!hideBnv && !hideTabs) state = LAYOUT_STATE_EXPOSE_FULL;
+            else if (!hideBnv && hideTabs) state = LAYOUT_STATE_EXPOSE_PLAYER;
+            else if (hideBnv && !hideTabs) state = LAYOUT_STATE_EXPOSE_PLAYER_TABS;
+            else state = LAYOUT_STATE_EXPOSE_PLAYER_ONLY;
+        } else {
+            if (!hideBnv && !hideTabs) state = LAYOUT_STATE_EXPOSE_TABS_BNV;
+            else if (!hideBnv && hideTabs) state = LAYOUT_STATE_EXPOSE_BNV;
+            else if (hideBnv && !hideTabs) state = LAYOUT_STATE_EXPOSE_TABS;
+            else state = LAYOUT_STATE_FULL;
+        }
+        
+        if (hidePlayer) {
+            activity.getLogicManager().sgfState = activity.getLogicManager().sgfState == LAYOUT_STATE_EXPOSE_PLAYER_ONLY? LAYOUT_STATE_FULL : LAYOUT_STATE_EXPOSE_BNV;
+            activity.getLogicManager().srfState = activity.getLogicManager().srfState == LAYOUT_STATE_EXPOSE_PLAYER_ONLY? LAYOUT_STATE_FULL : LAYOUT_STATE_EXPOSE_BNV;
+        } else {
+            activity.getLogicManager().sgfState = activity.getLogicManager().sgfState == LAYOUT_STATE_EXPOSE_BNV? LAYOUT_STATE_FULL : LAYOUT_STATE_EXPOSE_BNV;
+            activity.getLogicManager().srfState = activity.getLogicManager().srfState == LAYOUT_STATE_EXPOSE_PLAYER_ONLY? LAYOUT_STATE_FULL : LAYOUT_STATE_EXPOSE_BNV;
+        }
+        
+        setLayoutState(state, fragment);
     }
 
     // --------------- Fragments Viewpager Adapter ----------------- ]
@@ -445,153 +622,167 @@ public class UIManager {
     // PLAYER ANIMATION AND UPDATES LOGIC -------------
 
     public void updateColors() {
-        if (ColorPaletteUtils.lightColors == null && ColorPaletteUtils.darkColors == null) return;
+        Trace.beginSection("UM:updateColors");
+        try {
+            if (ColorPaletteUtils.lightColors == null && ColorPaletteUtils.darkColors == null) {
+                return;
+            }
 
-        Map<String, Integer> colors =
-                XUtils.isDarkMode(activity)
-                        ? ColorPaletteUtils.darkColors
-                        : ColorPaletteUtils.lightColors;
-        Map<String, Integer> oldColors =
-                XUtils.isDarkMode(activity)
-                        ? ColorPaletteUtils.oldDarkColors
-                        : ColorPaletteUtils.oldLightColors;
+            Map<String, Integer> colors =
+                    XUtils.isDarkMode(activity)
+                            ? ColorPaletteUtils.darkColors
+                            : ColorPaletteUtils.lightColors;
+            Map<String, Integer> oldColors =
+                    XUtils.isDarkMode(activity)
+                            ? ColorPaletteUtils.oldDarkColors
+                            : ColorPaletteUtils.oldLightColors;
 
-        effectiveOldColors = new HashMap<>(oldColors);
+            effectiveOldColors = new HashMap<>(oldColors);
 
-        boolean hasLive = LiveColors.primary != 0;
-        int onTertiary = colors.get("onTertiary");
-        int tertiary = colors.get("tertiary");
-        int oldOnTertiary = hasLive ? LiveColors.onTertiary : effectiveOldColors.get("onTertiary");
-        int oldTertiary = hasLive ? LiveColors.tertiary : effectiveOldColors.get("tertiary");
-        int surface = isOledTheme ? 0xff000000 : colors.get("surface");
-        int oldSurface =
-                isOledTheme
-                        ? 0xff000000
-                        : (hasLive ? LiveColors.surface : effectiveOldColors.get("surface"));
-        int surfaceContainer = isOledTheme ? 0xff050505 : colors.get("surfaceContainer");
-        int oldSurfaceContainer =
-                isOledTheme
-                        ? 0xff050505
-                        : (hasLive
-                                ? LiveColors.surfaceContainer
-                                : effectiveOldColors.get("surfaceContainer"));
-        int outline = colors.get("outline");
-        int oldOutline = hasLive ? LiveColors.outline : effectiveOldColors.get("outline");
-        int primary = colors.get("primary");
-        int oldPrimary = hasLive ? LiveColors.primary : effectiveOldColors.get("primary");
-        int onPrimary = colors.get("onPrimary");
-        int oldOnPrimary = hasLive ? LiveColors.onPrimary : effectiveOldColors.get("onPrimary");
-        int onSurfaceContainer =
-                isOledTheme ? colors.get("onSurface") : colors.get("onSurfaceContainer");
-        int oldOnSurfaceContainer =
-                isOledTheme
-                        ? (hasLive ? LiveColors.onSurface : effectiveOldColors.get("onSurface"))
-                        : (hasLive
-                                ? LiveColors.onSurfaceContainer
-                                : effectiveOldColors.get("onSurfaceContainer"));
-        int onSurface = colors.get("onSurface");
-        int oldOnSurface = hasLive ? LiveColors.onSurface : effectiveOldColors.get("onSurface");
+            boolean hasLive = LiveColors.primary != 0;
+            int onTertiary = colors.get("onTertiary");
+            int tertiary = colors.get("tertiary");
+            int oldOnTertiary = hasLive ? LiveColors.onTertiary : effectiveOldColors.get("onTertiary");
+            int oldTertiary = hasLive ? LiveColors.tertiary : effectiveOldColors.get("tertiary");
+            int surface = isOledTheme ? 0xff000000 : colors.get("surface");
+            int oldSurface =
+                    isOledTheme
+                            ? 0xff000000
+                            : (hasLive ? LiveColors.surface : effectiveOldColors.get("surface"));
+            int surfaceContainer = isOledTheme ? 0xff050505 : colors.get("surfaceContainer");
+            int oldSurfaceContainer =
+                    isOledTheme
+                            ? 0xff050505
+                            : (hasLive
+                                    ? LiveColors.surfaceContainer
+                                    : effectiveOldColors.get("surfaceContainer"));
+            int outline = colors.get("outline");
+            int oldOutline = hasLive ? LiveColors.outline : effectiveOldColors.get("outline");
+            int primary = colors.get("primary");
+            int oldPrimary = hasLive ? LiveColors.primary : effectiveOldColors.get("primary");
+            int onPrimary = colors.get("onPrimary");
+            int oldOnPrimary = hasLive ? LiveColors.onPrimary : effectiveOldColors.get("onPrimary");
+            int onSurfaceContainer =
+                    isOledTheme ? colors.get("onSurface") : colors.get("onSurfaceContainer");
+            int oldOnSurfaceContainer =
+                    isOledTheme
+                            ? (hasLive ? LiveColors.onSurface : effectiveOldColors.get("onSurface"))
+                            : (hasLive
+                                    ? LiveColors.onSurfaceContainer
+                                    : effectiveOldColors.get("onSurfaceContainer"));
+            int onSurface = colors.get("onSurface");
+            int oldOnSurface = hasLive ? LiveColors.onSurface : effectiveOldColors.get("onSurface");
 
-        binding.expandedPlayer.mesh.setColors(surface, onPrimary, onTertiary);
+            binding.gradientView.setColors(surface, onPrimary, onTertiary);
 
-        Drawable nextBg = binding.expandedPlayer.nextButton.getBackground();
-        Drawable favBg = binding.expandedPlayer.favoriteButton.getBackground();
-        Drawable saveBg = binding.expandedPlayer.saveButton.getBackground();
-        Drawable prevBg = binding.expandedPlayer.previousButton.getBackground();
+            Drawable nextBg = binding.expandedPlayer.nextButton.getBackground();
+            Drawable favBg = binding.expandedPlayer.favoriteButton.getBackground();
+            Drawable saveBg = binding.expandedPlayer.saveButton.getBackground();
+            Drawable prevBg = binding.expandedPlayer.previousButton.getBackground();
 
-        GradientDrawable d3 =
-                (GradientDrawable) binding.expandedPlayer.songInfoText.getBackground();
+            GradientDrawable d3 =
+                    (GradientDrawable) binding.expandedPlayer.songInfoText.getBackground();
+            
+            GradientDrawable d = (GradientDrawable) binding.expandedPlayer.actionsContainer.getBackground();
 
-        XSeekbar seekbar = binding.expandedPlayer.songSeekbar;
+            XSeekbar seekbar = binding.expandedPlayer.songSeekbar;
 
-        ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
-        va.setDuration(500);
-        va.addUpdateListener(
-                a -> {
-                    float f = (float) a.getAnimatedValue();
-                    int iop = XUtils.interpolateColor(oldOnPrimary, onPrimary, f);
-                    int ip = XUtils.interpolateColor(oldPrimary, primary, f);
-                    int iot = XUtils.interpolateColor(oldOnTertiary, onTertiary, f);
-                    int it = XUtils.interpolateColor(oldTertiary, tertiary, f);
-                    int is = XUtils.interpolateColor(oldSurface, surface, f);
-                    int isc = XUtils.interpolateColor(oldSurfaceContainer, surfaceContainer, f);
-                    int io = XUtils.interpolateColor(oldOutline, outline, f);
-                    int iosc =
-                            XUtils.interpolateColor(oldOnSurfaceContainer, onSurfaceContainer, f);
-                    int ios = XUtils.interpolateColor(oldOnSurface, onSurface, f);
+            ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
+            va.setDuration(500);
+            va.addUpdateListener(
+                    a -> {
+                        float f = (float) a.getAnimatedValue();
+                        int iop = XUtils.interpolateColor(oldOnPrimary, onPrimary, f);
+                        int ip = XUtils.interpolateColor(oldPrimary, primary, f);
+                        int iot = XUtils.interpolateColor(oldOnTertiary, onTertiary, f);
+                        int it = XUtils.interpolateColor(oldTertiary, tertiary, f);
+                        int is = XUtils.interpolateColor(oldSurface, surface, f);
+                        int isc = XUtils.interpolateColor(oldSurfaceContainer, surfaceContainer, f);
+                        int io = XUtils.interpolateColor(oldOutline, outline, f);
+                        int iosc =
+                                XUtils.interpolateColor(oldOnSurfaceContainer, onSurfaceContainer, f);
+                        int ios = XUtils.interpolateColor(oldOnSurface, onSurface, f);
 
-                    LiveColors.primary = ip;
-                    LiveColors.onPrimary = iop;
-                    LiveColors.tertiary = it;
-                    LiveColors.onTertiary = iot;
-                    LiveColors.surface = is;
-                    LiveColors.surfaceContainer = isc;
-                    LiveColors.outline = io;
-                    LiveColors.onSurface = ios;
-                    LiveColors.onSurfaceContainer = iosc;
+                        LiveColors.primary = ip;
+                        LiveColors.onPrimary = iop;
+                        LiveColors.tertiary = it;
+                        LiveColors.onTertiary = iot;
+                        LiveColors.surface = is;
+                        LiveColors.surfaceContainer = isc;
+                        LiveColors.outline = io;
+                        LiveColors.onSurface = ios;
+                        LiveColors.onSurfaceContainer = iosc;
 
-                    binding.expandedPlayer.toggleView.setShapeColor(iop);
-                    binding.expandedPlayer.toggleView.setIconColor(ip);
-                    binding.expandedPlayer.xlyricsView.setLyricColor(ios, io);
-                    binding.expandedPlayer.placeholderLyricsText.setTextColor(ios);
+                        binding.expandedPlayer.toggleView.setShapeColor(iop);
+                        binding.expandedPlayer.toggleView.setIconColor(ip);
+                        binding.xlyricsView.setLyricColor(ios, io);
+                        binding.placeholderLyricsText.setTextColor(ios);
 
-                    binding.expandedPlayer.nextButton.setIconColorFilter(it);
-                    binding.expandedPlayer.favoriteButton.setIconColorFilter(it);
-                    binding.expandedPlayer.saveButton.setIconColorFilter(it);
-                    binding.expandedPlayer.previousButton.setIconColorFilter(it);
+                        binding.expandedPlayer.nextButton.setIconColorFilter(it);
+                        binding.expandedPlayer.favoriteButton.setIconColorFilter(it);
+                        binding.expandedPlayer.saveButton.setIconColorFilter(it);
+                        binding.expandedPlayer.previousButton.setIconColorFilter(it);
 
-                    nextBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
-                    favBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
-                    saveBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
-                    prevBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
+                        nextBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
+                        favBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
+                        saveBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
+                        prevBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
 
-                    playerSurface = is;
+                        playerSurface = is;
 
-                    binding.miniPlayer.setSheetBackgroundColor(playerSurface);
-                    binding.expandedPlayer.lyricsContainer.setBackgroundColor(playerSurface);
+                        binding.miniPlayer.setSheetBackgroundColor(playerSurface);
+                        binding.lyricsContainer.setBackgroundColor(playerSurface);
 
-                    binding.expandedPlayer.songInfoLayout.setColor(isc);
+                        binding.expandedPlayer.songInfoLayout.setColor(isc);
 
-                    binding.collapsedPlayer.musicProgress.setIndicatorColor(ip);
-                    seekbar.setColor(ip);
+                        binding.collapsedPlayer.musicProgress.setIndicatorColor(ip);
+                        seekbar.setColor(ip);
 
-                    binding.collapsedPlayer.action.setIconTint(ColorStateList.valueOf(iop));
-                    binding.collapsedPlayer.action.setBackgroundColor(ip);
-                    binding.collapsedPlayer.action.setRippleColor(
-                            ColorStateList.valueOf(ColorUtils.setAlphaComponent(io, 100)));
+                        binding.collapsedPlayer.action.setIconTint(ColorStateList.valueOf(iop));
+                        binding.collapsedPlayer.action.setBackgroundColor(ip);
+                        binding.collapsedPlayer.action.setRippleColor(
+                                ColorStateList.valueOf(ColorUtils.setAlphaComponent(io, 100)));
+                    
+                        d.setColor(isc);
+                    
+                        binding.expandedPlayer.lyricsButton.setIconTint(ColorStateList.valueOf(isOledTheme? 0xffbdbdbd : iosc));
+                        binding.expandedPlayer.lyricsButton.setRippleColor(ColorStateList.valueOf(io));
 
-                    binding.expandedPlayer.artistBigTitle.setTextColor(iosc);
-                    binding.expandedPlayer.songBigTitle.setTextColor(ios);
+                        binding.expandedPlayer.artistBigTitle.setTextColor(iosc);
+                        binding.expandedPlayer.songBigTitle.setTextColor(ios);
 
-                    binding.collapsedPlayer.title.setTextColor(ios);
-                    binding.collapsedPlayer.subtitle.setTextColor(io);
+                        binding.collapsedPlayer.title.setTextColor(ios);
+                        binding.collapsedPlayer.subtitle.setTextColor(io);
 
-                    binding.expandedPlayer.currentDurationText.setTextColor(iosc);
-                    binding.expandedPlayer.totalDurationText.setTextColor(iosc);
-                    binding.expandedPlayer.songInfoText.setTextColor(iosc);
-                });
-        va.addListener(
-                new AnimatorListenerAdapter() {
-                    private boolean canceled;
+                        binding.expandedPlayer.currentDurationText.setTextColor(iosc);
+                        binding.expandedPlayer.totalDurationText.setTextColor(iosc);
+                        binding.expandedPlayer.songInfoText.setTextColor(iosc);
+                    });
+            va.addListener(
+                    new AnimatorListenerAdapter() {
+                        private boolean canceled;
 
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                        canceled = true;
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        if (!canceled) {
-                            effectiveOldColors = new HashMap<>(colors);
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+                            canceled = true;
                         }
-                    }
-                });
-        if (colorAnimator != null) {
-            colorAnimator.cancel();
-        }
 
-        colorAnimator = va;
-        va.start();
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            if (!canceled) {
+                                effectiveOldColors = new HashMap<>(colors);
+                            }
+                        }
+                    });
+            if (colorAnimator != null) {
+                colorAnimator.cancel();
+            }
+
+            colorAnimator = va;
+            va.start();
+        } finally {
+            Trace.endSection();
+        }
     }
 
     public void updateContent(int position, boolean isResuming) {
@@ -605,6 +796,7 @@ public class UIManager {
 
         if (position >= 0 && RuntimeData.songs.size() > 0 && position < RuntimeData.songs.size())
             syncPlayerUI(position, isResuming);
+            loadLyrics(RuntimeData.songs.get(position).path);
 
         if (isResuming && CallbackInterface.service() != null) {
             if (CallbackInterface.service().isPlaying())
@@ -614,61 +806,66 @@ public class UIManager {
     }
 
     public void syncPlayerUI(int position, boolean isResuming) {
-        updateMaxValue(position, isResuming);
-        updateCoverPager(position);
-        binding.collapsedPlayer.title.setText(RuntimeData.songs.get(position).title);
-        binding.collapsedPlayer.subtitle.setText(RuntimeData.songs.get(position).artist);
+        Trace.beginSection("UM:syncPlayerUI");
+        try {
+            updateMaxValue(position, isResuming);
+            updateCoverPager(position);
+            binding.collapsedPlayer.title.setText(RuntimeData.songs.get(position).title);
+            binding.collapsedPlayer.subtitle.setText(RuntimeData.songs.get(position).artist);
 
-        if (!isResuming) {
+            if (!isResuming) {
 
-            binding.expandedPlayer
-                    .artistBigTitle
-                    .animate()
-                    .alpha(0f)
-                    .translationX(-20f)
-                    .setDuration(100)
-                    .start();
-            binding.expandedPlayer
-                    .songBigTitle
-                    .animate()
-                    .alpha(0f)
-                    .translationX(-20f)
-                    .setDuration(100)
-                    .start();
-            binding.expandedPlayer
-                    .totalDurationText
-                    .animate()
-                    .alpha(0f)
-                    .translationX(-20f)
-                    .setDuration(100)
-                    .start();
-            binding.expandedPlayer
-                    .currentDurationText
-                    .animate()
-                    .alpha(0f)
-                    .translationX(-20f)
-                    .setDuration(100)
-                    .start();
+                binding.expandedPlayer
+                        .artistBigTitle
+                        .animate()
+                        .alpha(0f)
+                        .translationX(-20f)
+                        .setDuration(100)
+                        .start();
+                binding.expandedPlayer
+                        .songBigTitle
+                        .animate()
+                        .alpha(0f)
+                        .translationX(-20f)
+                        .setDuration(100)
+                        .start();
+                binding.expandedPlayer
+                        .totalDurationText
+                        .animate()
+                        .alpha(0f)
+                        .translationX(-20f)
+                        .setDuration(100)
+                        .start();
+                binding.expandedPlayer
+                        .currentDurationText
+                        .animate()
+                        .alpha(0f)
+                        .translationX(-20f)
+                        .setDuration(100)
+                        .start();
 
-            if (!isResuming)
-                binding.expandedPlayer.songInfoText.animate().alpha(0f).setDuration(100).start();
+                if (!isResuming)
+                    binding.expandedPlayer.songInfoText.animate().alpha(0f).setDuration(100).start();
 
-            handler = new Handler(Looper.getMainLooper());
+                handler = new Handler(Looper.getMainLooper());
 
-            handler.postDelayed(
-                    () -> {
-                        updateSongInfoLayout(position, true);
+                handler.postDelayed(
+                        () -> {
+                            updateSongInfoLayout(position, true);
 
-                        binding.expandedPlayer.totalDurationText.setTranslationX(20f);
-                        binding.expandedPlayer.currentDurationText.setTranslationX(20f);
-                        binding.expandedPlayer.songBigTitle.setTranslationX(20f);
-                        binding.expandedPlayer.artistBigTitle.setTranslationX(20f);
-                    },
-                    110);
+                            binding.expandedPlayer.totalDurationText.setTranslationX(20f);
+                            binding.expandedPlayer.currentDurationText.setTranslationX(20f);
+                            binding.expandedPlayer.songBigTitle.setTranslationX(20f);
+                            binding.expandedPlayer.artistBigTitle.setTranslationX(20f);
+                        },
+                        110);
 
-        } else {
-            updateTexts(position, false);
-            updateSongInfoLayout(position, !isResuming);
+            } else {
+                updateTexts(position, false);
+                updateSongInfoLayout(position, !isResuming);
+            }
+        } finally {
+            Trace.endSection();
         }
     }
 
@@ -710,141 +907,145 @@ public class UIManager {
     }
 
     private void updateSongInfoLayout(int pos, boolean animate) {
-        if (RuntimeData.songs.isEmpty()) return;
-
-        int index = -1;
-
-        if (pos == -1) {
-            if (CallbackInterface.service() != null) {
-                index = CallbackInterface.service().getCurrentPosition();
-                if (index == -1) return;
-            } else {
-                return;
-            }
-        } else {
-            index = pos;
-        }
-
-        final String path;
-
+        Trace.beginSection("UM:updateSongInfoLayout");
         try {
-            path = RuntimeData.songs.get(index).path;
-        } catch (IndexOutOfBoundsException e) {
-            e.printStackTrace();
-            return;
-        }
+            if (RuntimeData.songs.isEmpty()) return;
 
-        final long requestId = ++metadataRequestId;
+            int index = -1;
 
-        metadataExecutor.execute(
-                () -> {
-                    String mime = "Unknown";
-                    int kbps = -1;
-                    String sampleRate = "Unknown";
+            if (pos == -1) {
+                if (CallbackInterface.service() != null) {
+                    index = CallbackInterface.service().getCurrentPosition();
+                    if (index == -1) return;
+                } else {
+                    return;
+                }
+            } else {
+                index = pos;
+            }
 
-                    try {
-                        mime = XUtils.getAudioCodec(activity, Uri.fromFile(new File(path)));
+            final String path;
 
-                        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-                        mmr.setDataSource(path);
-
-                        String br =
-                                mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
-
-                        String sr =
-                                mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE);
-
-                        mmr.release();
-
-                        if (br != null) {
-                            kbps = Math.abs(Integer.parseInt(br) / 1000);
-                        }
-
-                        if (sr != null) {
-                            int hz = Integer.parseInt(sr);
-                            sampleRate = hz >= 1000 ? (hz / 1000f) + " kHz" : hz + " Hz";
-                        }
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    final String finalMime = mime;
-                    final int finalKbps = kbps;
-                    final String finalSampleRate = sampleRate;
-
-                    binding.expandedPlayer.songInfoText.post(
-        () -> {
-            if (requestId != metadataRequestId) {
+            try {
+                path = RuntimeData.songs.get(index).path;
+            } catch (IndexOutOfBoundsException e) {
+                e.printStackTrace();
                 return;
             }
 
-            String text =
-                    finalKbps > 0
-                            ? finalMime
-                                    + " • "
-                                    + finalKbps
-                                    + " kbps • "
-                                    + finalSampleRate
-                            : finalMime + " • " + finalSampleRate;
+            final long requestId = ++metadataRequestId;
 
-            binding.expandedPlayer.songInfoText.setText(text);
-            
-            float effectiveWidth = Math.min(
-        binding.expandedPlayer.songInfoText.getPaint()
-                .measureText(binding.expandedPlayer.songInfoText.getText().toString())
-                + binding.expandedPlayer.songInfoText.getPaddingLeft()
-                + binding.expandedPlayer.songInfoText.getPaddingRight(),
-        binding.expandedPlayer.songInfoText.getWidth()
-);
+            metadataExecutor.execute(() -> {
+                        String mime = "Unknown";
+                        int kbps = -1;
+                        String sampleRate = "Unknown";
 
-binding.expandedPlayer.songInfoLayout.update(effectiveWidth);
-            
-            
-            updateTexts(pos, !animate);
+                        try {
+                            mime = XUtils.getAudioCodec(activity, Uri.fromFile(new File(path)));
 
-            binding.expandedPlayer.songInfoText.post(() -> {
-                //binding.miniPlayer.forceRequestLayout();
-            });
+                            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                            mmr.setDataSource(path);
 
-            binding.expandedPlayer
-                    .artistBigTitle
-                    .animate()
-                    .alpha(1f)
-                    .translationX(0f)
-                    .setDuration(120)
-                    .start();
-            binding.expandedPlayer
-                    .songBigTitle
-                    .animate()
-                    .alpha(1f)
-                    .translationX(0f)
-                    .setDuration(120)
-                    .start();
-            binding.expandedPlayer
-                    .currentDurationText
-                    .animate()
-                    .alpha(1f)
-                    .translationX(0f)
-                    .setDuration(120)
-                    .start();
-            binding.expandedPlayer
-                    .totalDurationText
-                    .animate()
-                    .alpha(1f)
-                    .translationX(0f)
-                    .setDuration(120)
-                    .start();
-            if (animate)
+                            String br =
+                                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
+
+                            String sr =
+                                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE);
+
+                            mmr.release();
+
+                            if (br != null) {
+                                kbps = Math.abs(Integer.parseInt(br) / 1000);
+                            }
+
+                            if (sr != null) {
+                                int hz = Integer.parseInt(sr);
+                                sampleRate = hz >= 1000 ? (hz / 1000f) + " kHz" : hz + " Hz";
+                            }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        final String finalMime = mime;
+                        final int finalKbps = kbps;
+                        final String finalSampleRate = sampleRate;
+
+                        binding.expandedPlayer.songInfoText.post(
+            () -> {
+                if (requestId != metadataRequestId) {
+                    return;
+                }
+
+                String text =
+                        finalKbps > 0
+                                ? finalMime
+                                        + " • "
+                                        + finalKbps
+                                        + " kbps • "
+                                        + finalSampleRate
+                                : finalMime + " • " + finalSampleRate;
+
+                binding.expandedPlayer.songInfoText.setText(text);
+                
+                float effectiveWidth = Math.min(
+            binding.expandedPlayer.songInfoText.getPaint()
+                    .measureText(binding.expandedPlayer.songInfoText.getText().toString())
+                    + binding.expandedPlayer.songInfoText.getPaddingLeft()
+                    + binding.expandedPlayer.songInfoText.getPaddingRight(),
+            binding.expandedPlayer.songInfoText.getWidth()
+    );
+
+                binding.expandedPlayer.songInfoLayout.update(effectiveWidth);
+                
+                
+                updateTexts(pos, !animate);
+
+                binding.expandedPlayer.songInfoText.post(() -> {
+                    binding.miniPlayer.requestLayout();
+                });
+
                 binding.expandedPlayer
-                        .songInfoText
+                        .artistBigTitle
                         .animate()
                         .alpha(1f)
+                        .translationX(0f)
                         .setDuration(120)
                         .start();
-        });
+                binding.expandedPlayer
+                        .songBigTitle
+                        .animate()
+                        .alpha(1f)
+                        .translationX(0f)
+                        .setDuration(120)
+                        .start();
+                binding.expandedPlayer
+                        .currentDurationText
+                        .animate()
+                        .alpha(1f)
+                        .translationX(0f)
+                        .setDuration(120)
+                        .start();
+                binding.expandedPlayer
+                        .totalDurationText
+                        .animate()
+                        .alpha(1f)
+                        .translationX(0f)
+                        .setDuration(120)
+                        .start();
+                if (animate)
+                    binding.expandedPlayer
+                            .songInfoText
+                            .animate()
+                            .alpha(1f)
+                            .setDuration(120)
+                            .start();
+            });
 
-                });
+            });
+        } finally {
+            Trace.endSection();
+        }
     }
 
     private void updateCoverPager(int index) {
@@ -868,5 +1069,121 @@ binding.expandedPlayer.songInfoLayout.update(effectiveWidth);
             
             return Unit.INSTANCE;
         });
+    }
+
+    public void maybeRestoreUIState() {
+        if (viewModel.isDataSaved()) {
+            int savedState = viewModel.getLayoutState();
+
+            ViewKt.doOnLayout(binding.bottomNavigation, v -> {
+                ViewKt.doOnLayout(binding.tabLayout, v2 -> {
+                    binding.miniPlayer.setFloatingMargins(sideMargins, savedState >= 4 ? XUtils.getNavigationBarHeight(activity) : bottomMargin);
+
+                    setLayoutState(savedState, "restore state - viemodel");
+                    updateColors();
+
+                    return Unit.INSTANCE;
+                });
+                return Unit.INSTANCE;
+            });
+
+            if (CallbackInterface.service() != null && CallbackInterface.service().isAnythingPlaying()) {
+                syncPlayerUI(CallbackInterface.service().getCurrentPosition(), true);
+                if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
+                if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
+            
+                boolean playing = CallbackInterface.service().isPlaying();
+                activity.runOnUiThread(() -> {
+                    if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateVumeter(playing);
+                    if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateVumeter(playing);    
+                });
+                if (playing) binding.expandedPlayer.toggleView.forcePlayState();
+                binding.expandedPlayer.songSeekbar.setAnimate(playing);
+                binding.collapsedPlayer.action.setIconResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
+            }    
+            
+            viewModel.markDataAsSaved(false);
+        } else if (CallbackInterface.service() != null && CallbackInterface.service().isAnythingPlaying()) {
+            syncPlayerUI(CallbackInterface.service().getCurrentPosition(), true);
+            if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
+            if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
+            boolean playing = CallbackInterface.service().isPlaying();
+            activity.runOnUiThread(() -> {
+                if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateVumeter(playing);
+                if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateVumeter(playing);    
+            });
+            if (playing) binding.expandedPlayer.toggleView.forcePlayState();
+            
+            binding.expandedPlayer.songSeekbar.setAnimate(playing);
+            binding.collapsedPlayer.action.setIconResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
+        
+            ViewKt.doOnLayout(binding.bottomNavigation, v -> {
+                ViewKt.doOnLayout(binding.tabLayout, v2 -> {
+                    binding.miniPlayer.setFloatingMargins(sideMargins, bottomMargin);
+                    setLayoutState(LAYOUT_STATE_EXPOSE_FULL, true, "restore state - service");
+                    updateColors();
+                    return Unit.INSTANCE;
+                });
+                return Unit.INSTANCE;
+            });
+        } else {
+            ViewKt.doOnLayout(binding.bottomNavigation, v -> {
+                ViewKt.doOnLayout(binding.tabLayout, v2 -> {
+                    binding.miniPlayer.setFloatingMargins(sideMargins, bottomMargin);
+                    setLayoutState(LAYOUT_STATE_EXPOSE_TABS_BNV, true, "restore state - null");
+                    return Unit.INSTANCE;
+                });
+                return Unit.INSTANCE;
+            });
+        }
+    }
+
+    public void saveState() {
+        viewModel.setLastPosition(activity.getController().getCurrentMediaItemIndex());
+        computeState();
+        viewModel.saveLayoutState(layoutState);
+        viewModel.setBNVAsHidden(bnvHidden);
+        viewModel.saveBNVPosition(activity.getBinding().bottomNavigation.getSelectedItemId());
+    }
+
+    public void loadLyrics(String path) {
+		LyricsExtractor.extract(path, lyrics -> {
+            if (lyrics != null && !lyrics.isEmpty()) {
+                LyricsParser.parse(lyrics, result -> {
+                    binding.xlyricsView.post(() -> {
+                        binding.xlyricsView.setLyrics(result.lines);
+                        binding.xlyricsView.setListener(UIManager.this);
+						
+						MaterialFadeThrough mft = new MaterialFadeThrough();
+						mft.setDuration(300);
+						TransitionManager.beginDelayedTransition(binding.containerRoot);
+						binding.lyricsPlaceholder.setVisibility(View.GONE);
+						binding.xlyricsView.setVisibility(View.VISIBLE);
+                    });
+                });
+            } else {
+                MaterialFadeThrough mft = new MaterialFadeThrough();
+				mft.setDuration(300);
+				TransitionManager.beginDelayedTransition(binding.containerRoot);
+				binding.xlyricsView.setVisibility(View.GONE);
+				binding.lyricsPlaceholder.setVisibility(View.VISIBLE);
+            }
+        });
+	}
+
+    @Override
+    public void onSeekRequested(long ms) {
+        if (activity.getController() != null) {
+            activity.getController().seekTo(ms);
+        }
+    }
+
+    public void loadSettings() {
+        isOledTheme = XUtils.isDarkMode(activity) && DataManager.isOledThemeEnabled();
+        if (isOledTheme) binding.gradientView.setVisibility(View.GONE);
+        isBlurOn = DataManager.isBlurOn();
+        if (XUtils.areBlursOrDynamicColorsSupported() && !isBlurOn) binding.Coordinator.setRenderEffect(null);
+		binding.xlyricsView.updateActiveStates();
+        binding.gradientView.setVisibility((DataManager.sp.getBoolean("enable_lyrics_gradient", false) && !isOledTheme )? View.VISIBLE : View.GONE);
     }
 }

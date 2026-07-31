@@ -3,6 +3,7 @@ package com.xapps.media.xmusic.widget;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.Trace;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -40,24 +41,29 @@ public class PillBackgroundView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+        Trace.beginSection("PBV:onDraw");
+        try {
+            super.onDraw(canvas);
 
-        float width = Math.min(effectiveWidth, getWidth());
+            float width = Math.min(effectiveWidth, getWidth());
 
-        if (width <= 0f) return;
+            if (width <= 0f) return;
 
-        float left = (getWidth() - width) / 2f;
-        float right = left + width;
-        float radius = getHeight() / 2f;
+            float left = (getWidth() - width) / 2f;
+            float right = left + width;
+            float radius = getHeight() / 2f;
 
-        canvas.drawRoundRect(
-                left,
-                0f,
-                right,
-                getHeight(),
-                radius,
-                radius,
-                paint
-        );
+            canvas.drawRoundRect(
+                    left,
+                    0f,
+                    right,
+                    getHeight(),
+                    radius,
+                    radius,
+                    paint
+            );
+        } finally {
+            Trace.endSection();
+        }
     }
 }

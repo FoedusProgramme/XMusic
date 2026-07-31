@@ -13,8 +13,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@null"
+        android:stateListAnimator="@null"
+        app:elevation="0dp"
         app:liftOnScroll="false"
         app:layout_collapseMode="pin">
+
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsing_toolbar"
             android:layout_width="match_parent"
@@ -22,8 +25,8 @@
             android:background="@null"
             app:contentScrim="@android:color/transparent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
-            app:layout_scrollFlags="scroll|enterAlwaysCollapsed|exitUntilCollapsed"
-            app:layout_collapseMode="pin">
+            app:layout_collapseMode="pin"
+            app:layout_scrollFlags="scroll|enterAlwaysCollapsed|exitUntilCollapsed">
 
             <com.google.android.material.search.SearchBar
                 android:id="@+id/search_bar"

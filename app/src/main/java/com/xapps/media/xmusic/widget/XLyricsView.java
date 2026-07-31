@@ -9,6 +9,7 @@ import android.graphics.drawable.RippleDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 import android.os.Build;
+import android.os.Trace;
 import android.text.Layout;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -46,7 +47,6 @@ public class XLyricsView extends RecyclerView {
     private static final float BLUR_FACTOR = 4f;
     private static final int SEEK_THRESHOLD = 1500;
     private static final int RECOVERY_DELAY_MS = 2000;
-    private static final int WAVE_DISTANCE_LIMIT = 10;
 
     private final List<LyricItem> lyricItems = new ArrayList<>();
     private final List<Integer> activeIndexes = new ArrayList<>();
@@ -56,9 +56,6 @@ public class XLyricsView extends RecyclerView {
     private PlaybackControlListener listener;
     private int activeIndex = -1;
     private int currentProgressMs = 0;
-    private long waveTriggerTime = 0;
-    private int waveAnchorIndex = -1;
-    private int accumulatedDy = 0;
     private int currentColor, rippleColor;
 
     private boolean isAutoScrollPaused = false;
@@ -75,16 +72,6 @@ public class XLyricsView extends RecyclerView {
             int finalTarget = activeIndex;
             if (finalTarget < lyricItems.size() && lyricItems.get(finalTarget).mainLine.isWaitingDots && finalTarget + 1 < lyricItems.size()) {
                 finalTarget++;
-            }
-            if (getLayoutManager() instanceof LinearLayoutManager) {
-                int firstVis = ((LinearLayoutManager) getLayoutManager()).findFirstVisibleItemPosition();
-                if (Math.abs(firstVis - finalTarget) <= WAVE_DISTANCE_LIMIT) {
-                    waveAnchorIndex = firstVis;
-                    waveTriggerTime = android.os.SystemClock.uptimeMillis();
-                    accumulatedDy = 0;
-                } else {
-                    waveAnchorIndex = -1;
-                }
             }
             setActiveLine(finalTarget);
         }
@@ -106,7 +93,7 @@ public class XLyricsView extends RecyclerView {
 
     public void setLyricColor(int color, int color2) {
         currentColor = color;
-		rippleColor = color2;
+        rippleColor = color2;
         if (getAdapter() != null) getAdapter().notifyDataSetChanged();
     }
 
@@ -128,8 +115,6 @@ public class XLyricsView extends RecyclerView {
                         View child = getChildAt(i);
                         LyricViewHolder holder = (LyricViewHolder) getChildViewHolder(child);
                         if (holder != null) {
-                            LinearLayout container = (LinearLayout) holder.wrapper.getChildAt(0);
-                            container.removeCallbacks(holder.springRunnable);
                             holder.springY.animateToFinalPosition(0f);
                         }
                     }
@@ -139,10 +124,12 @@ public class XLyricsView extends RecyclerView {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (dy == 0 || isAutoScrollPaused || waveAnchorIndex == -1) return;
+                if (dy == 0 || isAutoScrollPaused) return;
 
-                long elapsed = android.os.SystemClock.uptimeMillis() - waveTriggerTime;
-                accumulatedDy += dy;
+                LinearLayoutManager llm = (LinearLayoutManager) getLayoutManager();
+                if (llm == null) return;
+
+                int firstVis = llm.findFirstVisibleItemPosition();
 
                 for (int i = 0; i < getChildCount(); i++) {
                     View child = getChildAt(i);
@@ -152,22 +139,15 @@ public class XLyricsView extends RecyclerView {
                     if (pos == NO_POSITION || holder == null) continue;
 
                     LinearLayout container = (LinearLayout) holder.wrapper.getChildAt(0);
+                    int dist = Math.abs(pos - firstVis);
 
-                    int dist = Math.abs(pos - waveAnchorIndex);
-                    if (dist == 0) {
-                        container.setTranslationY(0f);
-                        continue;
-                    }
+                    float waveBoost = (dy > 0 ? 1 : -1) * (0.1f * dist);
+                    container.setTranslationY(container.getTranslationY() + dy + waveBoost);
 
-                    long delay = 100L + (dist * 50L);
+                    float stiffness = Math.max(15f, 200f - (dist * 20f));
+                    holder.springY.getSpring().setStiffness(stiffness);
 
-                    if (elapsed < delay) {
-                        float waveBoost = (dy > 0 ? 1 : -1) * (0.1f * (dist+1));
-                        container.setTranslationY(container.getTranslationY() + dy + waveBoost);
-                        holder.springY.cancel();
-                        container.removeCallbacks(holder.springRunnable);
-                        container.postDelayed(holder.springRunnable, delay - elapsed);
-                    }
+                    holder.springY.animateToFinalPosition(0f);
                 }
             }
         });
@@ -241,215 +221,208 @@ public class XLyricsView extends RecyclerView {
     }
 
     public void onProgress(int progressMs) {
-        int diff = Math.abs(progressMs - this.currentProgressMs);
-        boolean justSeeked = diff > SEEK_THRESHOLD;
-        this.currentProgressMs = progressMs;
+        Trace.beginSection("XLV:onProgress");
+        try {
+            int diff = Math.abs(progressMs - this.currentProgressMs);
+            boolean justSeeked = diff > SEEK_THRESHOLD;
+            this.currentProgressMs = progressMs;
 
-        if (lyricItems.isEmpty()) return;
+            if (lyricItems.isEmpty()) return;
 
-        for (int i = 0; i < getChildCount(); i++) {
-            View child = getChildAt(i);
-            if (child instanceof FrameLayout) {
-                LinearLayout container = (LinearLayout) ((FrameLayout) child).getChildAt(0);
-                for (int j = 0; j < container.getChildCount(); j++) {
-                    View innerChild = container.getChildAt(j);
-                    if (innerChild instanceof XDynamicContainer) {
-                        XDynamicContainer dyn = (XDynamicContainer) innerChild;
-                        if (dyn.getChildCount() > 0) {
-                            View dynChild = dyn.getChildAt(0);
-                            if (dynChild instanceof XLyricsLineView) {
-                                ((XLyricsLineView) dynChild).updateProgress(progressMs, false);
-                            } else if (dynChild instanceof XWaitingDotsView) {
-                                ((XWaitingDotsView) dynChild).updateProgress(progressMs);
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                if (child instanceof FrameLayout) {
+                    LinearLayout container = (LinearLayout) ((FrameLayout) child).getChildAt(0);
+                    for (int j = 0; j < container.getChildCount(); j++) {
+                        View innerChild = container.getChildAt(j);
+                        if (innerChild instanceof XDynamicContainer) {
+                            XDynamicContainer dyn = (XDynamicContainer) innerChild;
+                            if (dyn.getChildCount() > 0) {
+                                View dynChild = dyn.getChildAt(0);
+                                if (dynChild instanceof XLyricsLineView) {
+                                    ((XLyricsLineView) dynChild).updateProgress(progressMs, false);
+                                } else if (dynChild instanceof XWaitingDotsView) {
+                                    ((XWaitingDotsView) dynChild).updateProgress(progressMs);
+                                }
                             }
+                        } else if (innerChild instanceof XLyricsLineView) {
+                            ((XLyricsLineView) innerChild).updateProgress(progressMs, false);
                         }
-                    } else if (innerChild instanceof XLyricsLineView) {
-                        ((XLyricsLineView) innerChild).updateProgress(progressMs, false);
                     }
                 }
             }
-        }
 
-        int topActiveIdx = -1;
-        int nextMainIdx = -1;
-        List<Integer> newActiveIndexes = new ArrayList<>();
+            int topActiveIdx = -1;
+            int nextMainIdx = -1;
+            List<Integer> newActiveIndexes = new ArrayList<>();
 
-        for (int i = 0; i < lyricItems.size(); i++) {
-            LyricItem item = lyricItems.get(i);
-            boolean isActive;
-            long mainEndTime = getEndTimeForLine(item.mainIndex);
-            
-            if (item.linkedBgLine != null) {
-                mainEndTime = Math.max(mainEndTime, getEndTimeForLine(item.linkedBgIndex));
-            }
+            for (int i = 0; i < lyricItems.size(); i++) {
+                LyricItem item = lyricItems.get(i);
+                boolean isActive;
+                long mainEndTime = getEndTimeForLine(item.mainIndex);
+                
+                if (item.linkedBgLine != null) {
+                    mainEndTime = Math.max(mainEndTime, getEndTimeForLine(item.linkedBgIndex));
+                }
 
-            if (item.mainLine.isWaitingDots) {
-                isActive = progressMs >= item.mainLine.time && progressMs <= item.mainLine.endTime;
-            } else if (item.mainLine.isBackground) {
-                isActive = progressMs >= (item.mainLine.time - 1000) && progressMs <= mainEndTime;
-            } else {
-                isActive = progressMs >= item.mainLine.time && progressMs <= mainEndTime;
-            }
+                if (item.mainLine.isWaitingDots) {
+                    isActive = progressMs >= item.mainLine.time && progressMs <= item.mainLine.endTime;
+                } else if (item.mainLine.isBackground) {
+                    isActive = progressMs >= (item.mainLine.time - 1000) && progressMs <= mainEndTime;
+                } else {
+                    isActive = progressMs >= item.mainLine.time && progressMs <= mainEndTime;
+                }
 
-            if (item.mainLine.isWaitingDots) {
-                if (justSeeked) {
-                    if (progressMs > item.mainLine.time + 500 && isActive) {
-                        suppressedIndexes.add(i);
-                    } else if (progressMs <= item.mainLine.time + 500) {
+                if (item.mainLine.isWaitingDots) {
+                    if (justSeeked) {
+                        if (progressMs > item.mainLine.time + 500 && isActive) {
+                            suppressedIndexes.add(i);
+                        } else if (progressMs <= item.mainLine.time + 500) {
+                            suppressedIndexes.remove(i);
+                        }
+                    }
+                    
+                    if (progressMs > getEndTimeForLine(item.mainIndex)) {
                         suppressedIndexes.remove(i);
+                    }
+
+                    if (suppressedIndexes.contains(i)) {
+                        isActive = false;
+                    }
+                }
+
+                if (isActive) {
+                    newActiveIndexes.add(i);
+                    if (!item.mainLine.isWaitingDots) topActiveIdx = i; 
+                }
+                if (!item.mainLine.isBackground && !item.mainLine.isWaitingDots && progressMs < item.mainLine.time && nextMainIdx == -1) {
+                    nextMainIdx = i;
+                }
+            }
+            
+            if (topActiveIdx == -1 && !newActiveIndexes.isEmpty()) {
+                topActiveIdx = newActiveIndexes.get(0);
+            }
+
+            boolean activeStatesChanged = !activeIndexes.equals(newActiveIndexes);
+            if (activeStatesChanged) {
+                activeIndexes.clear();
+                activeIndexes.addAll(newActiveIndexes);
+                updateActiveStates();
+            }
+
+            int targetFocus = (topActiveIdx != -1) ? topActiveIdx : (nextMainIdx != -1 ? nextMainIdx : 0);
+            
+            if (targetFocus != activeIndex) {
+                int oldIndex = activeIndex;
+                activeIndex = targetFocus;
+
+                int scrollTarget = targetFocus;
+                if (targetFocus != -1 && targetFocus < lyricItems.size() && lyricItems.get(targetFocus).mainLine.isWaitingDots) {
+                    if (targetFocus + 1 < lyricItems.size()) {
+                        scrollTarget = targetFocus + 1;
+                    }
+                }
+
+                boolean wasTransient = oldIndex != -1 && oldIndex < lyricItems.size() && 
+                    (lyricItems.get(oldIndex).mainLine.isWaitingDots || lyricItems.get(oldIndex).mainLine.isBackground);
+                boolean isNextAfterTransient = wasTransient && targetFocus == oldIndex + 1;
+
+                if (!isNextAfterTransient && !isAutoScrollPaused) {
+                    setActiveLine(scrollTarget);
+                }
+            } else if (activeStatesChanged && !isAutoScrollPaused && !justSeeked) {
+                int finalTarget = activeIndex;
+                if (finalTarget != -1 && finalTarget < lyricItems.size() && lyricItems.get(finalTarget).mainLine.isWaitingDots) {
+                    if (finalTarget + 1 < lyricItems.size()) {
+                        finalTarget = finalTarget + 1;
                     }
                 }
                 
-                if (progressMs > getEndTimeForLine(item.mainIndex)) {
-                    suppressedIndexes.remove(i);
-                }
-
-                if (suppressedIndexes.contains(i)) {
-                    isActive = false;
-                }
-            }
-
-            if (isActive) {
-                newActiveIndexes.add(i);
-                if (!item.mainLine.isWaitingDots) topActiveIdx = i; 
-            }
-            if (!item.mainLine.isBackground && !item.mainLine.isWaitingDots && progressMs < item.mainLine.time && nextMainIdx == -1) {
-                nextMainIdx = i;
-            }
-        }
-        
-        if (topActiveIdx == -1 && !newActiveIndexes.isEmpty()) {
-            topActiveIdx = newActiveIndexes.get(0);
-        }
-
-        boolean activeStatesChanged = !activeIndexes.equals(newActiveIndexes);
-        if (activeStatesChanged) {
-            activeIndexes.clear();
-            activeIndexes.addAll(newActiveIndexes);
-            updateActiveStates();
-        }
-
-        int targetFocus = (topActiveIdx != -1) ? topActiveIdx : (nextMainIdx != -1 ? nextMainIdx : 0);
-        if (targetFocus != activeIndex) {
-            int oldIndex = activeIndex;
-            activeIndex = targetFocus;
-
-            int scrollTarget = targetFocus;
-            if (targetFocus != -1 && targetFocus < lyricItems.size() && lyricItems.get(targetFocus).mainLine.isWaitingDots) {
-                if (targetFocus + 1 < lyricItems.size()) {
-                    scrollTarget = targetFocus + 1;
+                boolean isTransient = finalTarget != -1 && finalTarget < lyricItems.size() &&
+                    (lyricItems.get(finalTarget).mainLine.isWaitingDots || lyricItems.get(finalTarget).mainLine.isBackground);
+                
+                if (!isTransient) {
+                    setActiveLine(finalTarget);
                 }
             }
-
-            boolean wasTransient = oldIndex != -1 && oldIndex < lyricItems.size() && 
-                (lyricItems.get(oldIndex).mainLine.isWaitingDots || lyricItems.get(oldIndex).mainLine.isBackground);
-            boolean isNextAfterTransient = wasTransient && targetFocus == oldIndex + 1;
-
-            if (!isNextAfterTransient && !isAutoScrollPaused) {
-                setActiveLine(scrollTarget);
-            }
-
-            if (oldIndex != -1 && targetFocus != oldIndex && !isAutoScrollPaused) {
-                if (getLayoutManager() instanceof LinearLayoutManager) {
-                    if (Math.abs(targetFocus - oldIndex) <= WAVE_DISTANCE_LIMIT) {
-                        LinearLayoutManager llm = (LinearLayoutManager) getLayoutManager();
-                        waveAnchorIndex = llm.findFirstVisibleItemPosition();
-
-                        if (waveAnchorIndex == -1) {
-                            waveAnchorIndex = targetFocus;
-                        }
-
-                        waveTriggerTime = android.os.SystemClock.uptimeMillis();
-                        accumulatedDy = 0;
-                    } else {
-                        waveAnchorIndex = -1;
-                    }
-                }
-            }
-        } else if (activeStatesChanged && !isAutoScrollPaused && !justSeeked) {
-            int finalTarget = activeIndex;
-            if (finalTarget != -1 && finalTarget < lyricItems.size() && lyricItems.get(finalTarget).mainLine.isWaitingDots) {
-                if (finalTarget + 1 < lyricItems.size()) {
-                    finalTarget = finalTarget + 1;
-                }
-            }
-            
-            boolean isTransient = finalTarget != -1 && finalTarget < lyricItems.size() &&
-                (lyricItems.get(finalTarget).mainLine.isWaitingDots || lyricItems.get(finalTarget).mainLine.isBackground);
-            
-            if (!isTransient) {
-                setActiveLine(finalTarget);
-            }
+        } finally {
+            Trace.endSection();
         }
     }
 
     public void updateActiveStates() {
-        for (int i = 0; i < getChildCount(); i++) {
-            View child = getChildAt(i);
-            int pos = getChildAdapterPosition(child);
-            if (pos == NO_POSITION) continue;
+        Trace.beginSection("XLV:updateActiveStates");
+        try {
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                int pos = getChildAdapterPosition(child);
+                if (pos == NO_POSITION) continue;
 
-            boolean isActive = activeIndexes.contains(pos);
-            LinearLayout container = (LinearLayout) ((FrameLayout) child).getChildAt(0);
-            LyricItem item = lyricItems.get(pos);
+                boolean isActive = activeIndexes.contains(pos);
+                LinearLayout container = (LinearLayout) ((FrameLayout) child).getChildAt(0);
+                LyricItem item = lyricItems.get(pos);
 
-            int minDistance = Integer.MAX_VALUE;
-            if (activeIndexes.isEmpty()) {
-                minDistance = Math.abs(pos - activeIndex);
-            } else {
-                for (int activeIdx : activeIndexes) {
-                    minDistance = Math.min(minDistance, Math.abs(pos - activeIdx));
-                }
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (!isBlurEnabled || !DataManager.isBlurOn()) {
-                    container.setRenderEffect(null);
+                int minDistance = Integer.MAX_VALUE;
+                if (activeIndexes.isEmpty()) {
+                    minDistance = Math.abs(pos - activeIndex);
                 } else {
-                    float blurRadius = minDistance * BLUR_FACTOR;
-                    if (blurRadius > 0.1f) {
-                        container.setRenderEffect(RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP));
-                    } else {
-                        container.setRenderEffect(null);
+                    for (int activeIdx : activeIndexes) {
+                        minDistance = Math.min(minDistance, Math.abs(pos - activeIdx));
                     }
                 }
-            }
 
-            if (!item.mainLine.isWaitingDots) {
-                long scaleDelay = isActive ? 0 : 45;
-                container.animate()
-                    .scaleX(isActive ? 1.01f : 1.0f)
-                    .scaleY(isActive ? 1.01f : 1.0f)
-                    .setStartDelay(scaleDelay)
-                    .setDuration(isActive ? 350 : 300)
-                    .setInterpolator(yosEasing)
-                    .start();
-            }
-
-            for (int j = 0; j < container.getChildCount(); j++) {
-                View innerChild = container.getChildAt(j);
-                if (innerChild instanceof XDynamicContainer) {
-                    ((XDynamicContainer) innerChild).toggle(isActive, true);
-                    if (((ViewGroup) innerChild).getChildCount() > 0) {
-                        View dynChild = ((ViewGroup) innerChild).getChildAt(0);
-                        if (dynChild instanceof XLyricsLineView || dynChild instanceof XLyricsRomajiLineView) {
-                            float targetAlpha = 0.35f;
-                            if (dynChild instanceof XLyricsLineView) {
-                                targetAlpha = 0.0f;
-                            }
-                            dynChild.animate()
-                                .alpha(isActive ? 0.65f : targetAlpha)
-                                .setDuration(300)
-                                .start();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (!isBlurEnabled || !DataManager.isBlurOn()) {
+                        container.setRenderEffect(null);
+                    } else {
+                        float blurRadius = minDistance * BLUR_FACTOR;
+                        if (blurRadius > 0.1f) {
+                            container.setRenderEffect(RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP));
+                        } else {
+                            container.setRenderEffect(null);
                         }
                     }
-                } else if (innerChild instanceof XLyricsLineView) {
-                    innerChild.animate()
-                        .alpha(isActive ? 1.0f : 0.35f)
-                        .setDuration(300)
+                }
+
+                if (!item.mainLine.isWaitingDots) {
+                    long scaleDelay = isActive ? 0 : 45;
+                    container.animate()
+                        .scaleX(isActive ? 1.01f : 1.0f)
+                        .scaleY(isActive ? 1.01f : 1.0f)
+                        .setStartDelay(scaleDelay)
+                        .setDuration(isActive ? 350 : 300)
+                        .setInterpolator(yosEasing)
                         .start();
                 }
+
+                for (int j = 0; j < container.getChildCount(); j++) {
+                    View innerChild = container.getChildAt(j);
+                    if (innerChild instanceof XDynamicContainer) {
+                        ((XDynamicContainer) innerChild).toggle(isActive, true);
+                        if (((ViewGroup) innerChild).getChildCount() > 0) {
+                            View dynChild = ((ViewGroup) innerChild).getChildAt(0);
+                            if (dynChild instanceof XLyricsLineView || dynChild instanceof XLyricsRomajiLineView) {
+                                float targetAlpha = 0.35f;
+                                if (dynChild instanceof XLyricsLineView) {
+                                    targetAlpha = 0.0f;
+                                }
+                                dynChild.animate()
+                                    .alpha(isActive ? 0.65f : targetAlpha)
+                                    .setDuration(300)
+                                    .start();
+                            }
+                        }
+                    } else if (innerChild instanceof XLyricsLineView) {
+                        innerChild.animate()
+                            .alpha(isActive ? 1.0f : 0.35f)
+                            .setDuration(300)
+                            .start();
+                    }
+                }
             }
+        } finally {
+            Trace.endSection();
         }
     }
 
@@ -581,24 +554,9 @@ public class XLyricsView extends RecyclerView {
             int rightPad = (int) (getWidth() * 0.2f);
             int topBotPad = (int) (4 * getResources().getDisplayMetrics().density);
 
-            holder.container.removeCallbacks(holder.springRunnable);
             holder.springY.cancel();
-
-            if (waveTriggerTime > 0 && waveAnchorIndex != -1) {
-                long elapsed = android.os.SystemClock.uptimeMillis() - waveTriggerTime;
-                int dist = Math.abs(position - waveAnchorIndex);
-                long delay = 60L + (dist * 20L);
-
-                if (elapsed < delay) {
-                    float boost = (accumulatedDy > 0 ? 1f : -1f) * (1f * (dist+1));
-                    holder.container.setTranslationY(accumulatedDy + boost);
-                    holder.container.postDelayed(holder.springRunnable, delay - elapsed);
-                } else {
-                    holder.container.setTranslationY(0f);
-                }
-            } else {
-                holder.container.setTranslationY(0f);
-            }
+            holder.container.setTranslationY(0f);
+            holder.springY.getSpring().setStiffness(200f);
 
             boolean isActive = activeIndexes.contains(position);
             holder.container.setScaleX(isActive ? 1.01f : 1.0f);
@@ -674,24 +632,24 @@ public class XLyricsView extends RecyclerView {
                     holder.bgLineView.updateProgress(currentProgressMs, true);
                     
                 } else {
-					LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) holder.mainLineView.getLayoutParams();
-					FrameLayout.LayoutParams lp2 = (FrameLayout.LayoutParams) holder.bgLineView.getLayoutParams();
-					
-					if (item.mainLine.vocalType != 1) {
-						holder.container.setPadding(rightPad, topBotPad, leftPad, topBotPad);
-						lp.gravity = Gravity.RIGHT;
-						lp2.gravity = Gravity.RIGHT;
-						holder.mainLineView.setLineGravity(Layout.Alignment.ALIGN_OPPOSITE);
-						holder.bgLineView.setLineGravity(Layout.Alignment.ALIGN_OPPOSITE);
-					} else {
-						holder.container.setPadding(leftPad, topBotPad, rightPad, topBotPad);
-						lp.gravity = Gravity.LEFT;
-						lp2.gravity = Gravity.LEFT;
-						holder.mainLineView.setLineGravity(Layout.Alignment.ALIGN_NORMAL);
-						holder.bgLineView.setLineGravity(Layout.Alignment.ALIGN_NORMAL);
-					}
-					holder.mainLineView.setLayoutParams(lp);
-					holder.bgLineView.setLayoutParams(lp2);
+                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) holder.mainLineView.getLayoutParams();
+                    FrameLayout.LayoutParams lp2 = (FrameLayout.LayoutParams) holder.bgLineView.getLayoutParams();
+                    
+                    if (item.mainLine.vocalType != 1) {
+                        holder.container.setPadding(rightPad, topBotPad, leftPad, topBotPad);
+                        lp.gravity = Gravity.RIGHT;
+                        lp2.gravity = Gravity.RIGHT;
+                        holder.mainLineView.setLineGravity(Layout.Alignment.ALIGN_OPPOSITE);
+                        holder.bgLineView.setLineGravity(Layout.Alignment.ALIGN_OPPOSITE);
+                    } else {
+                        holder.container.setPadding(leftPad, topBotPad, rightPad, topBotPad);
+                        lp.gravity = Gravity.LEFT;
+                        lp2.gravity = Gravity.LEFT;
+                        holder.mainLineView.setLineGravity(Layout.Alignment.ALIGN_NORMAL);
+                        holder.bgLineView.setLineGravity(Layout.Alignment.ALIGN_NORMAL);
+                    }
+                    holder.mainLineView.setLayoutParams(lp);
+                    holder.bgLineView.setLayoutParams(lp2);
                     holder.bgWrapper.setPadding(0, 0, 0, 0);
                     holder.container.setBackground(createRipple());
                     
@@ -730,7 +688,7 @@ public class XLyricsView extends RecyclerView {
                 if (item.romajiLine != null) {
                     holder.romajiWrapper.setVisibility(View.VISIBLE);
                     holder.romajiView.setLyricLine(item.romajiLine);
-					holder.romajiView.setLyricColor(currentColor);
+                    holder.romajiView.setLyricColor(currentColor);
                     holder.romajiView.setFontConfig(DataManager.getFontConfig());
                     if (item.romajiLine.line != null) {
                         holder.romajiView.setText(item.romajiLine.line.toString(), getWidth() - leftPad - rightPad);
@@ -753,9 +711,9 @@ public class XLyricsView extends RecyclerView {
         public void onViewRecycled(@NonNull LyricViewHolder holder) {
             super.onViewRecycled(holder);
             holder.container.animate().cancel();
-            holder.container.removeCallbacks(holder.springRunnable);
             holder.springY.cancel();
             holder.container.setTranslationY(0f);
+            holder.springY.getSpring().setStiffness(200f);
             
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 holder.container.setRenderEffect(null);
@@ -807,9 +765,7 @@ public class XLyricsView extends RecyclerView {
         XLyricsLineView mainLineView;
         XDynamicContainer romajiWrapper;
         XLyricsRomajiLineView romajiView;
-        
         SpringAnimation springY;
-        Runnable springRunnable;
 
         LyricViewHolder(View v, LinearLayout c, XDynamicContainer dw, XWaitingDotsView dv, XDynamicContainer bw, XLyricsLineView bl, XLyricsLineView ml, XDynamicContainer rw, XLyricsRomajiLineView rv) {
             super(v);
@@ -824,8 +780,7 @@ public class XLyricsView extends RecyclerView {
             this.romajiView = rv;
 
             springY = new SpringAnimation(container, DynamicAnimation.TRANSLATION_Y, 0f);
-            springY.setSpring(new SpringForce(0f).setStiffness(180f).setDampingRatio(0.85f));
-            springRunnable = () -> springY.animateToFinalPosition(0f);
+            springY.setSpring(new SpringForce(0f).setStiffness(200f).setDampingRatio(0.85f));
         }
     }
 

@@ -8,10 +8,13 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+
+import androidx.annotation.OptIn;
 import androidx.media3.common.AudioAttributes;
 import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MediaMetadata;
+import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.audio.DefaultAudioSink;
@@ -33,7 +36,8 @@ public final class ExoPlayerManager {
     private ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Context context;
     private final Uri fallbackUri;
-    
+
+    @OptIn(markerClass = UnstableApi.class)
     public ExoPlayerManager(Context context) {
         fallbackUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.drawable.placeholder);
         

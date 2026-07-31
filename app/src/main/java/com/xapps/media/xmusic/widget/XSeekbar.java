@@ -6,6 +6,7 @@ import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.os.Trace;
 import android.util.AttributeSet;
 import android.view.Gravity;
 
@@ -62,13 +63,18 @@ public class XSeekbar extends AppCompatSeekBar {
     }
 
     public void setColor(int color) {
-        expressiveTrack.setTint(color);
-        
-        int backgroundColor = ColorUtils.setAlphaComponent(color, 0x4D);
+        Trace.beginSection("XSB:setColor");
+        try {
+            expressiveTrack.setTint(color);
+            
+            int backgroundColor = ColorUtils.setAlphaComponent(color, 0x4D);
 
-        setThumbTintList(ColorStateList.valueOf(color));
-        setProgressTintList(ColorStateList.valueOf(color));
-        setProgressBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+            setThumbTintList(ColorStateList.valueOf(color));
+            setProgressTintList(ColorStateList.valueOf(color));
+            setProgressBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+        } finally {
+            Trace.endSection();
+        }
     }
     
     public void setAnimate(boolean b) {

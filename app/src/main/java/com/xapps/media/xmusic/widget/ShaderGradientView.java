@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RuntimeShader;
 import android.os.Build;
+import android.os.Trace;
 import android.util.AttributeSet;
 import android.view.Choreographer;
 import android.view.View;
@@ -175,8 +176,13 @@ private final float[] uPoints = {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (!SUPPORTED) return;
-        canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
+        Trace.beginSection("SGV:onDraw");
+        try {
+            if (!SUPPORTED) return;
+            canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
+        } finally {
+            Trace.endSection();
+        }
     }
 
     public void setAnimationSpeed(float s) {

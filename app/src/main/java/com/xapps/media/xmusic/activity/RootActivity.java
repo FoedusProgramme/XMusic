@@ -1,10 +1,16 @@
 package com.xapps.media.xmusic.activity;
 
+import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.*;
+import android.os.Trace;
 
+import androidx.activity.EdgeToEdge;
+import androidx.activity.SystemBarStyle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.media3.session.MediaController;
 import androidx.media3.session.SessionToken;
 
@@ -13,10 +19,14 @@ import com.xapps.media.xmusic.activity.manager.LogicManager;
 import com.xapps.media.xmusic.activity.manager.UIManager;
 import com.xapps.media.xmusic.callback.ActivityCallback;
 import com.xapps.media.xmusic.callback.CallbackInterface;
+import com.xapps.media.xmusic.common.SongLoadListener;
+import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
+import com.xapps.media.xmusic.helper.SongMetadataHelper;
 import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 
+import com.xapps.media.xmusic.utils.XUtils;
 import java.lang.Override;
 import java.util.ArrayList;
 
@@ -28,17 +38,30 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        binding = ActivityRootBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        init();
+        Trace.beginSection("RA:onCreate");
+        try {
+            EdgeToEdge.enable(this, 
+                SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
+                SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
+            );
+            XUtils.applyDynamicColors(this, DataManager.isOledThemeEnabled());
+            if (XUtils.isDarkMode(this) && DataManager.isOledThemeEnabled())getTheme().applyStyle(R.style.ThemeOverlay_XMusic_OLED, true);
+            MaterialColorUtils.initColors(this);
+            super.onCreate(savedInstanceState);
+            binding = ActivityRootBinding.inflate(getLayoutInflater());
+            passData();
+            setContentView(binding.getRoot());
+            init();
+        } finally {
+            Trace.endSection();
+        }
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        CallbackInterface.setActivityCallback(this);
-        logicManager.initController(
+        if (CallbackInterface.activity() != this) CallbackInterface.setActivityCallback(this);
+        if (mediaController == null) logicManager.initController(
                 this,
                 controller -> {
                     mediaController = controller;
@@ -50,8 +73,13 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
     
     @Override
     public void onResume() {
-        super.onResume();
-        uiManager.updateContent(-1, true);
+        Trace.beginSection("RA:onResume");
+        try {
+            super.onResume();
+            uiManager.updateContent(-1, true);
+        } finally {
+            Trace.endSection();
+        }
     }
     
     @Override
@@ -59,6 +87,12 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
    	 super.onConfigurationChanged(newConfig);
         uiManager.restoreCoverExpansion();
 	}
+    
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        uiManager.viewModel.markDataAsSaved(true);
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
     public void onDestroy() {
@@ -81,7 +115,7 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
 
     public void setSong(int position) {
         logicManager.playSong(position);
-        uiManager.hideComponents(false, uiManager.bnvHidden, uiManager.tabsHidden);
+        uiManager.hideComponents(false, uiManager.bnvHidden, uiManager.tabsHidden, "mlf");
     }
 
     @Override
@@ -94,14 +128,31 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
     public MediaController getController() {
         return mediaController;
     }
+    
+    public LogicManager getLogicManager() {
+        return logicManager;
+    }
+    
+    public UIManager getUIManager() {
+        return uiManager;
+    }
 
     public void updateSongsQueue(ArrayList<Song> songs) {
         if (CallbackInterface.service() != null) CallbackInterface.service().updateSongs();
     }
 
-    public void restoreStateIfPossible() {}
+    public void restoreStateIfPossible() {
+        Trace.beginSection("RA:restoreStateIfPossible");
+        try {
+            uiManager.maybeRestoreUIState();
+        } finally {
+            Trace.endSection();
+        }
+    }
 
-    public void loadSettings() {}
+    public void loadSettings() {
+        uiManager.loadSettings();
+    }
 
     @Override
     public void onColorsChanged() {
@@ -115,10 +166,21 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
                     uiManager.updateContent(position, false);
                 });
                 if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateActiveItem(position);
+                if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateActiveItem(position);
     }
 
     @Override
     public void onProgressChanged(long progress) {
         logicManager.handleProgress(progress);
+    }
+
+    @Override
+    public void updateState() {
+        uiManager.saveState();
+    }
+
+    @Override
+    public void passData() {
+        if (CallbackInterface.subFrag() != null) CallbackInterface.subFrag().onBindingReady(binding);
     }
 }

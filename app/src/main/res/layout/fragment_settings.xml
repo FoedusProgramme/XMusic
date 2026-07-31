@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/coordinator"
+    android:background="?colorSurfaceContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -21,7 +22,7 @@
             android:layout_width="match_parent"
             android:id="@+id/collapsingtoolbar"
             android:background="@null"
-            app:contentScrim="?colorSurface"
+            app:contentScrim="?colorSurfaceContainer"
             app:expandedTitleTextAppearance="@style/ExpandedAppBarTextStyle"
             app:expandedTitleSpacing="0dp"
             app:collapsedTitleTextAppearance="@style/CollapsedAppBarTextStyle"
@@ -65,18 +66,22 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:layout_marginHorizontal="16dp"
-                    android:padding="12dp"
-                    android:background="@drawable/rv_ripple_top">
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_top_inverse">
 
                     <ImageView
                         android:id="@+id/first_icon"
-                        android:layout_height="24dp"
-                        android:layout_width="24dp"
+                        android:layout_height="40dp"
+                        android:layout_width="40dp"
+                        android:padding="6dp"
+                        android:background="@drawable/circle_shape"
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_brush_variant"
                         android:layout_marginRight="16dp"
-                        android:layout_marginLeft="12dp"
-                        android:tint="?colorSecondary" />
+                        android:layout_marginLeft="8dp"
+                        android:tint="?colorOnPrimary"
+                        android:backgroundTint="?colorPrimary" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -86,15 +91,14 @@
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="17sp"
-                            android:textStyle="bold"
+                            android:textSize="18sp"
                             android:textColor="?colorOnSurface"
                             android:text="Appearance" />
 
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="15sp"
+                            android:textSize="14sp"
                             android:textColor="?colorOutline"
                             android:text="Theme, Dynamic Colors, OLED theme" />
 
@@ -110,18 +114,22 @@
                     android:layout_marginHorizontal="16dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="12dp"
-                    android:background="@drawable/rv_ripple">
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_inverse">
 
                     <ImageView
                         android:id="@+id/second_icon"
-                        android:layout_height="24dp"
-                        android:layout_width="24dp"
+                        android:layout_height="40dp"
+                        android:layout_width="40dp"
+                        android:padding="6dp"
+                        android:background="@drawable/circle_shape"
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_tune_round"
                         android:layout_marginRight="16dp"
-                        android:layout_marginLeft="12dp"
-                        android:tint="?colorSecondary" />
+                        android:layout_marginLeft="8dp"
+                        android:tint="?colorOnSecondary"
+                        android:backgroundTint="?colorSecondary" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -131,15 +139,14 @@
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="17sp"
-                            android:textStyle="bold"
+                            android:textSize="18sp"
                             android:textColor="?colorOnSurface"
                             android:text="Now Playing" />
 
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="15sp"
+                            android:textSize="14sp"
                             android:textColor="?colorOutline"
                             android:text="Components, controls and behavior" />
 
@@ -155,18 +162,22 @@
                     android:layout_marginHorizontal="16dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="12dp"
-                    android:background="@drawable/rv_ripple">
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_inverse">
 
                     <ImageView
                         android:id="@+id/third_icon"
-                        android:layout_height="24dp"
-                        android:layout_width="24dp"
+                        android:layout_height="40dp"
+                        android:layout_width="40dp"
+                        android:padding="6dp"
+                        android:background="@drawable/circle_shape"
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_build_outline"
                         android:layout_marginRight="16dp"
-                        android:layout_marginLeft="12dp"
-                        android:tint="?colorSecondary" />
+                        android:layout_marginLeft="8dp"
+                        android:tint="?colorOnTertiary"
+                        android:backgroundTint="?colorTertiary" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -176,15 +187,14 @@
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="17sp"
+                            android:textSize="18sp"
                             android:textColor="?colorOnSurface"
-                            android:textStyle="bold"
                             android:text="Advanced" />
 
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="15sp"
+                            android:textSize="14sp"
                             android:textColor="?colorOutline"
                             android:text="Experimental features, testing options" />
 
@@ -200,18 +210,22 @@
                     android:layout_marginHorizontal="16dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="12dp"
-                    android:background="@drawable/rv_ripple_bottom">
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_bottom_inverse">
 
                     <ImageView
                         android:id="@+id/info_icon"
-                        android:layout_height="24dp"
-                        android:layout_width="24dp"
+                        android:layout_height="40dp"
+                        android:layout_width="40dp"
+                        android:padding="6dp"
+                        android:background="@drawable/circle_shape"
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_info_outline"
                         android:layout_marginRight="16dp"
-                        android:layout_marginLeft="12dp"
-                        android:tint="?colorSecondary" />
+                        android:layout_marginLeft="8dp"
+                        android:tint="?colorOnPrimary"
+                        android:backgroundTint="?colorPrimary" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -221,15 +235,14 @@
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="17sp"
-                            android:textStyle="bold"
+                            android:textSize="18sp"
                             android:textColor="?colorOnSurface"
                             android:text="About XMusic" />
 
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="15sp"
+                            android:textSize="14sp"
                             android:textColor="?colorOutline"
                             android:text="More information about XMusic" />
 

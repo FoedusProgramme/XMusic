@@ -26,11 +26,14 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDragHandleView;
 import com.google.android.material.search.SearchView;
+import com.google.android.material.search.SearchView.TransitionState;
 import com.xapps.media.xmusic.R;
-import com.xapps.media.xmusic.activity.MainActivity;
+import com.xapps.media.xmusic.activity.RootActivity;
+import com.xapps.media.xmusic.activity.manager.UIManager;
 import com.xapps.media.xmusic.common.SongLoadListener;
+import com.xapps.media.xmusic.callback.*;
 import com.xapps.media.xmusic.data.RuntimeData;
-import com.xapps.media.xmusic.databinding.ActivityMainBinding;
+import com.xapps.media.xmusic.databinding.ActivityRootBinding;
 import com.xapps.media.xmusic.databinding.FragmentSearchBinding;
 import com.xapps.media.xmusic.databinding.SearchItemMiddleBinding;
 import com.xapps.media.xmusic.helper.SongMetadataHelper;
@@ -40,16 +43,17 @@ import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 import com.xapps.media.xmusic.utils.XUtils;
 
+import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class SearchFragment extends BaseFragment {
+public class SearchFragment extends BaseFragment implements FragmentCallback {
 
     public FragmentSearchBinding binding;
-    private ActivityMainBinding activity;
-    private MainActivity a;
+    private ActivityRootBinding activity;
+    private RootActivity a;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -65,6 +69,8 @@ public class SearchFragment extends BaseFragment {
 
     private int currentPos = -1;
     private int oldPos = -1;
+    
+    private int currentState = UIManager.LAYOUT_STATE_EXPOSE_BNV;
     
     private boolean isCurrentlyPlaying = false;
     
@@ -85,8 +91,8 @@ public class SearchFragment extends BaseFragment {
             @Nullable Bundle savedInstanceState) {
 
         binding = FragmentSearchBinding.inflate(inflater, container, false);
-        a = (MainActivity) getActivity();
-        a.setSearchFragmentInstance(this);
+        a = (RootActivity) getActivity();
+        //a.setSearchFragmentInstance(this);
         activity = a.getBinding();
 
         imageSize = XUtils.convertToPx(getActivity(), 50);
@@ -105,6 +111,7 @@ public class SearchFragment extends BaseFragment {
     }
 
     private void initializeLogic() {
+        CallbackInterface.setSrFragCallback(this);
         binding.searchRecycler.setLayoutManager(new LinearLayoutManager(getActivity()));
         /*DefaultItemAnimator animator = new DefaultItemAnimator();
         animator.setSupportsChangeAnimations(true);
@@ -174,12 +181,14 @@ public class SearchFragment extends BaseFragment {
         binding.searchView.addTransitionListener(
         (searchView, previousState, newState) -> {
             if (newState == SearchView.TransitionState.SHOWING) {
-                a.bottomSheetBehavior.setDraggable(false);
-                a.HideBNV(true);
+                currentState = UIManager.LAYOUT_STATE_EXPOSE_PLAYER_ONLY;
+                //a.bottomSheetBehavior.setDraggable(false);
+                //a.HideBNV(true);
             } else if (newState == SearchView.TransitionState.SHOWN) {
-                a.bottomSheetBehavior.setDraggable(true);
+                //a.bottomSheetBehavior.setDraggable(true);
             } else if (newState == SearchView.TransitionState.HIDING) {
-                a.HideBNV(false);
+                currentState = UIManager.LAYOUT_STATE_EXPOSE_PLAYER_ONLY;
+                //a.HideBNV(false);
             }
         });
     }
@@ -298,7 +307,7 @@ public class SearchFragment extends BaseFragment {
                 currentPos = pos;
                 if (pos == RecyclerView.NO_POSITION) return;
                 if (a.getController() == null) return;
-                if (a.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_SETTLING || a.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_DRAGGING) return;
+                if (activity.miniPlayer.getState() == ExpressiveSliderLayout.STATE_SETTLING || activity.miniPlayer.getState() == ExpressiveSliderLayout.STATE_DRAGGING) return;
                 long now = System.currentTimeMillis();
                 if (now - lastClickTime < DEBOUNCE_MS) return;
                 lastClickTime = now;
@@ -312,7 +321,7 @@ public class SearchFragment extends BaseFragment {
                 }
 
                 if (realIndex == -1) return;
-                a.setSong(realIndex, true);
+                a.setSong(realIndex);
                 updateActiveItem(realIndex);
             });
             b.optionsIcon.setOnClickListener(v -> {  
@@ -432,6 +441,26 @@ public class SearchFragment extends BaseFragment {
             searchAdapter = new SearchListAdapter(requireContext(), initial);
             binding.searchRecycler.setAdapter(searchAdapter);
         });
+    }
+    
+    @Override
+    public SearchView.TransitionState getSearchViewState() {
+        return binding.searchView.getCurrentTransitionState();
+    }
+    
+    @Override
+    public void hideSearchView() {
+        binding.searchView.hide();
+    }
+    
+    @Override
+    public void freeze(boolean b) {
+        binding.blockingOverlay.setClickable(b); 
+    }
+    
+    @Override
+    public int getLayoutState() {
+        return currentState;
     }
 
 }

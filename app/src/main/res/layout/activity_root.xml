@@ -23,6 +23,7 @@
         app:cardCornerRadius="24dp">
 
         <LinearLayout
+            android:id="@+id/music_frag"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
@@ -31,9 +32,44 @@
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/viewpager"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent" />
 
         </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/search_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:strokeWidth="0dp"
+        app:elevation="2dp"
+        android:visibility="gone"
+        app:cardCornerRadius="24dp">
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/search_frag"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:name="com.xapps.media.xmusic.fragment.SearchFragment" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/settings_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:strokeWidth="0dp"
+        app:elevation="2dp"
+        android:visibility="gone"
+        app:cardCornerRadius="24dp">
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/settings_frag"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:name="com.xapps.media.xmusic.fragment.SettingsFragment"
+            android:background="?colorSurfaceContainer" />
 
     </com.google.android.material.card.MaterialCardView>
 
@@ -51,31 +87,64 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <com.xapps.media.xmusic.widget.RemainingHeightLinearLayout
             android:id="@+id/container_root"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical" >
+            android:orientation="vertical">
 
             <include
                 android:id="@+id/collapsed_player"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 layout="@layout/layout_player_collapsed" />
-                
+
             <com.xapps.media.xmusic.widget.CoverSpaceLayout
-    			android:id="@+id/maximum_size_view" 
-      		  android:layout_width="match_parent"
-      		  android:layout_height="0dp"
-                android:layout_weight="1"
+                android:id="@+id/maximum_size_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="10"
                 android:paddingHorizontal="24dp"
-      		  android:layout_marginBottom="24dp" />    
+                android:layout_marginBottom="24dp" />
 
             <include
                 android:id="@+id/expanded_player"
                 layout="@layout/layout_player_expanded" />
 
-        </LinearLayout>
+        </com.xapps.media.xmusic.widget.RemainingHeightLinearLayout>
+        
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/lyrics_container"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:visibility="gone">
+            <com.xapps.media.xmusic.widget.GradientView
+                android:id="@+id/gradient_view"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+            <FrameLayout
+                android:id="@+id/lyrics_placeholder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <TextView
+                    android:id="@+id/placeholder_lyrics_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:text="Hmm, No lyrics found\n¯⁠\⁠\\_⁠(⁠ツ⁠)⁠_⁠/⁠¯"
+                    android:textColor="?colorOnSurface"
+                    android:alpha="0.85"
+                    android:textSize="24dp" />
+            </FrameLayout>
+            <com.xapps.media.xmusic.widget.XLyricsView
+                android:id="@+id/xlyrics_view"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:clipChildren="false"
+                android:clipToPadding="false" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.xapps.media.xmusic.widget.ExpressiveSliderLayout>
 
@@ -84,6 +153,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:translationY="15px"
+        android:alpha="0"
+        android:scaleX="0.85"
+        android:scaleY="0.85"
         android:background="?colorSurface"
         android:translationZ="-1dp"
         app:elevation="0dp"
@@ -91,6 +164,6 @@
         app:menu="@menu/bnv_menu"
         app:labelVisibilityMode="selected"
         app:paddingBottomSystemWindowInsets="false"
-        app:itemTextAppearanceActive="@style/BoldStyleBNV" />
+        android:clipToPadding="false" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -109,7 +109,7 @@ public class SongsListFragment extends BaseFragment implements FragmentCallback 
         imageSize = XUtils.convertToPx(getActivity(), 45f);
         ViewKt.doOnLayout(activity.bottomNavigation, v -> {
             if (getActivity() == null) return Unit.INSTANCE;
-            lastSpacing = XUtils.convertToPx(getActivity(), 5f) /*+ activity.coversPager.getHeight()*2*/ + activity.bottomNavigation.getHeight()*2 ;
+            lastSpacing = activity.bottomNavigation.getHeight()*2;
             binding.songsList.addItemDecoration(new BottomSpacingDecoration(lastSpacing));
             binding.songsList.setLayoutManager(new LinearLayoutManager(getContext()));
 			return Unit.INSTANCE;
@@ -518,7 +518,7 @@ public class SongsListFragment extends BaseFragment implements FragmentCallback 
             int position = parent.getChildAdapterPosition(view);
             if (position == RecyclerView.NO_POSITION) return;
             if (position == state.getItemCount() -1 ) {
-                outRect.set(sideSpacing, 0, sideSpacing, lastSpacing);
+                outRect.set(sideSpacing, 0, sideSpacing, bottomSpacing);
             } else {
                 outRect.set(sideSpacing, 0, sideSpacing, spacing);
             }
@@ -541,6 +541,7 @@ public class SongsListFragment extends BaseFragment implements FragmentCallback 
     
     @Override
     public void updateActiveItem(int i) {
+        if (a == null) return;
         oldPos = currentPos;
         oldSongID = currentSongID;
         if (i != -1) currentSongID = (int) songsAdapter.getItemId(i); else currentSongID = -1;
@@ -596,5 +597,10 @@ public class SongsListFragment extends BaseFragment implements FragmentCallback 
                 }
             });
         });
+    }
+    
+    @Override
+    public void freeze(boolean b) {
+        binding.blockingOverlay.setClickable(b); 
     }
 }

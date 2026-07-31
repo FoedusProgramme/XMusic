@@ -7,6 +7,7 @@ import androidx.annotation.*;
 import androidx.core.content.res.ResourcesCompat;
 import com.google.android.material.slider.LabelFormatter;
 import com.xapps.media.xmusic.activity.MainActivity;
+import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.databinding.*;
 import com.xapps.media.xmusic.R;
@@ -16,7 +17,7 @@ public class LyricsEditFragment extends BaseFragment {
     private ActivityMainBinding activityBinding;
     private FragmentLyricsEditBinding binding;
     
-    private MainActivity activity;
+    private RootActivity activity;
     
     private int width = 100;
     private int weight = 500;
@@ -28,7 +29,7 @@ public class LyricsEditFragment extends BaseFragment {
     @Override
 	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 		binding = FragmentLyricsEditBinding.inflate(inflater, container, false);
-        activity = (MainActivity) getActivity();
+        activity = (RootActivity) getActivity();
         init();
         return binding.getRoot();
 	}

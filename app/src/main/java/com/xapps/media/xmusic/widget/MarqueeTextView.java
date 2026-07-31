@@ -3,6 +3,7 @@ package com.xapps.media.xmusic.widget;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
+import android.os.Trace;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import androidx.appcompat.widget.AppCompatTextView;
@@ -39,13 +40,18 @@ private void init() {
 }  
 
 public void resetMarquee() {  
-    marqueeEnabled = false;  
-    setSelected(false);  
+    Trace.beginSection("MTV:resetMarquee");
+    try {
+        marqueeEnabled = false;  
+        setSelected(false);  
 
-    post(() -> {  
-        marqueeEnabled = true;  
-        setSelected(true);  
-    });  
+        post(() -> {  
+            marqueeEnabled = true;  
+            setSelected(true);  
+        });
+    } finally {
+        Trace.endSection();
+    }
 }  
 
 @Override  

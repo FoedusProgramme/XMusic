@@ -9,7 +9,7 @@ import android.view.*;
 import androidx.annotation.*;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
-import com.xapps.media.xmusic.activity.MainActivity;
+import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.common.SettingsItem;
 import com.xapps.media.xmusic.databinding.ActivityMainBinding;
 import com.xapps.media.xmusic.databinding.FragmentExperimentBinding;
@@ -26,20 +26,20 @@ import com.xapps.media.xmusic.R;
 
 public class ExperimentsFragment extends SubPrefsFragment {
 
-    private MainActivity activity;
+    private RootActivity activity;
     private ActivityMainBinding activityBinding;
     private FragmentExperimentBinding binding;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     
     @Override
     protected List<SettingsItem> provideItems() {
-        activity = (MainActivity) getActivity();
+        activity = (RootActivity) getActivity();
         List<SettingsItem> items = new ArrayList<>();
         items.add(new SettingsItem(SettingsItem.TYPE_HEADER, "h1", "Miscellaneous", "", null));
         items.add(new SettingsItem(SettingsItem.TYPE_NAV, "crash_app", "Crash the app", "Click to instantly crash XMusic", null));
         items.add(new SettingsItem(SettingsItem.TYPE_NAV, "export_logs", "Export app logs", "This collect all XMusic logs and allow to share them as a file", null));
         items.add(new SettingsItem(SettingsItem.TYPE_NAV, "show_bs", "Collapse Bottom sheet", "This will set miniplayer State to STATE_COLLAPSED", null));
-        items.add(new SettingsItem(SettingsItem.TYPE_NAV, "test_frag", "Open test fragment", "Test some new components under testing", new TestFragment()));
+        // items.add(new SettingsItem(SettingsItem.TYPE_NAV, "test_frag", "Open test fragment", "Test some new components under testing", new TestFragment()));
         
         return items;
     }
@@ -54,7 +54,7 @@ public class ExperimentsFragment extends SubPrefsFragment {
                 exportLogs(getActivity());
                 break;
             case "show_bs" :
-                activity.getBinding().expressiveBottomSheet.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
+                activity.getBinding().miniPlayer.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
                 break;
             case "test_frag" :
                 openFragment(item.destinationFragment);

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Trace;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -41,6 +42,7 @@ public class ExpressiveTabs extends HorizontalScrollView {
     private int selectedIndex = -1;
     private final List<ExpressiveTab> tabs = new ArrayList<>();
     private final LinearLayout container;
+    private static Typeface cachedFont;
 
     public ExpressiveTabs(Context context) {
         this(context, null);
@@ -70,42 +72,53 @@ public class ExpressiveTabs extends HorizontalScrollView {
     }
 
     public void addTab(String text) {
-        ExpressiveTab tab = new ExpressiveTab(getContext());
-        tab.setText(text);
-        int position = tabs.size();
+        Trace.beginSection("ET:addTab");
+        try {
+            ExpressiveTab tab = new ExpressiveTab(getContext());
+            tab.setText(text);
+            int position = tabs.size();
 
-        tab.setOnClickListener(v -> setSelectedIndex(position));
+            tab.setOnClickListener(v -> setSelectedIndex(position));
 
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        params.setMargins(12, 0, 12, 0);
-        container.addView(tab, params);
-        tabs.add(tab);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(12, 0, 12, 0);
+            container.addView(tab, params);
+            tabs.add(tab);
 
-        if (selectedIndex == -1) {
-            setSelectedIndex(0);
-        } else {
-            tab.animateToInactive();
+            if (selectedIndex == -1) {
+                selectedIndex = 0;
+                tab.updateStateInstant(true);
+            } else {
+                tab.updateStateInstant(false);
+            }
+        } finally {
+            Trace.endSection();
         }
     }
 
     public void setSelectedIndex(int index) {
-        if (index < 0 || index >= tabs.size() || index == selectedIndex) return;
+        Trace.beginSection("ET:setSelectedIndex");
+        try {
+            if (index < 0 || index >= tabs.size() || index == selectedIndex) return;
 
-        if (selectedIndex != -1) {
-            tabs.get(selectedIndex).animateToInactive();
-        }
+            if (selectedIndex != -1) {
+                tabs.get(selectedIndex).animateToInactive();
+            }
 
-        selectedIndex = index;
-        ExpressiveTab selectedTab = tabs.get(selectedIndex);
-        selectedTab.animateToActive();
+            selectedIndex = index;
+            ExpressiveTab selectedTab = tabs.get(selectedIndex);
+            selectedTab.animateToActive();
 
-        scrollToTab(selectedTab);
+            scrollToTab(selectedTab);
 
-        if (listener != null) {
-            listener.onTabSelected(selectedIndex, selectedTab.getText().toString());
+            if (listener != null) {
+                listener.onTabSelected(selectedIndex, selectedTab.getText().toString());
+            }
+        } finally {
+            Trace.endSection();
         }
     }
 
@@ -164,9 +177,11 @@ public class ExpressiveTabs extends HorizontalScrollView {
         }
 
         private void setupView() {
-            Typeface typeface = ResourcesCompat.getFont(getContext(), R.font.gsans_flex_full);
-            if (typeface != null) {
-                setTypeface(typeface);
+            if (cachedFont == null) {
+                cachedFont = ResourcesCompat.getFont(getContext(), R.font.gsans_flex_full);
+            }
+            if (cachedFont != null) {
+                setTypeface(cachedFont);
             }
             
             setFontVariationSettings("'wght' 500");
@@ -254,6 +269,30 @@ public class ExpressiveTabs extends HorizontalScrollView {
             scaleXAnim.animateToFinalPosition(1.0f);
             scaleYAnim.animateToFinalPosition(1.0f);
             gradAnim.animateToFinalPosition(400f);
+        }
+
+        public void updateStateInstant(boolean active) {
+            if (bgColorAnim != null && bgColorAnim.isRunning()) bgColorAnim.cancel();
+            if (textColorAnim != null && textColorAnim.isRunning()) textColorAnim.cancel();
+
+            currentBgColor = active ? ACTIVE_BG_COLOR : INACTIVE_BG_COLOR;
+            currentTextColor = active ? ACTIVE_TEXT_COLOR : INACTIVE_TEXT_COLOR;
+
+            GradientDrawable bg = (GradientDrawable) getBackground();
+            bg.setColor(currentBgColor);
+            setTextColor(currentTextColor);
+
+            float scale = active ? 1.05f : 1.0f;
+            setScaleX(scale);
+            setScaleY(scale);
+
+            float weight = active ? 600f : 400f;
+            currentGrad = weight;
+            setFontVariationSettings("'wght' " + weight);
+
+            if (scaleXAnim != null) scaleXAnim.setStartValue(scale);
+            if (scaleYAnim != null) scaleYAnim.setStartValue(scale);
+            if (gradAnim != null) gradAnim.setStartValue(weight);
         }
     }
 }
