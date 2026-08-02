@@ -29,6 +29,7 @@ import com.google.android.material.shape.ShapeAppearanceModel;
 import com.google.android.material.transition.MaterialContainerTransform;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.MainActivity;
+import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.databinding.ActivityMainBinding;
 import com.xapps.media.xmusic.databinding.FragmentLibDetailsBinding;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
@@ -39,7 +40,7 @@ public class LibDetailsFragment extends BaseFragment {
 
     private ActivityMainBinding activityBinding;
     private FragmentLibDetailsBinding binding;
-    private MainActivity activity;
+    private RootActivity activity;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,7 +50,7 @@ public class LibDetailsFragment extends BaseFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentLibDetailsBinding.inflate(inflater, container, false);
-        activity = (MainActivity) getActivity();
+        activity = (RootActivity) getActivity();
         init();
         return binding.getRoot();
     }

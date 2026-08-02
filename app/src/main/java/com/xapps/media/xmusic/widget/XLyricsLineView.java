@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.os.Trace;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -31,7 +32,7 @@ public class XLyricsLineView extends View {
     private LinearGradient brushShader;
     private final Matrix shaderMatrix = new Matrix();
 	
-	private Layout.Alignment alignment = Layout.Alignment.ALIGN_NORMAL;
+    private Layout.Alignment alignment = Layout.Alignment.ALIGN_NORMAL;
     
     protected int activeColor = 0xFFFFFFFF;
     protected int pastViewColor = 0x80FFFFFF;
@@ -58,7 +59,7 @@ public class XLyricsLineView extends View {
     private final List<VisualCluster> clusters = new ArrayList<>();
     
     private boolean isForcedActive = false;
-    private static final float GRADIENT_WIDTH = 100f;
+    private static final float GRADIENT_WIDTH = 200f;
     private static final float ELEVATION_AMOUNT = 6f;
 
     private static class VisualCluster {
@@ -69,6 +70,7 @@ public class XLyricsLineView extends View {
         float width;
         int lineIdx;
         float currentElevation;
+        float liftCenterGlobalX;
         boolean isHeavy;
         int wordStartMs;
         int wordEndMs;
@@ -95,20 +97,20 @@ public class XLyricsLineView extends View {
         setFocusable(false);
     }
 	
-	public void setLyricColor(int color) {
-		activeColor = color;
+    public void setLyricColor(int color) {
+        activeColor = color;
         pastViewColor = (color & 0x00FFFFFF) | 0x80000000;
-		futureColor = (color & 0x00FFFFFF) | 0x26000000;
-		invalidate();
-	}
+        futureColor = (color & 0x00FFFFFF) | 0x26000000;
+        invalidate();
+    }
 	
-	public void setLineGravity(Layout.Alignment alignment) {
-		this.alignment = alignment;
-	}
+    public void setLineGravity(Layout.Alignment alignment) {
+        this.alignment = alignment;
+    }
 	
-	public void setFontConfig(String s) {
-		textPaint.setFontVariationSettings(s);
-	}
+    public void setFontConfig(String s) {
+        textPaint.setFontVariationSettings(s);
+    }
     
     public void setTextSize(int dp) {
         textPaint.setTextSize(spToPx(dp));
@@ -153,143 +155,158 @@ public class XLyricsLineView extends View {
     }
 
     public void setText(String text, int width) {
-        if (width <= 0 || lyricLine == null) return;
-        staticLayout = StaticLayout.Builder.obtain(lyricLine.line, 0, lyricLine.line.length(), textPaint, width)
-                .setAlignment(alignment)
-                .setIncludePad(true)
-                .setLineSpacing(0f, 1.2f)
-                .build();
-        
-        lineStarts = new float[staticLayout.getLineCount()];
-        lineWidths = new float[staticLayout.getLineCount()];
-        totalWidth = 0;
-        
-        for (int i = 0; i < staticLayout.getLineCount(); i++) {
-            lineStarts[i] = totalWidth;
-            lineWidths[i] = Math.max(1f, staticLayout.getLineWidth(i));
-            totalWidth += lineWidths[i];
-        }
-        
-        charXMap = new float[lyricLine.line.length() + 1];
-        for (int i = 0; i < charXMap.length; i++) {
-            int lineIdx = staticLayout.getLineForOffset(i);
-            float lineLeft = staticLayout.getLineLeft(lineIdx);
-            charXMap[i] = lineStarts[lineIdx] + (staticLayout.getPrimaryHorizontal(i) - lineLeft);
-        }
-
-
-        clusters.clear();
-        String content = lyricLine.line.toString();
-        BreakIterator it = BreakIterator.getCharacterInstance();
-        it.setText(content);
-
-        int start = it.first();
-        for (int end = it.next(); end != BreakIterator.DONE; start = end, end = it.next()) {
-            VisualCluster vc = new VisualCluster();
-            vc.start = start;
-            vc.end = end;
-            vc.lineIdx = staticLayout.getLineForOffset(start);
-            int endLineIdx = staticLayout.getLineForOffset(end);
+        Trace.beginSection("XLLV:setText");
+        try {
+            if (width <= 0 || lyricLine == null) return;
+            staticLayout = StaticLayout.Builder.obtain(lyricLine.line, 0, lyricLine.line.length(), textPaint, width)
+                    .setAlignment(alignment)
+                    .setIncludePad(true)
+                    .setLineSpacing(0f, 1.2f)
+                    .build();
             
-            vc.x = staticLayout.getPrimaryHorizontal(start);
-            if (vc.lineIdx == endLineIdx) {
-                vc.width = staticLayout.getPrimaryHorizontal(end) - vc.x;
-            } else {
-                vc.width = staticLayout.getLineWidth(vc.lineIdx) - vc.x;
+            lineStarts = new float[staticLayout.getLineCount()];
+            lineWidths = new float[staticLayout.getLineCount()];
+            totalWidth = 0;
+            
+            for (int i = 0; i < staticLayout.getLineCount(); i++) {
+                lineStarts[i] = totalWidth;
+                lineWidths[i] = Math.max(1f, staticLayout.getLineWidth(i));
+                totalWidth += lineWidths[i];
             }
-            vc.y = staticLayout.getLineBaseline(vc.lineIdx);
-            vc.currentElevation = 0f;
-            vc.isHeavy = false;
-            vc.disableScale = false;
-            clusters.add(vc);
-        }
+            
+            charXMap = new float[lyricLine.line.length() + 1];
+            for (int i = 0; i < charXMap.length; i++) {
+                int lineIdx = staticLayout.getLineForOffset(i);
+                float lineLeft = staticLayout.getLineLeft(lineIdx);
+                charXMap[i] = lineStarts[lineIdx] + (staticLayout.getPrimaryHorizontal(i) - lineLeft);
+            }
 
-        if (lyricLine.words != null) {
-            for (int w = 0; w < lyricLine.words.size(); w++) {
-                LyricWord word = lyricLine.words.get(w);
-                if (word.syllables == null || word.syllables.isEmpty()) continue;
+            clusters.clear();
+            String content = lyricLine.line.toString();
+            BreakIterator it = BreakIterator.getCharacterInstance();
+            it.setText(content);
+
+            int start = it.first();
+            for (int end = it.next(); end != BreakIterator.DONE; start = end, end = it.next()) {
+                VisualCluster vc = new VisualCluster();
+                vc.start = start;
+                vc.end = end;
+                vc.lineIdx = staticLayout.getLineForOffset(start);
+                int endLineIdx = staticLayout.getLineForOffset(end);
                 
-                int wordLen = 0;
-                int wordStartTime = word.syllables.get(0).startTime;
-                int wordEndTime = word.syllables.get(word.syllables.size() - 1).endTime;
-                
-                for (int s = 0; s < word.syllables.size(); s++) {
-                    wordLen += word.syllables.get(s).text.length();
+                vc.x = staticLayout.getPrimaryHorizontal(start);
+                if (vc.lineIdx == endLineIdx) {
+                    vc.width = staticLayout.getPrimaryHorizontal(end) - vc.x;
+                } else {
+                    vc.width = staticLayout.getLineWidth(vc.lineIdx) - vc.x;
                 }
-                
-                if (wordLen > 0) {
-                    boolean isArabic = false;
-                    boolean isCJK = false;
+                vc.y = staticLayout.getLineBaseline(vc.lineIdx);
+                vc.currentElevation = 0f;
+                vc.liftCenterGlobalX = lineStarts[vc.lineIdx] + (vc.x - staticLayout.getLineLeft(vc.lineIdx)) + (vc.width / 2f);
+                vc.isHeavy = false;
+                vc.disableScale = false;
+                vc.wordStartMs = 0;
+                vc.wordEndMs = 0;
+                clusters.add(vc);
+            }
+
+            if (lyricLine.words != null) {
+                for (int w = 0; w < lyricLine.words.size(); w++) {
+                    LyricWord word = lyricLine.words.get(w);
+                    if (word.syllables == null || word.syllables.isEmpty()) continue;
                     
-                    String firstSyl = word.syllables.get(0).text;
-                    if (firstSyl != null && !firstSyl.isEmpty()) {
-                        Character.UnicodeBlock block = Character.UnicodeBlock.of(firstSyl.charAt(0));
-                        if (block != null) {
-                            String bName = block.toString();
-                            if (bName.contains("ARABIC")) {
-                                isArabic = true;
-                            } else if (bName.contains("CJK") || bName.contains("HIRAGANA") || bName.contains("KATAKANA") || bName.contains("HANGUL")) {
-                                isCJK = true;
+                    int wordLen = 0;
+                    int wordStartTime = word.syllables.get(0).startTime;
+                    int wordEndTime = word.syllables.get(word.syllables.size() - 1).endTime;
+                    
+                    for (int s = 0; s < word.syllables.size(); s++) {
+                        wordLen += word.syllables.get(s).text.length();
+                    }
+                    
+                    if (wordLen > 0) {
+                        int wordStartOffset = word.startIndex + word.syllables.get(0).relStart;
+                        int wordEndOffset = wordStartOffset + wordLen;
+                        
+                        float wStartX = getGlobalXForOffset(wordStartOffset);
+                        float wEndX = getGlobalXForOffset(wordEndOffset);
+                        float wordWidth = wEndX - wStartX;
+                        float wordCenter = wStartX + (wordWidth / 2f);
+
+                        for (int c = 0; c < clusters.size(); c++) {
+                            VisualCluster vc = clusters.get(c);
+                            if (vc.start >= wordStartOffset && vc.end <= wordEndOffset) {
+                                vc.liftCenterGlobalX = wordCenter;
+                                vc.wordStartMs = wordStartTime;
+                                vc.wordEndMs = wordEndTime;
                             }
                         }
-                    }
 
-                    boolean eligible = false;
-                    float minMs = 200f;
-                    float msRange = 300f;
-                    boolean shouldDisableScale = false;
-
-                    if (isCJK) {
-                        if (wordLen == 1) eligible = true;
-                        minMs = 400f;
-                        msRange = 400f;
-                    } else if (isArabic) {
-                        if (wordLen > 1 && wordLen <= 7) eligible = true;
-                        shouldDisableScale = true;
-                    } else {
-                        if (wordLen > 1 && wordLen <= 7) eligible = true;
-                    }
-
-                    if (eligible) {
-                        float msPerLetter = (float)(wordEndTime - wordStartTime) / wordLen;
+                        boolean isArabic = false;
+                        boolean isCJK = false;
                         
-                        if (msPerLetter >= minMs) {
-                            int wordStartOffset = word.startIndex + word.syllables.get(0).relStart;
-                            int wordEndOffset = wordStartOffset + wordLen;
+                        String firstSyl = word.syllables.get(0).text;
+                        if (firstSyl != null && !firstSyl.isEmpty()) {
+                            Character.UnicodeBlock block = Character.UnicodeBlock.of(firstSyl.charAt(0));
+                            if (block != null) {
+                                String bName = block.toString();
+                                if (bName.contains("ARABIC")) {
+                                    isArabic = true;
+                                } else if (bName.contains("CJK") || bName.contains("HIRAGANA") || bName.contains("KATAKANA") || bName.contains("HANGUL")) {
+                                    isCJK = true;
+                                }
+                            }
+                        }
+
+                        boolean eligible = false;
+                        float minMs = 200f;
+                        float msRange = 300f;
+                        boolean shouldDisableScale = false;
+
+                        if (isCJK) {
+                            if (wordLen == 1) eligible = true;
+                            minMs = 400f;
+                            msRange = 400f;
+                        } else if (isArabic) {
+                            if (wordLen > 1 && wordLen <= 7) eligible = true;
+                            shouldDisableScale = true;
+                        } else {
+                            if (wordLen > 1 && wordLen <= 7) eligible = true;
+                        }
+
+                        if (eligible) {
+                            float msPerLetter = (float)(wordEndTime - wordStartTime) / wordLen;
                             
-                            float wStartX = getGlobalXForOffset(wordStartOffset);
-                            float wEndX = getGlobalXForOffset(wordEndOffset);
-                            float wordWidth = wEndX - wStartX;
-                            
-                            float intensityRaw = (msPerLetter - minMs) / msRange;
-                            float calculatedIntensity = 0.3f + 0.7f * Math.max(0f, Math.min(1f, intensityRaw));
-                            
-                            for (int c = 0; c < clusters.size(); c++) {
-                                VisualCluster vc = clusters.get(c);
-                                if (vc.start >= wordStartOffset && vc.end <= wordEndOffset) {
-                                    vc.isHeavy = true;
-                                    vc.wordStartMs = wordStartTime;
-                                    vc.wordEndMs = wordEndTime;
-                                    vc.intensity = calculatedIntensity;
-                                    vc.disableScale = shouldDisableScale;
-                                    
-                                    float charCenter = getGlobalXForOffset(vc.start) + (getGlobalXForOffset(vc.end) - getGlobalXForOffset(vc.start)) / 2f;
-                                    vc.normX = wordWidth > 0 ? ((charCenter - wStartX) / wordWidth) * 2f - 1f : 0f;
+                            if (msPerLetter >= minMs) {
+                                float intensityRaw = (msPerLetter - minMs) / msRange;
+                                float calculatedIntensity = 0.3f + 0.7f * Math.max(0f, Math.min(1f, intensityRaw));
+                                
+                                for (int c = 0; c < clusters.size(); c++) {
+                                    VisualCluster vc = clusters.get(c);
+                                    if (vc.start >= wordStartOffset && vc.end <= wordEndOffset) {
+                                        vc.isHeavy = true;
+                                        vc.intensity = calculatedIntensity;
+                                        vc.disableScale = shouldDisableScale;
+                                        
+                                        float charCenter = getGlobalXForOffset(vc.start) + (getGlobalXForOffset(vc.end) - getGlobalXForOffset(vc.start)) / 2f;
+                                        vc.normX = wordWidth > 0 ? ((charCenter - wStartX) / wordWidth) * 2f - 1f : 0f;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
 
-        brushShader = new LinearGradient(0, 0, GRADIENT_WIDTH, 0,
-                new int[]{activeColor, activeColor, futureColor, futureColor},
-                new float[]{0f, 0.1f, 0.9f, 1f},
-                Shader.TileMode.CLAMP);
-                
-        requestLayout();
-        invalidate();
+            brushShader = new LinearGradient(0, 0, GRADIENT_WIDTH, 0,
+                    new int[]{activeColor, activeColor, futureColor, futureColor},
+                    new float[]{0f, 0.1f, 0.9f, 1f},
+                    Shader.TileMode.CLAMP);
+                    
+            requestLayout();
+            invalidate();
+        } finally {
+            Trace.endSection();
+        }
     }
 
     private float getGlobalXForOffset(int offset) {
@@ -375,23 +392,19 @@ public class XLyricsLineView extends View {
             this.velocityX = 0f;
             this.colorTransitionState = newTargetColorState;
             
-            boolean isLineActive = progressMs >= lyricLine.time && progressMs <= effectiveEndTime;
-            float waveRadius = GRADIENT_WIDTH * 0.75f;
-            
             for (VisualCluster vc : clusters) {
-                float lineLeft = staticLayout.getLineLeft(vc.lineIdx);
-                float clusterCenter = lineStarts[vc.lineIdx] + (vc.x - lineLeft) + (vc.width / 2f);
                 float targetElev = 0f;
-                
-                if (isLineActive) {
-                    float distance = globalX - clusterCenter;
-                    float t = Math.max(0f, Math.min(1f, (distance + waveRadius) / (waveRadius * 2f)));
-                    float smoothT = t * t * (3f - 2f * t);
-                    targetElev = -ELEVATION_AMOUNT * smoothT;
+                if (!lyricLine.isSimpleLRC && !isForcedActive && vc.wordEndMs > vc.wordStartMs) {
+                    if (progressMs >= vc.wordEndMs) {
+                        targetElev = -ELEVATION_AMOUNT;
+                    } else if (progressMs >= vc.wordStartMs) {
+                        float p = (float)(progressMs - vc.wordStartMs) / (vc.wordEndMs - vc.wordStartMs);
+                        float organicP = p * p * (3f - 2f * p);
+                        targetElev = -(ELEVATION_AMOUNT * organicP);
+                    }
                 }
                 vc.currentElevation = targetElev;
             }
-
         }
 
         this.targetGlobalX = globalX;
@@ -410,135 +423,139 @@ public class XLyricsLineView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (staticLayout == null || clusters.isEmpty() || lyricLine == null) return;
+        Trace.beginSection("XLLV:onDraw");
+        try {
+            if (staticLayout == null || clusters.isEmpty() || lyricLine == null) return;
 
-        long now = android.os.SystemClock.uptimeMillis();
-        if (lastFrameTime == 0) lastFrameTime = now;
-        float dt = (now - lastFrameTime) / 1000f;
-        lastFrameTime = now;
-        if (dt > 0.05f) dt = 0.016f;
+            long now = android.os.SystemClock.uptimeMillis();
+            if (lastFrameTime == 0) lastFrameTime = now;
+            float dt = (now - lastFrameTime) / 1000f;
+            lastFrameTime = now;
+            if (dt > 0.05f) dt = 0.016f;
 
-        boolean animating = false;
-        boolean isSimple = lyricLine.isSimpleLRC || isForcedActive;
-
-        if (isSimple) {
-            currentSimpleState += (targetSimpleState - currentSimpleState) * 15f * dt;
-            if (Math.abs(targetSimpleState - currentSimpleState) > 0.005f) animating = true;
-        } else {
-            colorTransitionState += (targetColorState - colorTransitionState) * 25f * dt;
-            if (Math.abs(targetColorState - colorTransitionState) > 0.005f) animating = true;
-
-            float stiffness = 220f;
-            float damping = 28f;
-            float displacement = currentGlobalX - targetGlobalX;
-            float acceleration = (-stiffness * displacement) - (damping * velocityX);
-            velocityX += acceleration * dt;
-            currentGlobalX += velocityX * dt;
-            
-            if (Math.abs(displacement) > 0.1f || Math.abs(velocityX) > 0.5f) animating = true;
-        }
-
-        int currentPastColor = blendColors(activeColor, pastViewColor, colorTransitionState);
-
-        long finalEndTime = lyricLine.words.isEmpty() ? lyricLine.time : lyricLine.words.get(lyricLine.words.size() - 1).getEndTime();
-        long effectiveEndTime = (customEndTime != -1) ? customEndTime : finalEndTime;
-        boolean isLineActive = currentProgressMs >= lyricLine.time && currentProgressMs <= effectiveEndTime;
-        float waveRadius = GRADIENT_WIDTH * 0.75f;
-
-        for (int i = 0; i < clusters.size(); i++) {
-            VisualCluster vc = clusters.get(i);
-            float lineLeft = staticLayout.getLineLeft(vc.lineIdx);
-            float lineGlobalStart = lineStarts[vc.lineIdx];
-            float lineWidth = lineWidths[vc.lineIdx];
-            float lineGlobalEnd = lineGlobalStart + lineWidth;
-            float clusterCenter = lineGlobalStart + (vc.x - lineLeft) + (vc.width / 2f);
-
-            float targetElev = 0f;
-            if (isLineActive && !isSimple) {
-                float distance = currentGlobalX - clusterCenter;
-                float t = Math.max(0f, Math.min(1f, (distance + waveRadius) / (waveRadius * 2f)));
-                float smoothT = t * t * (3f - 2f * t);
-                targetElev = -ELEVATION_AMOUNT * smoothT;
-            }
-
-
-            vc.currentElevation += (targetElev - vc.currentElevation) * 16f * dt;
-            if (Math.abs(targetElev - vc.currentElevation) > 0.1f) animating = true;
-
-            float scale = 1.0f;
-            int shadowColor = 0;
-            float spacingShift = 0f;
-
-            if (vc.isHeavy && currentProgressMs >= vc.wordStartMs && currentProgressMs <= vc.wordEndMs) {
-                animating = true;
-                float p = (currentProgressMs - vc.wordStartMs) / (float) Math.max(1, vc.wordEndMs - vc.wordStartMs);
-                
-                if (!vc.disableScale) {
-                    float baseScale = 1.0f + (0.1f * vc.intensity) * (float)Math.sin(Math.PI * p);
-                    float perspective = -(0.08f * vc.intensity) * vc.normX * (float)Math.sin(2 * Math.PI * p);
-                    scale = baseScale + perspective;
-                    spacingShift = vc.normX * (10f * vc.intensity) * (float)Math.sin(p * Math.PI);
-                }
-                
-                float distanceToCurrent = currentGlobalX - clusterCenter;
-                float glowAlphaProgress = Math.max(0f, Math.min(1f, (distanceToCurrent + waveRadius) / waveRadius));
-                int shadowAlpha = (int) (255f * vc.intensity * glowAlphaProgress * (float) Math.sin(p * Math.PI));
-                shadowColor = ((shadowAlpha & 0xFF) << 24) | (activeColor & 0x00FFFFFF);
-            }
-
-            float drawX = vc.x + spacingShift;
-            float drawY = vc.y + vc.currentElevation + getExtraPadding();
-
-            if (scale != 1.0f) {
-                canvas.save();
-                canvas.scale(scale, scale, drawX + vc.width / 2f, drawY);
-            }
-
-            if (shadowColor != 0) {
-                textPaint.setShadowLayer(12f, 0f, 0f, shadowColor);
-            } else {
-                textPaint.clearShadowLayer();
-            }
+            boolean animating = false;
+            boolean isSimple = lyricLine.isSimpleLRC || isForcedActive;
 
             if (isSimple) {
-                int drawColor;
-                if (currentSimpleState < 1f) {
-                    drawColor = blendColors(futureColor, activeColor, currentSimpleState);
-                } else {
-                    drawColor = blendColors(activeColor, pastViewColor, currentSimpleState - 1f);
-                }
-                textPaint.setShader(null);
-                textPaint.setColor(drawColor);
-                canvas.drawText(lyricLine.line, vc.start, vc.end, drawX, drawY, textPaint);
+                currentSimpleState += (targetSimpleState - currentSimpleState) * 15f * dt;
+                if (Math.abs(targetSimpleState - currentSimpleState) > 0.005f) animating = true;
             } else {
-                if (currentGlobalX >= lineGlobalEnd + GRADIENT_WIDTH) {
-                    textPaint.setShader(null);
-                    textPaint.setColor(currentPastColor);
-                } else if (currentGlobalX <= lineGlobalStart - GRADIENT_WIDTH) {
-                    textPaint.setShader(null);
-                    textPaint.setColor(futureColor);
-                } else {
-                    float localX = currentGlobalX - lineGlobalStart;
-                    float progress = Math.min(1f, Math.max(0f, localX / lineWidth));
-                    float translate = (lineLeft - GRADIENT_WIDTH) + (lineWidth + GRADIENT_WIDTH) * progress;
-                    
-                    shaderMatrix.setTranslate(translate, 0);
-                    brushShader.setLocalMatrix(shaderMatrix);
-                    textPaint.setShader(brushShader);
-                    textPaint.setColor(activeColor);
+                colorTransitionState += (targetColorState - colorTransitionState) * 25f * dt;
+                if (Math.abs(targetColorState - colorTransitionState) > 0.005f) animating = true;
+
+                float stiffness = 220f;
+                float damping = 28f;
+                float displacement = currentGlobalX - targetGlobalX;
+                float acceleration = (-stiffness * displacement) - (damping * velocityX);
+                velocityX += acceleration * dt;
+                currentGlobalX += velocityX * dt;
+                
+                if (Math.abs(displacement) > 0.1f || Math.abs(velocityX) > 0.5f) animating = true;
+            }
+
+            int currentPastColor = blendColors(activeColor, pastViewColor, colorTransitionState);
+
+            long finalEndTime = lyricLine.words.isEmpty() ? lyricLine.time : lyricLine.words.get(lyricLine.words.size() - 1).getEndTime();
+            long effectiveEndTime = (customEndTime != -1) ? customEndTime : finalEndTime;
+            float waveRadius = GRADIENT_WIDTH * 0.75f;
+
+            for (int i = 0; i < clusters.size(); i++) {
+                VisualCluster vc = clusters.get(i);
+                float lineLeft = staticLayout.getLineLeft(vc.lineIdx);
+                float lineGlobalStart = lineStarts[vc.lineIdx];
+                float lineWidth = lineWidths[vc.lineIdx];
+                float lineGlobalEnd = lineGlobalStart + lineWidth;
+                
+                float targetElev = 0f;
+                if (!isSimple && vc.wordEndMs > vc.wordStartMs) {
+                    if (currentProgressMs >= vc.wordEndMs) {
+                        targetElev = -ELEVATION_AMOUNT;
+                    } else if (currentProgressMs >= vc.wordStartMs) {
+                        float p = (float)(currentProgressMs - vc.wordStartMs) / (vc.wordEndMs - vc.wordStartMs);
+                        float organicP = p * p * (3f - 2f * p);
+                        targetElev = -(ELEVATION_AMOUNT * organicP);
+                    }
                 }
-                canvas.drawText(lyricLine.line, vc.start, vc.end, drawX, drawY, textPaint);
-            }
 
+                vc.currentElevation += (targetElev - vc.currentElevation) * 16f * dt;
+                if (Math.abs(targetElev - vc.currentElevation) > 0.1f) animating = true;
 
-            if (scale != 1.0f) {
-                canvas.restore();
+                float scale = 1.0f;
+                int shadowColor = 0;
+                float spacingShift = 0f;
+
+                if (vc.isHeavy && currentProgressMs >= vc.wordStartMs && currentProgressMs <= vc.wordEndMs) {
+                    animating = true;
+                    float p = (currentProgressMs - vc.wordStartMs) / (float) Math.max(1, vc.wordEndMs - vc.wordStartMs);
+                    
+                    if (!vc.disableScale) {
+                        float baseScale = 1.0f + (0.1f * vc.intensity) * (float)Math.sin(Math.PI * p);
+                        float perspective = -(0.08f * vc.intensity) * vc.normX * (float)Math.sin(2 * Math.PI * p);
+                        scale = baseScale + perspective;
+                        spacingShift = vc.normX * (10f * vc.intensity) * (float)Math.sin(p * Math.PI);
+                    }
+                    
+                    float distanceToCurrent = currentGlobalX - vc.liftCenterGlobalX;
+                    float glowAlphaProgress = Math.max(0f, Math.min(1f, (distanceToCurrent + waveRadius) / waveRadius));
+                    int shadowAlpha = (int) (255f * vc.intensity * glowAlphaProgress * (float) Math.sin(p * Math.PI));
+                    shadowColor = ((shadowAlpha & 0xFF) << 24) | (activeColor & 0x00FFFFFF);
+                }
+
+                float drawX = vc.x + spacingShift;
+                float drawY = vc.y + vc.currentElevation + getExtraPadding();
+
+                if (scale != 1.0f) {
+                    canvas.save();
+                    canvas.scale(scale, scale, drawX + vc.width / 2f, drawY);
+                }
+
+                if (shadowColor != 0) {
+                    textPaint.setShadowLayer(12f, 0f, 0f, shadowColor);
+                } else {
+                    textPaint.clearShadowLayer();
+                }
+
+                if (isSimple) {
+                    int drawColor;
+                    if (currentSimpleState < 1f) {
+                        drawColor = blendColors(futureColor, activeColor, currentSimpleState);
+                    } else {
+                        drawColor = blendColors(activeColor, pastViewColor, currentSimpleState - 1f);
+                    }
+                    textPaint.setShader(null);
+                    textPaint.setColor(drawColor);
+                    canvas.drawText(lyricLine.line, vc.start, vc.end, drawX, drawY, textPaint);
+                } else {
+                    if (currentGlobalX >= lineGlobalEnd + GRADIENT_WIDTH) {
+                        textPaint.setShader(null);
+                        textPaint.setColor(currentPastColor);
+                    } else if (currentGlobalX <= lineGlobalStart - GRADIENT_WIDTH) {
+                        textPaint.setShader(null);
+                        textPaint.setColor(futureColor);
+                    } else {
+                        float localX = currentGlobalX - lineGlobalStart;
+                        float progress = Math.min(1f, Math.max(0f, localX / lineWidth));
+                        float translate = (lineLeft - GRADIENT_WIDTH) + (lineWidth + GRADIENT_WIDTH) * progress;
+                        
+                        shaderMatrix.setTranslate(translate, 0);
+                        brushShader.setLocalMatrix(shaderMatrix);
+                        textPaint.setShader(brushShader);
+                        textPaint.setColor(activeColor);
+                    }
+                    canvas.drawText(lyricLine.line, vc.start, vc.end, drawX, drawY, textPaint);
+                }
+
+                if (scale != 1.0f) {
+                    canvas.restore();
+                }
             }
+            
+            textPaint.clearShadowLayer();
+
+            if (animating) postInvalidateOnAnimation();
+        } finally {
+            Trace.endSection();
         }
-        
-        textPaint.clearShadowLayer();
-
-        if (animating) postInvalidateOnAnimation();
     }
 
     @Override

@@ -17,4 +17,12 @@ public interface ActivityCallback {
     default void onPlaybackStateChanged(boolean playing) {
         
     }
+
+    default void updateState() {
+        
+    }
+
+    default void passData() {
+        
+    }
 }

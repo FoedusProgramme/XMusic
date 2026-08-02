@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/coordinator"
-	android:background="?colorSurface"
+	android:background="?colorSurfaceContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -19,8 +19,9 @@
             android:layout_height="?attr/collapsingToolbarLayoutLargeSize"
             android:layout_width="match_parent"
             android:id="@+id/collapsingtoolbar"
-            app:contentScrim="?colorSurface"
+            app:contentScrim="?colorSurfaceContainer"
 			android:paddingHorizontal="8dp"
+            android:layout_marginHorizontal="8dp"
             app:expandedTitleTextAppearance="@style/ExpandedAppBarTextStyle"
             app:expandedTitleSpacing="0dp"
             app:collapsedTitleTextAppearance="@style/CollapsedAppBarTextStyle"
@@ -62,7 +63,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="8dp"
                     android:layout_marginHorizontal="16dp"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -74,7 +75,7 @@
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:padding="16dp"
-                    android:background="@drawable/rv_ripple_top"
+                    android:background="@drawable/rv_ripple_top_inverse"
                     android:orientation="vertical">
 
                     <LinearLayout
@@ -89,16 +90,8 @@
                             android:layout_width="wrap_content"
                             android:text="Theme"
                             android:textSize="16sp"
-                            android:textStyle="bold"
                             android:layout_marginBottom="2dp"
                             android:textColor="?colorOnSurface" />
-
-                        <TextView
-                            android:layout_height="wrap_content"
-                            android:layout_width="wrap_content"
-                            android:text="Switch between dark and light theme to your liking"
-                            android:textSize="14sp"
-                            android:textColor="?colorOutline" />
 
                     </LinearLayout>
 
@@ -106,8 +99,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:paddingHorizontal="4dp"
-                        android:background="@drawable/fully_round_bg"
+                        android:gravity="center"
                         android:layout_marginTop="12dp"
                         app:selectionRequired="true"
                         app:singleSelection="true">
@@ -115,31 +107,38 @@
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/system_theme"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
+                            android:paddingVertical="12dp"
+                            android:paddingHorizontal="4dp"
+                            app:iconPadding="8dp"
                             android:textSize="16dp"
-                            android:layout_width="wrap_content"
-                            style="@style/Widget.Material3.Button.TextButton"
                             android:text="System"
+                            android:layout_width="wrap_content"
+                            style="@style/Widget.Material3Expressive.Button.TonalButton"
+                            app:icon="@drawable/ic_theme_light_dark"
                         />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/dark_theme"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
+                            android:paddingVertical="12dp"
+                            app:iconPadding="8dp"
                             android:textSize="16dp"
-                            android:layout_width="wrap_content"
-                            style="@style/Widget.Material3.Button.TextButton"
                             android:text="Dark"
+                            android:layout_width="wrap_content"
+                            style="@style/Widget.Material3Expressive.Button.TonalButton"
+                            app:icon="@drawable/ic_dark_mode"
                         />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/light_theme"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:layout_width="wrap_content"
+                            android:paddingVertical="12dp"
+                            app:iconPadding="8dp"
                             android:textSize="16dp"
-                            style="@style/Widget.Material3.Button.TextButton"
                             android:text="Light"
+                            style="@style/Widget.Material3Expressive.Button.TonalButton"
+                            app:icon="@drawable/ic_light_mode"
                         />
 
                     </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -153,7 +152,7 @@
                     android:layout_width="match_parent"
                     android:layout_marginTop="2dp"
                     android:padding="16dp"
-                    android:background="@drawable/rv_ripple"
+                    android:background="@drawable/rv_ripple_inverse"
                     android:orientation="horizontal">
 
                     <LinearLayout
@@ -167,9 +166,8 @@
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
                             android:text="Dynamic Theme"
-                            android:textStyle="bold"
                             android:textSize="16sp"
-                            android:layout_marginBottom="4dp"
+                            android:layout_marginBottom="2dp"
                             android:textColor="?colorOnSurface" />
 
                         <TextView
@@ -196,7 +194,7 @@
                     android:layout_width="match_parent"
                     android:layout_marginTop="2dp"
                     android:padding="16dp"
-                    android:background="@drawable/rv_ripple"
+                    android:background="@drawable/rv_ripple_inverse"
                     android:orientation="horizontal">
 
                     <LinearLayout
@@ -210,7 +208,6 @@
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
                             android:text="Pure black theme"
-                            android:textStyle="bold"
                             android:textSize="16sp"
                             android:layout_marginBottom="2dp"
                             android:textColor="?colorOnSurface" />
@@ -239,7 +236,7 @@
                     android:layout_width="match_parent"
                     android:layout_marginTop="2dp"
                     android:padding="0dp"
-                    android:background="@drawable/rv_ripple_bottom"
+                    android:background="@drawable/rv_ripple_bottom_inverse"
                     android:orientation="vertical">
 
                     <LinearLayout
@@ -265,7 +262,6 @@
                                     android:layout_width="wrap_content"
                                     android:text="Custom Dynamic Color"
                                     android:textSize="16sp"
-                                    android:textStyle="bold"
                                     android:layout_marginBottom="2dp"
                                     android:textColor="?colorOnSurface" />
 
@@ -319,7 +315,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="8dp"
                     android:layout_marginHorizontal="16dp"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -332,7 +328,7 @@
                     android:layout_width="match_parent"
                     android:layout_marginTop="2dp"
                     android:padding="16dp"
-                    android:background="@drawable/rv_ripple_single"
+                    android:background="@drawable/rv_ripple_single_inverse"
                     android:orientation="horizontal">
 
                     <LinearLayout
@@ -346,7 +342,6 @@
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
                             android:text="Use redesigned icon style"
-                            android:textStyle="bold"
                             android:textSize="16sp"
                             android:layout_marginBottom="2dp"
                             android:textColor="?colorOnSurface" />
@@ -373,7 +368,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="8dp"
                     android:layout_marginHorizontal="16dp"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -386,7 +381,7 @@
                     android:layout_width="match_parent"
                     android:layout_marginTop="2dp"
                     android:padding="16dp"
-                    android:background="@drawable/rv_ripple_single"
+                    android:background="@drawable/rv_ripple_single_inverse"
                     android:orientation="horizontal">
 
                     <LinearLayout
@@ -400,7 +395,6 @@
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
                             android:text="Enable Blur"
-                            android:textStyle="bold"
                             android:textSize="16sp"
                             android:layout_marginBottom="2dp"
                             android:textColor="?colorOnSurface" />

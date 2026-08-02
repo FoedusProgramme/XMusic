@@ -14,7 +14,7 @@
         android:scaleType="centerCrop"
         android:elevation="4dp"
         android:layout_margin="4dp"
-        android:src="@drawable/placeholder"
+        android:src="@drawable/placeholder_small"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
         

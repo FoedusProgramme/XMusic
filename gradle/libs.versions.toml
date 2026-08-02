@@ -1,5 +1,5 @@
 [versions]
-agp = "9.2.1"
+agp = "9.3.1"
 taglib = "1.0.6"
 glide = "5.0.3"
 gson = "2.13.1"

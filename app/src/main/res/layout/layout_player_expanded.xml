@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -20,39 +21,44 @@
         android:src="@drawable/ic_favorite_outlined"
         android:tint="?attr/colorOnSurface"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/song_big_title"
-        app:layout_constraintBottom_toBottomOf="@+id/artist_big_title" />
+        app:layout_constraintTop_toTopOf="@id/title_container"
+        app:layout_constraintBottom_toBottomOf="@id/title_container" />
 
-    <com.xapps.media.xmusic.widget.MarqueeTextView
-        android:id="@+id/song_big_title"
+    <LinearLayout
+        android:id="@+id/title_container"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="2dp"
-        android:textSize="22sp"
+        android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:textColor="?colorOnSurface"
-        app:layout_constraintStart_toEndOf="@+id/favorite_button"
-        app:layout_constraintEnd_toStartOf="@+id/save_button"
-        app:layout_constraintBottom_toTopOf="@+id/artist_big_title" />
+        app:layout_constraintStart_toEndOf="@id/favorite_button"
+        app:layout_constraintEnd_toStartOf="@id/save_button"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <com.xapps.media.xmusic.widget.MarqueeTextView
-        android:id="@+id/artist_big_title"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:textSize="16sp"
-        android:gravity="center"
-        android:textColor="?colorOutline"
-        app:layout_constraintStart_toEndOf="@+id/favorite_button"
-        app:layout_constraintEnd_toStartOf="@+id/save_button"
-        app:layout_constraintBottom_toTopOf="@+id/song_seekbar"
-        android:layout_marginBottom="24dp" />
+        <com.xapps.media.xmusic.widget.MarqueeTextView
+            android:id="@+id/song_big_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dp"
+            android:paddingBottom="2dp"
+            android:textSize="22sp"
+            android:gravity="center_horizontal"
+            android:textColor="?colorOnSurface" />
+
+        <com.xapps.media.xmusic.widget.MarqueeTextView
+            android:id="@+id/artist_big_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:textColor="?colorOutline" />
+
+    </LinearLayout>
 
     <com.xapps.media.xmusic.widget.SmallToggleView
         android:id="@+id/save_button"
@@ -65,21 +71,22 @@
         android:src="@drawable/ic_playlist_add"
         android:tint="?attr/colorOnSurface"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/song_big_title"
-        app:layout_constraintBottom_toBottomOf="@+id/artist_big_title" />
+        app:layout_constraintTop_toTopOf="@id/title_container"
+        app:layout_constraintBottom_toBottomOf="@id/title_container" />
 
     <com.xapps.media.xmusic.widget.XSeekbar
         android:id="@+id/song_seekbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="24dp"
         android:paddingTop="8dp"
         android:paddingBottom="0dp"
         android:enabled="false"
         android:progress="0"
+        app:layout_constraintTop_toBottomOf="@id/title_container"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/current_duration_text"
         android:layout_marginBottom="2dp" />
 
     <TextView
@@ -87,38 +94,38 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="28dp"
-        android:textSize="13sp"
+        android:layout_marginBottom="24dp"
+        android:gravity="start"
         android:text="00:00"
         android:textColor="?colorOutline"
+        android:textSize="13sp"
+        app:layout_constraintTop_toBottomOf="@+id/song_seekbar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/controls_flow"
-        app:layout_constraintEnd_toStartOf="@+id/total_duration_text"
-        android:gravity="start"
-        android:layout_marginBottom="24dp" />
+        app:layout_constraintEnd_toStartOf="@id/total_duration_text" />
 
     <TextView
         android:id="@+id/total_duration_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="28dp"
-        android:textSize="13sp"
+        android:layout_marginBottom="24dp"
         android:text="00:00"
         android:textColor="?colorOutline"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/controls_flow"
-        android:layout_marginBottom="24dp" />
+        android:textSize="13sp"
+        app:layout_constraintTop_toBottomOf="@+id/song_seekbar"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.constraintlayout.helper.widget.Flow
         android:id="@+id/controls_flow"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
         app:constraint_referenced_ids="previous_button,toggle_view,next_button"
-        app:flow_horizontalStyle="packed"
         app:flow_horizontalGap="24dp"
+        app:flow_horizontalStyle="packed"
+        app:layout_constraintTop_toBottomOf="@+id/total_duration_text"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/song_info_layout"
-        android:layout_marginBottom="24dp" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <com.xapps.media.xmusic.widget.SmallToggleView
         android:id="@+id/previous_button"
@@ -143,72 +150,45 @@
         android:background="@drawable/circle_shape"
         android:src="@drawable/icon_skip_next_outline"
         android:tint="?attr/colorOnSurface" />
-        
+
     <com.xapps.media.xmusic.widget.PillBackgroundView
-        	android:id="@+id/song_info_layout"
-            android:layout_width="match_parent"
-      	  android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="@+id/song_info_text"
-            app:layout_constraintTop_toTopOf="@+id/song_info_text" />             
+        android:id="@+id/song_info_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="@id/song_info_text"
+        app:layout_constraintBottom_toBottomOf="@id/song_info_text" />
 
     <TextView
-            android:id="@+id/song_info_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#BDBDBD"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:paddingVertical="5dp"
-            app:layout_constraintBottom_toTopOf="@+id/frame"
-            android:paddingHorizontal="12dp"
-            android:text="Unknown" />
+        android:id="@+id/song_info_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="5dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:text="Unknown"
+        android:textColor="#BDBDBD"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/controls_flow" />
 
-    <FrameLayout
-        android:id="@+id/frame"
-        android:layout_width="0dp"
-        android:layout_height="85dp"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+    <LinearLayout
+        android:id="@+id/actions_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:background="@drawable/rounded_corners_bottom_sheet"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/lyrics_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/lyrics_button"
+            style="@style/Widget.Material3Expressive.Button.IconButton.Standard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            app:icon="@drawable/ic_lyrics_selector" />
 
-            <com.xapps.media.xmusic.widget.GradientView
-                android:id="@+id/mesh"
-                android:visibility="gone"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+    </LinearLayout>
 
-            <FrameLayout
-                android:id="@+id/lyrics_placeholder"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:id="@+id/placeholder_lyrics_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:text="Hmm, No lyrics found\n¯⁠\⁠\\_⁠(⁠ツ⁠)⁠_⁠/⁠¯"
-                    android:textColor="?colorOnSurface"
-                    android:alpha="0.85"
-                    android:textSize="24dp" />
-            </FrameLayout>
-
-            <com.xapps.media.xmusic.widget.XLyricsView
-                android:id="@+id/xlyrics_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipChildren="false"
-                android:clipToPadding="false" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

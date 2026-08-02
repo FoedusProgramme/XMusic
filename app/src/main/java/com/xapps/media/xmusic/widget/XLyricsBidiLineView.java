@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.os.Trace;
 import android.util.AttributeSet;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,87 +110,92 @@ public class XLyricsBidiLineView extends XLyricsLineView {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (staticLayout == null || bidiRuns.isEmpty()) return;
+        Trace.beginSection("XLBLV:onDraw");
+        try {
+            if (staticLayout == null || bidiRuns.isEmpty()) return;
 
-        long now = android.os.SystemClock.uptimeMillis();
-        if (lastFrameTime == 0) lastFrameTime = now;
-        float dt = (now - lastFrameTime) / 1000f;
-        lastFrameTime = now;
-        if (dt > 0.05f) dt = 0.016f;
+            long now = android.os.SystemClock.uptimeMillis();
+            if (lastFrameTime == 0) lastFrameTime = now;
+            float dt = (now - lastFrameTime) / 1000f;
+            lastFrameTime = now;
+            if (dt > 0.05f) dt = 0.016f;
 
-        float displacement = currentGlobalX - targetGlobalX;
-        velocityX += ((-220f * displacement) - (28f * velocityX)) * dt;
-        currentGlobalX += velocityX * dt;
+            float displacement = currentGlobalX - targetGlobalX;
+            velocityX += ((-220f * displacement) - (28f * velocityX)) * dt;
+            currentGlobalX += velocityX * dt;
 
-        colorTransitionState += (targetColorState - colorTransitionState) * 25f * dt;
-        int currentPastColor = blendColors(activeColor, pastViewColor, colorTransitionState);
+            colorTransitionState += (targetColorState - colorTransitionState) * 25f * dt;
+            int currentPastColor = blendColors(activeColor, pastViewColor, colorTransitionState);
 
-        boolean isFullyPast = currentGlobalX >= totalWidth + 100f;
-        boolean isFullyFuture = currentGlobalX <= -100f;
+            boolean isFullyPast = currentGlobalX >= totalWidth + 100f;
+            boolean isFullyFuture = currentGlobalX <= -100f;
 
-        if (isFullyPast) {
-            canvas.save();
-            canvas.translate(0, getExtraPadding());
-            textPaint.setShader(null);
-            textPaint.setColor(currentPastColor);
-            staticLayout.draw(canvas);
-            canvas.restore();
-            if (Math.abs(displacement) > 0.1f || Math.abs(velocityX) > 0.5f) postInvalidateOnAnimation();
-            return;
-        }
-
-        if (isFullyFuture) {
-            canvas.save();
-            canvas.translate(0, getExtraPadding());
-            textPaint.setShader(null);
-            textPaint.setColor(futureColor);
-            staticLayout.draw(canvas);
-            canvas.restore();
-            if (Math.abs(displacement) > 0.1f || Math.abs(velocityX) > 0.5f) postInvalidateOnAnimation();
-            return;
-        }
-
-        updateShadersIfNeeded();
-
-        for (BidiRun run : bidiRuns) {
-            canvas.save();
-            canvas.translate(0, getExtraPadding());
-            
-            float top = staticLayout.getLineTop(run.lineIdx);
-            float bottom = staticLayout.getLineBottom(run.lineIdx);
-            canvas.clipRect(run.visualLeft, top, run.visualRight, bottom);
-
-            if (currentGlobalX >= run.logicalEnd) {
+            if (isFullyPast) {
+                canvas.save();
+                canvas.translate(0, getExtraPadding());
                 textPaint.setShader(null);
                 textPaint.setColor(currentPastColor);
-            } else if (currentGlobalX <= run.logicalStart) {
-                textPaint.setShader(null);
-                textPaint.setColor(futureColor);
-            } else {
-                float localProgress = (currentGlobalX - run.logicalStart) / run.width;
-                float tx;
-                LinearGradient activeShader;
-
-                if (run.isRtl) {
-                    tx = run.visualRight - (run.width + 100f) * localProgress;
-                    activeShader = rtlShader;
-                } else {
-                    tx = run.visualLeft - 100f + (run.width + 100f) * localProgress;
-                    activeShader = ltrShader;
-                }
-
-                shaderMatrix.setTranslate(tx, 0);
-                activeShader.setLocalMatrix(shaderMatrix);
-                textPaint.setShader(activeShader);
-                textPaint.setColor(activeColor);
+                staticLayout.draw(canvas);
+                canvas.restore();
+                if (Math.abs(displacement) > 0.1f || Math.abs(velocityX) > 0.5f) postInvalidateOnAnimation();
+                return;
             }
 
-            staticLayout.draw(canvas);
-            canvas.restore();
-        }
+            if (isFullyFuture) {
+                canvas.save();
+                canvas.translate(0, getExtraPadding());
+                textPaint.setShader(null);
+                textPaint.setColor(futureColor);
+                staticLayout.draw(canvas);
+                canvas.restore();
+                if (Math.abs(displacement) > 0.1f || Math.abs(velocityX) > 0.5f) postInvalidateOnAnimation();
+                return;
+            }
 
-        if (Math.abs(currentGlobalX - targetGlobalX) > 0.1f || Math.abs(velocityX) > 0.5f) {
-            postInvalidateOnAnimation();
+            updateShadersIfNeeded();
+
+            for (BidiRun run : bidiRuns) {
+                canvas.save();
+                canvas.translate(0, getExtraPadding());
+                
+                float top = staticLayout.getLineTop(run.lineIdx);
+                float bottom = staticLayout.getLineBottom(run.lineIdx);
+                canvas.clipRect(run.visualLeft, top, run.visualRight, bottom);
+
+                if (currentGlobalX >= run.logicalEnd) {
+                    textPaint.setShader(null);
+                    textPaint.setColor(currentPastColor);
+                } else if (currentGlobalX <= run.logicalStart) {
+                    textPaint.setShader(null);
+                    textPaint.setColor(futureColor);
+                } else {
+                    float localProgress = (currentGlobalX - run.logicalStart) / run.width;
+                    float tx;
+                    LinearGradient activeShader;
+
+                    if (run.isRtl) {
+                        tx = run.visualRight - (run.width + 100f) * localProgress;
+                        activeShader = rtlShader;
+                    } else {
+                        tx = run.visualLeft - 100f + (run.width + 100f) * localProgress;
+                        activeShader = ltrShader;
+                    }
+
+                    shaderMatrix.setTranslate(tx, 0);
+                    activeShader.setLocalMatrix(shaderMatrix);
+                    textPaint.setShader(activeShader);
+                    textPaint.setColor(activeColor);
+                }
+
+                staticLayout.draw(canvas);
+                canvas.restore();
+            }
+
+            if (Math.abs(currentGlobalX - targetGlobalX) > 0.1f || Math.abs(velocityX) > 0.5f) {
+                postInvalidateOnAnimation();
+            }
+        } finally {
+            Trace.endSection();
         }
     }
 

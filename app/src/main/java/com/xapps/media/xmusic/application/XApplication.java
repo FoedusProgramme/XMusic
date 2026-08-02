@@ -2,22 +2,26 @@ package com.xapps.media.xmusic.application;
 
 import android.app.Application;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Process;
 
 import android.os.StrictMode;
 import androidx.annotation.NonNull;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
 import com.xapps.media.xmusic.BuildConfig;
+import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.CrashReportActivity;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.utils.XUtils;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.Executors;
 
 public class XApplication extends Application {
 
@@ -26,8 +30,17 @@ public class XApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
         DataManager.init(this);
-        
+        XUtils.updateTheme();
+
+        // Pre-warm variable font in background to avoid main-thread lag during first usage
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                ResourcesCompat.getFont(this, R.font.gsans_flex_full);
+            } catch (Exception ignored) {}
+        });
+
         if (BuildConfig.BUILD_TYPE.equals("debug")) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectAll().penaltyFlashScreen().penaltyLog().build());
             StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().penaltyLog().build());

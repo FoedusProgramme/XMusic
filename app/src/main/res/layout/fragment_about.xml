@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/coordinator"
-	android:background="?colorSurface"
+	android:background="?colorSurfaceContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -14,7 +14,7 @@
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$Behavior"
         android:background="@null"
         android:fitsSystemWindows="true"
-        app:liftOnScrollColor="@android:color/transparent"
+        app:liftOnScrollColor="?colorSurfaceContainer"
         android:id="@+id/appbar">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -24,7 +24,7 @@
             android:gravity="center"
             android:background="@null"
             app:layout_collapseMode="pin"
-            app:contentScrim="?colorSurface"
+            app:contentScrim="?colorSurfaceContainer"
             app:expandedTitleTextColor="@android:color/transparent"
             app:expandedTitleSpacing="0dp"
             app:collapsedTitleTextAppearance="@style/CollapsedAppBarTextStyle"
@@ -49,6 +49,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:textColor="?colorOnSurfaceVariant"
+                    android:gravity="center"
+                    android:layout_gravity="center"
                     android:text="Works on my device" />
             </LinearLayout>
 
@@ -120,7 +122,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_marginBottom="2dp"
-                    android:background="@drawable/rv_ripple_top"
+                    android:background="@drawable/rv_ripple_top_inverse"
                     android:padding="16dp">
 
                     <TextView
@@ -144,7 +146,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_marginBottom="2dp"
-                    android:background="@drawable/rv_ripple"
+                    android:background="@drawable/rv_ripple_inverse"
                     android:padding="16dp">
 
                     <TextView
@@ -168,7 +170,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_marginBottom="2dp"
-                    android:background="@drawable/rv_ripple"
+                    android:background="@drawable/rv_ripple_inverse"
                     android:padding="16dp">
 
                     <TextView
@@ -192,7 +194,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_marginBottom="2dp"
-                    android:background="@drawable/rv_ripple_bottom"
+                    android:background="@drawable/rv_ripple_bottom_inverse"
                     android:padding="16dp">
 
                     <TextView

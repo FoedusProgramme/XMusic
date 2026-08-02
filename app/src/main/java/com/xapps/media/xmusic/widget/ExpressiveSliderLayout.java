@@ -1,9 +1,10 @@
 package com.xapps.media.xmusic.widget;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.os.Trace;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,7 +22,6 @@ import androidx.dynamicanimation.animation.FloatValueHolder;
 import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
 
-import com.google.android.material.shape.MaterialShapeDrawable;
 import com.xapps.media.xmusic.models.ViewDragHelper;
 
 import java.util.ArrayList;
@@ -50,7 +50,9 @@ public class ExpressiveSliderLayout extends FrameLayout {
     private ViewDragHelper dragHelper;
     private View sheetView;
     private final List<SliderCallback> sliderCallbacks = new ArrayList<>();
-    private MaterialShapeDrawable internalBackground;
+    private GradientDrawable internalBackground;
+    private final float[] cornerRadii = new float[8];
+
     private SpringAnimation settleSpringAnim;
     private SpringAnimation settleXSpringAnim;
 
@@ -85,9 +87,11 @@ public class ExpressiveSliderLayout extends FrameLayout {
     private float cornerRadiusBottomLeft = 0f;
     private float cornerRadiusBottomRight = 0f;
     private int sheetBackgroundColor = Color.parseColor("#1C1B1F");
+    private float lastExponentialFactor = -1f;
 
     private boolean isDraggable = true;
     private boolean isValidBack = false;
+    private boolean isInitialLayout = true;
 
     private final OnBackPressedCallback backCallback =
             new OnBackPressedCallback(false) {
@@ -144,8 +148,8 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
     private void init() {
         dragHelper = ViewDragHelper.create(this, 1.0f, new DragCallback());
-        internalBackground = new MaterialShapeDrawable();
-        internalBackground.setFillColor(ColorStateList.valueOf(sheetBackgroundColor));
+        internalBackground = new GradientDrawable();
+        internalBackground.setColor(sheetBackgroundColor);
         ViewCompat.setElevation(this, 0f);
         setClickable(false);
 
@@ -230,7 +234,7 @@ public class ExpressiveSliderLayout extends FrameLayout {
     public void setSheetBackgroundColor(int color) {
         this.sheetBackgroundColor = color;
         if (internalBackground != null) {
-            internalBackground.setFillColor(ColorStateList.valueOf(color));
+            internalBackground.setColor(color);
         }
     }
 
@@ -292,6 +296,20 @@ public class ExpressiveSliderLayout extends FrameLayout {
             return;
         }
 
+        if (currentState == STATE_HIDDEN && state != STATE_HIDDEN) {
+            int actualPeekHeight = peekHeight + (floatingBottomMargin == 0 ? systemBottomInset : 0);
+            int actualBottomMargin = floatingBottomMargin > 0 ? floatingBottomMargin + systemBottomInset : 0;
+            hiddenTop = getHeight();
+            collapsedTop = hiddenTop - actualPeekHeight - actualBottomMargin;
+
+            int dy = hiddenTop - sheetView.getTop();
+            if (dy != 0) {
+                ViewCompat.offsetTopAndBottom(sheetView, dy);
+            }
+
+            applyExponentialMorph(calculateSlideOffset(hiddenTop), hiddenTop);
+        }
+
         int targetTop;
         if (state == STATE_EXPANDED) {
             targetTop = expandedTop;
@@ -324,36 +342,41 @@ public class ExpressiveSliderLayout extends FrameLayout {
         settleSpringAnim.setStartVelocity(initialVelocity);
 
         SpringForce force = new SpringForce(targetTop);
-        force.setDampingRatio((sheetView.getTop() > targetTop) ? SpringForce.DAMPING_RATIO_NO_BOUNCY : SpringForce.DAMPING_RATIO_LOW_BOUNCY);
+        force.setDampingRatio(/*(sheetView.getTop() > targetTop) ? SpringForce.DAMPING_RATIO_NO_BOUNCY : SpringForce.DAMPING_RATIO_LOW_BOUNCY*/SpringForce.DAMPING_RATIO_NO_BOUNCY);
         force.setStiffness(500f);
 
         settleSpringAnim.setSpring(force);
 
-        settleSpringAnim.addUpdateListener(
-                (animation, value, velocity) -> {
-                    int beforeTop = sheetView.getTop();
-                    int rounded = Math.round(value);
-                    int dy = rounded - beforeTop;
+        settleSpringAnim.addUpdateListener((animation, value, velocity) -> {
+              int beforeTop = sheetView.getTop();
+              int rounded = Math.round(value);
+              int dy = rounded - beforeTop;
 
-                    ViewCompat.offsetTopAndBottom(sheetView, dy);
+              ViewCompat.offsetTopAndBottom(sheetView, dy);
 
-                    int afterTop = sheetView.getTop();
+              int afterTop = sheetView.getTop();
 
-                    float progress = calculateSlideOffset(afterTop);
-                    applyExponentialMorph(progress, afterTop);
+              float progress = calculateSlideOffset(afterTop);
+              applyExponentialMorph(progress, afterTop);
 
-                    for (SliderCallback callback : sliderCallbacks) {
-                        callback.onSlide(progress);
-                    }
-                });
+              for (SliderCallback callback : sliderCallbacks) {
+                    callback.onSlide(progress);
+              }
+        });
 
         settleSpringAnim.addEndListener(
                 (animation, canceled, value, velocity) -> {
                     if (!canceled) {
-                        dispatchState(this.targetState);
-                        if (this.targetState == STATE_COLLAPSED || this.targetState == STATE_EXPANDED) {
-                            requestLayout();
+                        int exactTop = hiddenTop;
+                        if (this.targetState == STATE_EXPANDED) exactTop = expandedTop;
+                        else if (this.targetState == STATE_COLLAPSED) exactTop = collapsedTop;
+
+                        if (exactTop >= 0 && hiddenTop > 0 && exactTop <= hiddenTop) {
+                            float progress = calculateSlideOffset(exactTop);
+                            applyExponentialMorph(progress, exactTop);
                         }
+
+                        dispatchState(this.targetState);
                     }
                 });
 
@@ -405,48 +428,64 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        int previousTop = sheetView != null ? sheetView.getTop() : 0;
+        Trace.beginSection("ESL:onLayout");
+        try {
+            int previousTop = sheetView != null ? sheetView.getTop() : 0;
 
-        super.onLayout(changed, left, top, right, bottom);
-
-        if (sheetView != null) {
-            int actualPeekHeight = peekHeight + (floatingBottomMargin == 0 ? systemBottomInset : 0);
-            int actualBottomMargin =
-                    floatingBottomMargin > 0 ? floatingBottomMargin + systemBottomInset : 0;
-
-            expandedTop = 0;
-            hiddenTop = getHeight();
-            collapsedTop = hiddenTop - actualPeekHeight - actualBottomMargin;
-            
-            if (currentState == STATE_SETTLING
-                    && settleSpringAnim != null
-                    && settleSpringAnim.isRunning()) {
-                int dynamicTargetTop = collapsedTop;
-                if (targetState == STATE_EXPANDED) {
-                    dynamicTargetTop = expandedTop;
-                } else if (targetState == STATE_HIDDEN) {
-                    dynamicTargetTop = hiddenTop;
-                }
-                settleSpringAnim.getSpring().setFinalPosition(dynamicTargetTop);
+            if (currentState == STATE_HIDDEN && previousTop == 0 && getHeight() > 0) {
+                previousTop = getHeight();
             }
 
-            if (currentState == STATE_DRAGGING || currentState == STATE_SETTLING) {
-                float progress = calculateSlideOffset(previousTop);
-                applyExponentialMorph(progress, previousTop);
-            } else {
-                int targetTop;
-                if (currentState == STATE_EXPANDED) targetTop = expandedTop;
-                else if (currentState == STATE_HIDDEN) targetTop = hiddenTop;
-                else targetTop = collapsedTop;
+            super.onLayout(changed, left, top, right, bottom);
 
-                sheetView.layout(left, targetTop, right, targetTop + sheetView.getMeasuredHeight());
+            if (sheetView != null && getHeight() > 0) {
+                int actualPeekHeight = peekHeight + (floatingBottomMargin == 0 ? systemBottomInset : 0);
+                int actualBottomMargin =
+                        floatingBottomMargin > 0 ? floatingBottomMargin + systemBottomInset : 0;
 
-                if (currentState == STATE_COLLAPSED) {
-                    applyExponentialMorph(0f, targetTop);
-                } else if (currentState == STATE_EXPANDED) {
-                    applyExponentialMorph(1f, targetTop);
+                expandedTop = 0;
+                hiddenTop = getHeight();
+                collapsedTop = hiddenTop - actualPeekHeight - actualBottomMargin;
+
+                if (isInitialLayout) {
+                    isInitialLayout = false;
+                    if (currentState == STATE_HIDDEN) {
+                        previousTop = hiddenTop;
+                    } else if (currentState == STATE_COLLAPSED) {
+                        previousTop = collapsedTop;
+                    } else if (currentState == STATE_EXPANDED) {
+                        previousTop = expandedTop;
+                    }
+                    sheetView.offsetTopAndBottom(previousTop - sheetView.getTop());
+                }
+
+                if (currentState == STATE_SETTLING
+                        && settleSpringAnim != null
+                        && settleSpringAnim.isRunning()) {
+                    int dynamicTargetTop = collapsedTop;
+                    if (targetState == STATE_EXPANDED) {
+                        dynamicTargetTop = expandedTop;
+                    } else if (targetState == STATE_HIDDEN) {
+                        dynamicTargetTop = hiddenTop;
+                    }
+                    settleSpringAnim.getSpring().setFinalPosition(dynamicTargetTop);
+                }
+
+                if (currentState == STATE_DRAGGING || currentState == STATE_SETTLING) {
+                    float progress = calculateSlideOffset(previousTop);
+                    applyExponentialMorph(progress, previousTop);
+                } else {
+                    int targetTop;
+                    if (currentState == STATE_EXPANDED) targetTop = expandedTop;
+                    else if (currentState == STATE_HIDDEN) targetTop = hiddenTop;
+                    else targetTop = collapsedTop;
+
+                    float progress = calculateSlideOffset(targetTop);
+                    applyExponentialMorph(progress, targetTop);
                 }
             }
+        } finally {
+            Trace.endSection();
         }
     }
 
@@ -514,49 +553,61 @@ public class ExpressiveSliderLayout extends FrameLayout {
     }
 
     private void applyExponentialMorph(float slideOffset, int currentTop) {
-        if (sheetView == null) return;
+        Trace.beginSection("ESL:applyExponentialMorph");
+        try {
+            if (sheetView == null) return;
 
-        float safeOffset = Math.max(0f, Math.min(1f, slideOffset));
-        float invertedOffset = 1.0f - safeOffset;
-        float exponentialFactor = (float) Math.pow(invertedOffset, 3.0f);
+            float safeOffset = Math.max(0f, Math.min(1f, slideOffset));
+            float invertedOffset = 1.0f - safeOffset;
+            float exponentialFactor = (float) Math.pow(invertedOffset, 3.0f);
 
-        if (internalBackground != null) {
-            float currentTl = cornerRadiusTopLeft * (float) Math.pow(exponentialFactor, 0.1f);
-            float currentTr = cornerRadiusTopRight * (float) Math.pow(exponentialFactor, 0.1f);
-            float currentBl = cornerRadiusBottomLeft * (float) Math.pow(exponentialFactor, 0.1f);
-            float currentBr = cornerRadiusBottomRight * (float) Math.pow(exponentialFactor, 0.1f);
+            if (internalBackground != null) {
+                if (Math.abs(lastExponentialFactor - exponentialFactor) > 0.001f) {
+                    lastExponentialFactor = exponentialFactor;
 
-            internalBackground.setShapeAppearanceModel(
-                    internalBackground.getShapeAppearanceModel().toBuilder()
-                            .setTopLeftCornerSize(currentTl)
-                            .setTopRightCornerSize(currentTr)
-                            .setBottomLeftCornerSize(currentBl)
-                            .setBottomRightCornerSize(currentBr)
-                            .build());
+                    float currentTl = cornerRadiusTopLeft * (float) Math.pow(exponentialFactor, 0.1f);
+                    float currentTr = cornerRadiusTopRight * (float) Math.pow(exponentialFactor, 0.1f);
+                    float currentBl = cornerRadiusBottomLeft * (float) Math.pow(exponentialFactor, 0.1f);
+                    float currentBr = cornerRadiusBottomRight * (float) Math.pow(exponentialFactor, 0.1f);
+
+                    cornerRadii[0] = currentTl;
+                    cornerRadii[1] = currentTl;
+                    cornerRadii[2] = currentTr;
+                    cornerRadii[3] = currentTr;
+                    cornerRadii[4] = currentBr;
+                    cornerRadii[5] = currentBr;
+                    cornerRadii[6] = currentBl;
+                    cornerRadii[7] = currentBl;
+
+                    internalBackground.setCornerRadii(cornerRadii);
+                }
+            }
+
+            int parentWidth = getWidth();
+            int parentHeight = getHeight();
+
+            int baseLeft = (int) (floatingSideMargin * exponentialFactor);
+            int currentLeft = baseLeft + currentXOffset;
+            int currentRight = parentWidth - baseLeft + currentXOffset;
+
+            int currentBottom;
+
+            int actualBottomMargin =
+                    floatingBottomMargin > 0 ? floatingBottomMargin + systemBottomInset : 0;
+            int actualPeekHeight = peekHeight + (floatingBottomMargin == 0 ? systemBottomInset : 0);
+
+            if (currentTop < expandedTop) {
+                currentBottom = currentTop + (parentHeight - expandedTop);
+            } else if (currentTop > collapsedTop) {
+                currentBottom = currentTop + actualPeekHeight;
+            } else {
+                currentBottom = parentHeight - (int) (actualBottomMargin * exponentialFactor);
+            }
+
+            sheetView.layout(currentLeft, currentTop, currentRight, currentBottom);
+        } finally {
+            Trace.endSection();
         }
-
-        int parentWidth = getWidth();
-        int parentHeight = getHeight();
-
-        int baseLeft = (int) (floatingSideMargin * exponentialFactor);
-        int currentLeft = baseLeft + currentXOffset;
-        int currentRight = parentWidth - baseLeft + currentXOffset;
-
-        int currentBottom;
-
-        int actualBottomMargin =
-                floatingBottomMargin > 0 ? floatingBottomMargin + systemBottomInset : 0;
-        int actualPeekHeight = peekHeight + (floatingBottomMargin == 0 ? systemBottomInset : 0);
-
-        if (currentTop < expandedTop) {
-            currentBottom = currentTop + (parentHeight - expandedTop);
-        } else if (currentTop > collapsedTop) {
-            currentBottom = currentTop + actualPeekHeight;
-        } else {
-            currentBottom = parentHeight - (int) (actualBottomMargin * exponentialFactor);
-        }
-
-        sheetView.layout(currentLeft, currentTop, currentRight, currentBottom);
     }
 
     private class DragCallback extends ViewDragHelper.Callback {

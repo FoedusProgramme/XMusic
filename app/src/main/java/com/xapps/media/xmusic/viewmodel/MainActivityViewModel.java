@@ -14,6 +14,7 @@ public class MainActivityViewModel extends ViewModel {
     private static final String KEY_DATA_SAVED = "key_data_saved";
     private static final String KEY_LAST_POSITION = "key_last_position";
     private static final String KEY_BNV_POSITION = "key_bnv_position";
+    private static final String KEY_LAYOUT_STATE= "key_layout_state";
 
     private final SavedStateHandle mSavedStateHandle;
 
@@ -59,6 +60,15 @@ public class MainActivityViewModel extends ViewModel {
 
     public void saveBNVPosition(int i) {
         mSavedStateHandle.set(KEY_BNV_POSITION, i);
+    }
+    
+    public void saveLayoutState(int i) {
+        mSavedStateHandle.set(KEY_LAYOUT_STATE, i);
+    }
+    
+    public int getLayoutState() {
+        Integer i = mSavedStateHandle.get(KEY_LAYOUT_STATE);
+        return i != null? i : 6;
     }
 
     public int loadBNVPosition() {

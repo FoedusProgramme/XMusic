@@ -11,6 +11,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Interpolator;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
@@ -25,6 +26,7 @@ import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
 import android.animation.ValueAnimator;
+import android.view.ViewTreeObserver;
 import android.view.animation.DecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -441,5 +443,33 @@ public class XUtils {
     
         a.start();
     }
+    
+    public static void runOnReady(View view, Runnable action) {
+        if (view == null || action == null) {
+            return;
+        }
+        if (isViewTrulyVisible(view)) {
+            action.run();
+            return;
+        }
+        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (isViewTrulyVisible(view)) {
+                    view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    action.run();
+                }
+            }
+        });
+    }
+
+    private static boolean isViewTrulyVisible(View view) {
+        if (!view.isShown()) {
+            return false;
+        }
+        Rect hitRect = new Rect();
+        return view.getGlobalVisibleRect(hitRect);
+    }
+    
 
 }

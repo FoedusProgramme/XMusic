@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView.State;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.MainActivity;
+import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.common.SettingsItem;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.databinding.*;
@@ -33,7 +34,7 @@ import java.util.List;
 
 public abstract class BasePrefsFragment extends BaseFragment {
 
-    private MainActivity activity;
+    private RootActivity activity;
     private ItemsListAdapter adapter;
     private FragmentBasePrefsBinding binding;
     protected List<SettingsItem> provideItems() {
@@ -47,7 +48,7 @@ public abstract class BasePrefsFragment extends BaseFragment {
         binding.recyclerView.setAdapter(adapter);
 		binding.toolbar.setNavigationOnClickListener(v -> {
             getActivity().getOnBackPressedDispatcher().onBackPressed();
-			activity.HideBNV(false);
+            activity.getUIManager().hideBnv(false);
         });
     }
 
@@ -55,7 +56,7 @@ public abstract class BasePrefsFragment extends BaseFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentBasePrefsBinding.inflate(inflater, container, false);
-        activity = (MainActivity) getActivity();
+        activity = (RootActivity) getActivity();
         initialize();
         return binding.getRoot();
     }
@@ -72,10 +73,10 @@ public abstract class BasePrefsFragment extends BaseFragment {
         public ItemsListAdapter(BasePrefsFragment fragment, Context context, List<SettingsItem> data) {
             setHasStableIds(true);
             frag = fragment;
-            this.single = ContextCompat.getDrawable(context, R.drawable.rv_ripple_single);
-            this.top = ContextCompat.getDrawable(context, R.drawable.rv_ripple_top);
-            this.middle = ContextCompat.getDrawable(context, R.drawable.rv_ripple);
-            this.bottom = ContextCompat.getDrawable(context, R.drawable.rv_ripple_bottom);
+            this.single = ContextCompat.getDrawable(context, R.drawable.rv_ripple_single_inverse);
+            this.top = ContextCompat.getDrawable(context, R.drawable.rv_ripple_top_inverse);
+            this.middle = ContextCompat.getDrawable(context, R.drawable.rv_ripple_inverse);
+            this.bottom = ContextCompat.getDrawable(context, R.drawable.rv_ripple_bottom_inverse);
             this.data = data;
         }
 
@@ -182,7 +183,6 @@ public abstract class BasePrefsFragment extends BaseFragment {
         }
         void bind(BasePrefsFragment host, SettingsItem item) {
             binding.title.setText(item.title);
-            binding.title.setTypeface(binding.title.getTypeface(), Typeface.BOLD);
             binding.description.setText(item.description);
             binding.item.setOnClickListener(v -> {
                 host.onItemSelected(item);
@@ -202,7 +202,6 @@ public abstract class BasePrefsFragment extends BaseFragment {
             binding.prefSwitch.setChecked(DataManager.sp.getBoolean(item.id, false));
             binding.prefSwitch.setOnCheckedChangeListener(null);
             binding.prefTitle.setText(item.title);
-            binding.prefTitle.setTypeface(binding.prefTitle.getTypeface(), Typeface.BOLD);
             binding.prefDescription.setText(item.description);
             binding.prefItem.setOnClickListener(v -> {
                 binding.prefSwitch.setChecked(!binding.prefSwitch.isChecked());

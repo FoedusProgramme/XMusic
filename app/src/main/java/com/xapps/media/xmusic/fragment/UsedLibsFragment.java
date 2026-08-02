@@ -16,6 +16,7 @@ import com.google.android.material.transition.MaterialContainerTransform;
 import com.mikepenz.aboutlibraries.Libs;
 import com.mikepenz.aboutlibraries.entity.Library;
 import com.xapps.media.xmusic.activity.MainActivity;
+import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.databinding.*;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
@@ -29,14 +30,14 @@ public class UsedLibsFragment extends BaseFragment {
 
     private ActivityMainBinding activityBinding;
     private FragmentUsedLibsBinding binding;
-	private MainActivity activity;
+	private RootActivity activity;
 	
 	private ListAdapter adapter;
 
 	@Override
 	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 		binding = FragmentUsedLibsBinding.inflate(inflater, container, false);
-        activity = (MainActivity) getActivity();
+        activity = (RootActivity) getActivity();
         return binding.getRoot();
 	}
     

@@ -62,4 +62,9 @@
         <item name="android:textColor">?colorOnSurface</item>
     </style>
 
+    <style name="ThemeOverlay.Material3.Toolbar.CircleNavigationButton" parent="">
+        <item name="toolbarNavigationButtonCircleColor">?attr/colorSurface</item>
+        <item name="toolbarNavigationButtonStyle">@style/Widget.Material3.Toolbar.Button.Navigation.Circle</item>
+    </style>
+
 </resources>

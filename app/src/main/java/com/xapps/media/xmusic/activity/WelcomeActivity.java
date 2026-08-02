@@ -5,9 +5,11 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.*;
+import android.os.Trace;
 import android.provider.Settings;
 import com.xapps.media.xmusic.utils.Log;
 import android.view.*;
@@ -18,6 +20,7 @@ import android.widget.TextSwitcher;
 import android.widget.TextView;
 import androidx.activity.BackEventCompat;
 import androidx.activity.EdgeToEdge;
+import androidx.activity.SystemBarStyle;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -54,8 +57,6 @@ import java.util.concurrent.TimeUnit;
 public class WelcomeActivity extends AppCompatActivity {
     
     private ActivityWelcomeBinding binding;
-    private int currentPage = 1;
-    private int MAX_PAGE_COUNT = 4;
     private OnBackPressedCallback callback1, callback2, callback3, callback4, nullcallback;
     private boolean notificationsAllowed, audiAccessAllowed, storageReadAllowed;
     private TransitionSeekController seekController;
@@ -64,37 +65,54 @@ public class WelcomeActivity extends AppCompatActivity {
             
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        getWindow().setNavigationBarContrastEnforced(false);
-        binding = ActivityWelcomeBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        MaterialColorUtils.initColors(this);
-        setupLottie();
-        checkSDK();
-        setupInsets();
-        setupClickListeners();
-        setupPermsLaunchers();
-        GradientDrawable bg = new GradientDrawable();
-        bg.setShape(GradientDrawable.RECTANGLE);
-        bg.setColor(MaterialColorUtils.colorPrimaryContainer);
-        bg.setCornerRadius(Float.MAX_VALUE);
-        binding.progressBar.setBackground(bg);
+        Trace.beginSection("WA:onCreate");
+        try {
+            super.onCreate(savedInstanceState);
+            EdgeToEdge.enable(this, 
+                SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
+                SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
+            );
+            binding = ActivityWelcomeBinding.inflate(getLayoutInflater());
+            setContentView(binding.getRoot());
+            MaterialColorUtils.initColors(this);
+            setupLottie();
+            checkSDK();
+            setupInsets();
+            setupClickListeners();
+            setupPermsLaunchers();
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.RECTANGLE);
+            bg.setColor(MaterialColorUtils.colorPrimaryContainer);
+            bg.setCornerRadius(Float.MAX_VALUE);
+            binding.progressBar.setBackground(bg);
+        } finally {
+            Trace.endSection();
+        }
     }
     
     public void setupLottie() {
-        binding.lottie.addLottieOnCompositionLoadedListener(composition -> {
-            binding.lottie.addValueCallback(new KeyPath(".primaryContainer", "**"), LottieProperty.COLOR, frameInfo -> MaterialColorUtils.colorPrimaryContainer);
-            binding.lottie.addValueCallback(new KeyPath(".onSecondary", "**"), LottieProperty.COLOR, frameInfo -> MaterialColorUtils.colorOnSecondary);
-            binding.lottie.addValueCallback(new KeyPath(".surfaceContainer", "**"), LottieProperty.COLOR, frameInfo -> MaterialColorUtils.colorSurfaceContainer);
-        });
+        Trace.beginSection("WA:setupLottie");
+        try {
+            binding.lottie.addLottieOnCompositionLoadedListener(composition -> {
+                binding.lottie.addValueCallback(new KeyPath(".primaryContainer", "**"), LottieProperty.COLOR, frameInfo -> MaterialColorUtils.colorPrimaryContainer);
+                binding.lottie.addValueCallback(new KeyPath(".onSecondary", "**"), LottieProperty.COLOR, frameInfo -> MaterialColorUtils.colorOnSecondary);
+                binding.lottie.addValueCallback(new KeyPath(".surfaceContainer", "**"), LottieProperty.COLOR, frameInfo -> MaterialColorUtils.colorSurfaceContainer);
+            });
+        } finally {
+            Trace.endSection();
+        }
     }
     
     @Override
     public void onResume() {
-        super.onResume();
-        checkPerms();
-        binding.screen2Button.setEnabled(XUtils.areAllPermsGranted(this));
+        Trace.beginSection("WA:onResume");
+        try {
+            super.onResume();
+            checkPerms();
+            binding.screen2Button.setEnabled(XUtils.areAllPermsGranted(this));
+        } finally {
+            Trace.endSection();
+        }
     }
 
     private void setupInsets() {
@@ -116,28 +134,33 @@ public class WelcomeActivity extends AppCompatActivity {
                 
                 ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
                 executor.execute(() -> {
-                    SongMetadataHelper.getAllSongs(this, new SongLoadListener(){
-                        @Override
-                        public void onStarted(int i) {
-                            binding.progressBar.setMax(i);
-                        }
-                        
-                        @Override
-                        public void onProgress(java.util.ArrayList<Song> songs, int count) {
-                            binding.progressBar.setProgressCompat(count, true);
-                        }
-                
-                        @Override
-                        public void onComplete(java.util.ArrayList<Song> songs) {
-                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                DataManager.setDataInitialized();
-                                Intent i = new Intent();
-                                i.setClass(WelcomeActivity.this, RootActivity.class);
-                                startActivity(i);
-                                finish();
-                            }, 1000);
-                        }
-                    });
+                    Trace.beginSection("WA:loadSongsInBackground");
+                    try {
+                        SongMetadataHelper.getAllSongs(this, new SongLoadListener(){
+                            @Override
+                            public void onStarted(int i) {
+                                binding.progressBar.setMax(i);
+                            }
+                            
+                            @Override
+                            public void onProgress(java.util.ArrayList<Song> songs, int count) {
+                                binding.progressBar.setProgressCompat(count, true);
+                            }
+                    
+                            @Override
+                            public void onComplete(java.util.ArrayList<Song> songs) {
+                                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                    DataManager.setDataInitialized();
+                                    Intent i = new Intent();
+                                    i.setClass(WelcomeActivity.this, RootActivity.class);
+                                    startActivity(i);
+                                    finish();
+                                }, 1000);
+                            }
+                        });
+                    } finally {
+                        Trace.endSection();
+                    }
                 });
             } else {
                 Snackbar.make(WelcomeActivity.this, binding.coordinator, "Please allow all necessary permissions first", Snackbar.LENGTH_SHORT).show(); 
