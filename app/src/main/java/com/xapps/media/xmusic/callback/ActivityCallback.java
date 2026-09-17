@@ -25,4 +25,12 @@ public interface ActivityCallback {
     default void passData() {
         
     }
+
+    default void onNotificationButtonsUsed(int i) {
+
+    }
+
+    default void onNotificationButtonsUsed(boolean b) {
+
+    }
 }

@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinator"
+    android:background="?colorSurfaceContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:paddingHorizontal="8dp"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:fitsSystemWindows="true"
+        android:background="@android:color/transparent"
+        app:liftOnScrollColor="@android:color/transparent"
+        android:id="@+id/appbar">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:layout_height="?attr/collapsingToolbarLayoutLargeSize"
+            android:layout_width="match_parent"
+            android:id="@+id/collapsingtoolbar"
+            app:contentScrim="@android:color/transparent"
+            android:background="@null"
+            app:expandedTitleTextAppearance="@style/ExpandedAppBarTextStyle"
+            app:expandedTitleSpacing="0dp"
+            app:collapsedTitleTextAppearance="@style/CollapsedAppBarTextStyle"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:layout_height="?attr/actionBarSize"
+                android:layout_width="match_parent"
+                app:title="Contributions"
+                app:navigationIcon="@drawable/ic_arrow_back"
+                android:theme="@style/ThemeOverlay.Material3.Toolbar.CircleNavigationButton"
+                app:layout_collapseMode="pin"
+                android:id="@+id/toolbar" />
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/nested_scroll_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:overScrollMode="never"
+            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+            <LinearLayout
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginHorizontal="24dp"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?colorPrimary"
+                    android:text="@string/contributions_main_devs" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="8dp"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp"
+                    android:background="@drawable/checkable_background_single_inverse">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/contributons_lead_dev"
+                            android:layout_marginBottom="4dp"
+                            android:textColor="?colorOutline"
+                            android:textSize="14sp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/text_grimmthejow"
+                            android:textColor="?colorOnSurface"
+                            android:textSize="22sp"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="24dp"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/github_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                style="@style/Widget.Material3Expressive.Button"
+                                app:icon="@drawable/icon_github"
+                                android:text="@string/button_github"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/telegram_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                style="@style/Widget.Material3Expressive.Button.OutlinedButton"
+                                app:icon="@drawable/icon_telegram"
+                                android:text="@string/button_telegram"/>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <com.appbroker.roundedimageview.RoundedImageView
+                        android:id="@+id/big_pic"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        app:radius="16dp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?colorPrimary"
+                    android:text="@string/text_contributors" />
+
+                <LinearLayout
+                    android:id="@+id/first_contributor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginHorizontal="8dp"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_top_inverse">
+
+                    <com.appbroker.roundedimageview.RoundedImageView
+                        android:id="@+id/first_icon"
+                        android:layout_height="48dp"
+                        android:layout_width="48dp"
+                        android:scaleType="fitCenter"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginStart="8dp"
+                        app:radius="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="18sp"
+                            android:textColor="?colorOnSurface"
+                            android:text="@string/person_syntaxspin" />
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="14sp"
+                            android:textColor="?colorOutline"
+                            android:text="@string/role_code_contributions" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/second_contributor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginHorizontal="8dp"
+                    android:layout_marginTop="2dp"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_inverse">
+
+                    <com.appbroker.roundedimageview.RoundedImageView
+                        android:id="@+id/second_icon"
+                        android:layout_height="48dp"
+                        android:layout_width="48dp"
+                        android:scaleType="fitCenter"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginStart="8dp"
+                        app:radius="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="18sp"
+                            android:textColor="?colorOnSurface"
+                            android:text="@string/person_aquiles_trindade" />
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="14sp"
+                            android:textColor="?colorOutline"
+                            android:text="@string/role_code_contributions" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/third_contributor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginHorizontal="8dp"
+                    android:layout_marginTop="2dp"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_inverse">
+
+                    <com.appbroker.roundedimageview.RoundedImageView
+                        android:id="@+id/third_icon"
+                        android:layout_height="48dp"
+                        android:layout_width="48dp"
+                        android:scaleType="fitCenter"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginStart="8dp"
+                        app:radius="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="18sp"
+                            android:textColor="?colorOnSurface"
+                            android:text="@string/person_ekansh_bhavik" />
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="14sp"
+                            android:textColor="?colorOutline"
+                            android:text="@string/role_code_contributions" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/fourth_contributor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginHorizontal="8dp"
+                    android:layout_marginTop="2dp"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_bottom_inverse">
+
+                    <com.appbroker.roundedimageview.RoundedImageView
+                        android:id="@+id/fourth_icon"
+                        android:layout_height="48dp"
+                        android:layout_width="48dp"
+                        android:scaleType="fitCenter"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginStart="8dp"
+                        app:radius="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="18sp"
+                            android:textColor="?colorOnSurface"
+                            android:text="@string/person_zackie" />
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="14sp"
+                            android:textColor="?colorOutline"
+                            android:text="@string/role_code_contributions" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginHorizontal="24dp"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?colorPrimary"
+                    android:text="@string/text_special_thanks" />
+
+                <LinearLayout
+                    android:id="@+id/big_thanks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginHorizontal="8dp"
+                    android:layout_marginTop="2dp"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_top_inverse">
+
+                    <com.appbroker.roundedimageview.RoundedImageView
+                        android:id="@+id/fifth_icon"
+                        android:layout_height="48dp"
+                        android:layout_width="48dp"
+                        android:scaleType="fitCenter"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginStart="8dp"
+                        app:radius="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="18sp"
+                            android:textColor="?colorOnSurface"
+                            android:text="@string/person_nick" />
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="14sp"
+                            android:textColor="?colorOutline"
+                            android:text="@string/text_nick_big_help" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/second_big_thanks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginHorizontal="8dp"
+                    android:layout_marginTop="2dp"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_inverse">
+
+                    <com.appbroker.roundedimageview.RoundedImageView
+                        android:id="@+id/sixth_icon"
+                        android:layout_height="48dp"
+                        android:layout_width="48dp"
+                        android:scaleType="fitCenter"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginStart="8dp"
+                        app:radius="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="18sp"
+                            android:textColor="?colorOnSurface"
+                            android:text="@string/person_piyush" />
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="14sp"
+                            android:textColor="?colorOutline"
+                            android:text="@string/text_big_help_piyush" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/first_thanks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginHorizontal="8dp"
+                    android:layout_marginTop="2dp"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/rv_ripple_bottom_inverse">
+
+                    <com.appbroker.roundedimageview.RoundedImageView
+                        android:id="@+id/seventh_icon"
+                        android:layout_height="48dp"
+                        android:layout_width="48dp"
+                        android:scaleType="fitCenter"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginStart="8dp"
+                        app:radius="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="18sp"
+                            android:textColor="?colorOnSurface"
+                            android:text="@string/person_salad" />
+
+                        <TextView
+                            android:layout_height="wrap_content"
+                            android:layout_width="wrap_content"
+                            android:textSize="14sp"
+                            android:textColor="?colorOutline"
+                            android:text="@string/role_quality_assurance" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+    </com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

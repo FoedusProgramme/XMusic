@@ -38,6 +38,7 @@ import com.xapps.media.xmusic.lyric.LyricsExtractor;
 import com.xapps.media.xmusic.service.XPlayerService;
 import com.xapps.media.xmusic.utils.XUtils;
 import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
+import com.xapps.media.xmusic.widget.RichTooltip;
 
 import java.util.List;
 import java.util.Objects;
@@ -135,6 +136,7 @@ public class LogicManager {
         });
 
         binding.expandedPlayer.repeatModeButton.setOnClickListener(v -> handleRepeatButtonClick());
+        binding.expandedPlayer.shuffleModeButton.setOnClickListener(v -> handleShuffleButtonClick());
 
         binding.expandedPlayer.toggleView.setExtraOnClickListener(new View.OnClickListener() {
             @Override
@@ -246,6 +248,13 @@ public class LogicManager {
         });
     }
 
+    private void handleShuffleButtonClick() {
+        if (activity == null || activity.getController() == null || CallbackInterface.service() == null) return;
+        activity.getController().setShuffleModeEnabled(!activity.getController().getShuffleModeEnabled());
+        binding.expandedPlayer.shuffleModeButton.setIconResource(activity.getController().getShuffleModeEnabled()? R.drawable.ic_shuffle : R.drawable.ic_shuffle_off);
+        binding.expandedPlayer.shuffleModeButton.setChecked(activity.getController().getShuffleModeEnabled());
+    }
+
     private void handleRepeatButtonClick() {
         if (activity == null || activity.getController() == null || CallbackInterface.service() == null) return;
         switch (activity.getController().getRepeatMode()) {
@@ -280,6 +289,33 @@ public class LogicManager {
                     uiManager.onPlayerHidden();
                     mediaController.stop();
                     mediaController.clearMediaItems();
+                } else if (state == ExpressiveSliderLayout.STATE_COLLAPSED) {
+                    DataManager.increasePlayerShowCount();
+                    if (DataManager.getPlayerSHowCount() >= 5 && !DataManager.isPlayerTipShown()) {
+                        new RichTooltip.Builder(activity)
+                                .setTitle("Did you know?")
+                                .setMessage("You can swipe the mini player the left or the right to seek between tracks")
+                                .setIconRes(R.drawable.lightbulb_24px)
+                                .setStyle(RichTooltip.TooltipStyle.PRIMARY)
+                                .setPrimaryAction("Got it", RichTooltip.ButtonStyle.PRIMARY, null)
+                                .setCancelable(false)
+                                .build()
+                                .show(binding.collapsedPlayer.getRoot());
+                        DataManager.markPlayerTipAsShown();
+                    }
+                } else if (state == ExpressiveSliderLayout.STATE_EXPANDED) {
+                    if (DataManager.getPlayerSHowCount() >= 8 && !DataManager.isSeekTipShown()) {
+                        new RichTooltip.Builder(activity)
+                                .setTitle("Pro tip")
+                                .setMessage("Hold on the seek buttons to seek the song forward or backward by 10s")
+                                .setIconRes(R.drawable.lightbulb_24px)
+                                .setStyle(RichTooltip.TooltipStyle.TERTIARY)
+                                .setPrimaryAction("Got it", RichTooltip.ButtonStyle.TERTIARY, null)
+                                .setCancelable(false)
+                                .build()
+                                .show(binding.expandedPlayer.nextButton);
+                        DataManager.markSeekTipAsShown();
+                    }
                 }
             }
 

@@ -122,7 +122,7 @@ public class SearchFragment extends BaseFragment implements FragmentCallback {
         Until I find a fix for ugly animations*/
         binding.searchRecycler.setItemAnimator(null);
         activity.bottomNavigation.post(() -> {
-            binding.searchRecycler.addItemDecoration(new BottomSpacingDecoration(XUtils.convertToPx(getActivity(), activity.bottomNavigation.getHeight())));
+            binding.searchRecycler.addItemDecoration(new BottomSpacingDecoration(XUtils.convertToPx(requireContext(), activity.bottomNavigation.getHeight())));
         });
         loadSongs();
     }

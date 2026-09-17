@@ -101,10 +101,12 @@
             app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
             <LinearLayout
+                android:id="@+id/container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="16dp"
-                android:padding="16dp"
+                android:paddingTop="16dp"
+                android:paddingHorizontal="16dp"
                 android:orientation="vertical">
 
                 <TextView
@@ -286,7 +288,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_marginBottom="2dp"
-                    android:background="@drawable/rv_ripple_bottom_inverse"
+                    android:background="@drawable/rv_ripple_inverse"
                     android:padding="16dp">
 
                     <TextView
@@ -300,6 +302,31 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/text_telegram_join_details"
+                        android:textColor="?colorOutline"
+                        android:textSize="14.0sp"
+                        tools:ignore="TextContrastCheck" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/seventh_item"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="2dp"
+                    android:background="@drawable/rv_ripple_bottom_inverse"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:textSize="16.0sp"
+                        android:textColor="?colorOnSurface"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_website" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_website_desc"
                         android:textColor="?colorOutline"
                         android:textSize="14.0sp"
                         tools:ignore="TextContrastCheck" />

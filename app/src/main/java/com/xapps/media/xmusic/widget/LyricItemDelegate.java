@@ -1,6 +1,7 @@
 package com.xapps.media.xmusic.widget;
 
 import android.content.Context;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.text.Layout;
@@ -363,6 +364,21 @@ public class LyricItemDelegate {
         if (mainLineView != null) mainLineView.setFontConfig(config);
         if (bgLineView != null) bgLineView.setFontConfig(config);
         if (romajiView != null) romajiView.setFontConfig(config);
+        isPrepped = false;
+    }
+
+    public void setTextSize(float textSizeDp) {
+        if (mainLineView != null) mainLineView.setTextSize(textSizeDp);
+        if (bgLineView != null) bgLineView.setTextSize(textSizeDp > 0 ? textSizeDp * 0.75f : -1f);
+        if (romajiView != null) romajiView.setTextSize(textSizeDp > 0 ? textSizeDp * 0.5f : -1f);
+        isPrepped = false;
+    }
+
+    public void setUseSystemFont(boolean useSystemFont) {
+        if (mainLineView != null) mainLineView.setUseSystemFont(useSystemFont);
+        if (bgLineView != null) bgLineView.setUseSystemFont(useSystemFont);
+        if (romajiView != null) romajiView.setUseSystemFont(useSystemFont);
+        isPrepped = false;
     }
 
     public void setEnableSparkles(boolean enableSparkles) {
@@ -371,7 +387,7 @@ public class LyricItemDelegate {
         if (romajiView != null) romajiView.setEnableSparkles(enableSparkles);
     }
 
-    public void setBlurFilter(android.graphics.BlurMaskFilter filter) {
+    public void setBlurFilter(BlurMaskFilter filter) {
         if (mainLineView != null) mainLineView.setBlurFilter(filter);
         if (bgLineView != null) bgLineView.setBlurFilter(filter);
         if (romajiView != null) romajiView.setBlurFilter(filter);

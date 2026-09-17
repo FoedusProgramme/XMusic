@@ -97,6 +97,10 @@ public class UIManager implements PlaybackControlListener {
 
     private int playerSurface, bottomSheetColor;
 
+    private int repeatMode;
+
+    private boolean shuffleEnabled;
+
     private Map<String, Integer> effectiveOldColors = new HashMap<>();
 
     public MainActivityViewModel viewModel;
@@ -213,6 +217,8 @@ public class UIManager implements PlaybackControlListener {
         binding.containerRoot.setClipChildren(false);
         binding.collapsedPlayer.motionRoot.setClipChildren(false);
 
+        binding.expandedPlayer.favoriteButton.setAvdResources(R.drawable.favorite_avd, R.drawable.favorite_avd_out);
+
         loadSettings();
         updateLyrics();
     }
@@ -276,7 +282,7 @@ public class UIManager implements PlaybackControlListener {
                         0,
                         tabsNeededMargin,
                         0,
-                        bnvNeededMargin,
+                        playerNeededMargin,
                         duration,
                         interpolator);
                 XUtils.animateMarginsTo(
@@ -593,14 +599,8 @@ public class UIManager implements PlaybackControlListener {
             return;
         }
 
-        Map<String, Integer> colors =
-                XUtils.isDarkMode(activity)
-                        ? ColorPaletteUtils.darkColors
-                        : ColorPaletteUtils.lightColors;
-        Map<String, Integer> oldColors =
-                XUtils.isDarkMode(activity)
-                        ? ColorPaletteUtils.oldDarkColors
-                        : ColorPaletteUtils.oldLightColors;
+        Map<String, Integer> colors = XUtils.isDarkMode(activity) ? ColorPaletteUtils.darkColors : ColorPaletteUtils.lightColors;
+        Map<String, Integer> oldColors = XUtils.isDarkMode(activity) ? ColorPaletteUtils.oldDarkColors : ColorPaletteUtils.oldLightColors;
 
         effectiveOldColors = new HashMap<>(oldColors);
 
@@ -610,33 +610,24 @@ public class UIManager implements PlaybackControlListener {
         int oldOnTertiary = hasLive ? LiveColors.onTertiary : effectiveOldColors.get("onTertiary");
         int oldTertiary = hasLive ? LiveColors.tertiary : effectiveOldColors.get("tertiary");
         int surface = isOledTheme ? 0xff000000 : colors.get("surface");
-        int oldSurface =
-                isOledTheme
-                        ? 0xff000000
-                        : (hasLive ? LiveColors.surface : effectiveOldColors.get("surface"));
+        int oldSurface = isOledTheme ? 0xff000000 : (hasLive ? LiveColors.surface : effectiveOldColors.get("surface"));
         int surfaceContainer = isOledTheme ? 0xff050505 : colors.get("surfaceContainer");
-        int oldSurfaceContainer =
-                isOledTheme
-                        ? 0xff050505
-                        : (hasLive
-                           ? LiveColors.surfaceContainer
-                           : effectiveOldColors.get("surfaceContainer"));
+        int oldSurfaceContainer = isOledTheme ? 0xff050505 : (hasLive ? LiveColors.surfaceContainer : effectiveOldColors.get("surfaceContainer"));
         int outline = colors.get("outline");
         int oldOutline = hasLive ? LiveColors.outline : effectiveOldColors.get("outline");
         int primary = colors.get("primary");
         int oldPrimary = hasLive ? LiveColors.primary : effectiveOldColors.get("primary");
         int onPrimary = colors.get("onPrimary");
         int oldOnPrimary = hasLive ? LiveColors.onPrimary : effectiveOldColors.get("onPrimary");
-        int onSurfaceContainer =
-                isOledTheme ? colors.get("onSurface") : colors.get("onSurfaceContainer");
-        int oldOnSurfaceContainer =
-                isOledTheme
-                        ? (hasLive ? LiveColors.onSurface : effectiveOldColors.get("onSurface"))
-                        : (hasLive
-                           ? LiveColors.onSurfaceContainer
-                           : effectiveOldColors.get("onSurfaceContainer"));
+        int onSurfaceContainer = isOledTheme ? colors.get("onSurface") : colors.get("onSurfaceContainer");
+        int oldOnSurfaceContainer = isOledTheme ? (hasLive ? LiveColors.onSurface : effectiveOldColors.get("onSurface")) : (hasLive ? LiveColors.onSurfaceContainer : effectiveOldColors.get("onSurfaceContainer"));
         int onSurface = colors.get("onSurface");
         int oldOnSurface = hasLive ? LiveColors.onSurface : effectiveOldColors.get("onSurface");
+
+        int[][] states = new int[][] {
+                new int[] { android.R.attr.state_checked },
+                new int[] { -android.R.attr.state_checked }
+        };
 
         binding.gradientView.setColors(surface, onPrimary, onTertiary);
 
@@ -645,8 +636,7 @@ public class UIManager implements PlaybackControlListener {
         Drawable saveBg = binding.expandedPlayer.saveButton.getBackground();
         Drawable prevBg = binding.expandedPlayer.previousButton.getBackground();
 
-        GradientDrawable d3 =
-                (GradientDrawable) binding.expandedPlayer.songInfoText.getBackground();
+        GradientDrawable d3 = (GradientDrawable) binding.expandedPlayer.songInfoText.getBackground();
 
         MaterialShapeDrawable d = (MaterialShapeDrawable) binding.expandedPlayer.floatingToolbarLayout.getBackground();
 
@@ -654,76 +644,103 @@ public class UIManager implements PlaybackControlListener {
 
         ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
         va.setDuration(500);
-        va.addUpdateListener(
-                a -> {
-                    float f = (float) a.getAnimatedValue();
-                    int iop = XUtils.interpolateColor(oldOnPrimary, onPrimary, f);
-                    int ip = XUtils.interpolateColor(oldPrimary, primary, f);
-                    int iot = XUtils.interpolateColor(oldOnTertiary, onTertiary, f);
-                    int it = XUtils.interpolateColor(oldTertiary, tertiary, f);
-                    int is = XUtils.interpolateColor(oldSurface, surface, f);
-                    int isc = XUtils.interpolateColor(oldSurfaceContainer, surfaceContainer, f);
-                    int io = XUtils.interpolateColor(oldOutline, outline, f);
-                    int iosc = XUtils.interpolateColor(oldOnSurfaceContainer, onSurfaceContainer, f);
-                    int ios = XUtils.interpolateColor(oldOnSurface, onSurface, f);
+        va.addUpdateListener(a -> {
+            float f = (float) a.getAnimatedValue();
+            int iop = XUtils.interpolateColor(oldOnPrimary, onPrimary, f);
+            int ip = XUtils.interpolateColor(oldPrimary, primary, f);
+            int iot = XUtils.interpolateColor(oldOnTertiary, onTertiary, f);
+            int it = XUtils.interpolateColor(oldTertiary, tertiary, f);
+            int is = XUtils.interpolateColor(oldSurface, surface, f);
+            int isc = XUtils.interpolateColor(oldSurfaceContainer, surfaceContainer, f);
+            int io = XUtils.interpolateColor(oldOutline, outline, f);
+            int iosc = XUtils.interpolateColor(oldOnSurfaceContainer, onSurfaceContainer, f);
+            int ios = XUtils.interpolateColor(oldOnSurface, onSurface, f);
 
-                    LiveColors.primary = ip;
-                    LiveColors.onPrimary = iop;
-                    LiveColors.tertiary = it;
-                    LiveColors.onTertiary = iot;
-                    LiveColors.surface = is;
-                    LiveColors.surfaceContainer = isc;
-                    LiveColors.outline = io;
-                    LiveColors.onSurface = ios;
-                    LiveColors.onSurfaceContainer = iosc;
+            LiveColors.primary = ip;
+            LiveColors.onPrimary = iop;
+            LiveColors.tertiary = it;
+            LiveColors.onTertiary = iot;
+            LiveColors.surface = is;
+            LiveColors.surfaceContainer = isc;
+            LiveColors.outline = io;
+            LiveColors.onSurface = ios;
+            LiveColors.onSurfaceContainer = iosc;
 
-                    binding.expandedPlayer.toggleView.setShapeColor(iop);
-                    binding.expandedPlayer.toggleView.setIconColor(ip);
-                    binding.lyricsView.setLyricColor(ios);
-                    binding.placeholderLyricsText.setTextColor(ios);
+            binding.expandedPlayer.toggleView.setShapeColor(ip);
+            binding.expandedPlayer.toggleView.setIconColor(iop);
+            binding.lyricsView.setLyricColor(ios);
+            binding.placeholderLyricsText.setTextColor(ios);
 
-                    binding.expandedPlayer.nextButton.setIconColorFilter(it);
-                    binding.expandedPlayer.favoriteButton.setIconColorFilter(it);
-                    binding.expandedPlayer.saveButton.setIconColorFilter(it);
-                    binding.expandedPlayer.previousButton.setIconColorFilter(it);
+            binding.expandedPlayer.nextButton.setIconColorFilter(ip);
+            binding.expandedPlayer.favoriteButton.setIconColorFilter(ip);
+            binding.expandedPlayer.saveButton.setIconColorFilter(ip);
+            binding.expandedPlayer.previousButton.setIconColorFilter(ip);
 
-                    nextBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
-                    favBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
-                    saveBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
-                    prevBg.setColorFilter(new PorterDuffColorFilter(iot, PorterDuff.Mode.SRC_IN));
+            nextBg.setColorFilter(new PorterDuffColorFilter(iop, PorterDuff.Mode.SRC_IN));
+            favBg.setColorFilter(new PorterDuffColorFilter(iop, PorterDuff.Mode.SRC_IN));
+            saveBg.setColorFilter(new PorterDuffColorFilter(iop, PorterDuff.Mode.SRC_IN));
+            prevBg.setColorFilter(new PorterDuffColorFilter(iop, PorterDuff.Mode.SRC_IN));
 
-                    playerSurface = is;
+            playerSurface = is;
 
-                    binding.miniPlayer.setSheetBackgroundColor(playerSurface);
-                    binding.lyricsContainer.setBackgroundColor(playerSurface);
+            binding.miniPlayer.setSheetBackgroundColor(is);
+            binding.lyricsContainer.setBackgroundColor(playerSurface);
 
-                    binding.expandedPlayer.songInfoLayout.setColor(isc);
+            binding.expandedPlayer.songInfoLayout.setColor(isc);
 
-                    binding.collapsedPlayer.musicProgress.setIndicatorColor(ip);
-                    seekbar.setColor(ip);
+            binding.collapsedPlayer.musicProgress.setIndicatorColor(ip);
+            seekbar.setColor(ip);
 
-                    binding.collapsedPlayer.action.setIconTint(ColorStateList.valueOf(iop));
-                    binding.collapsedPlayer.action.setBackgroundColor(ip);
-                    binding.collapsedPlayer.action.setRippleColor(ColorStateList.valueOf(ColorUtils.setAlphaComponent(io, 100)));
+            binding.collapsedPlayer.action.setIconTint(ColorStateList.valueOf(iop));
+            binding.collapsedPlayer.action.setBackgroundColor(ip);
+            binding.collapsedPlayer.action.setRippleColor(ColorStateList.valueOf(ColorUtils.setAlphaComponent(io, 100)));
 
-                    d.setFillColor(ColorStateList.valueOf(isc));
+            d.setFillColor(ColorStateList.valueOf(isc));
 
-                    binding.expandedPlayer.lyricsButton.setIconTint(ColorStateList.valueOf(isOledTheme? 0xffbdbdbd : iosc));
-                    binding.expandedPlayer.lyricsButton.setRippleColor(ColorStateList.valueOf(io));
+            int[] bgColors = new int[] {
+                    ip,
+                    iop
+            };
 
-                    binding.expandedPlayer.repeatModeButton.setIconTint(ColorStateList.valueOf(isOledTheme? 0xffbdbdbd : iosc));
-                    binding.expandedPlayer.repeatModeButton.setRippleColor(ColorStateList.valueOf(io));
+            int[] iconColors = new int[] {
+                    iop,
+                    iosc
+            };
 
-                    binding.expandedPlayer.artistBigTitle.setTextColor(iosc);
-                    binding.expandedPlayer.songBigTitle.setTextColor(ios);
+            binding.expandedPlayer.lyricsButton.setIconTint(isOledTheme? ColorStateList.valueOf(0xffbdbdbd) : new ColorStateList(states, iconColors));
+            binding.expandedPlayer.lyricsButton.setRippleColor(ColorStateList.valueOf(io));
+            binding.expandedPlayer.lyricsButton.setBackgroundTintList(isOledTheme? ColorStateList.valueOf(iop) : new ColorStateList(states, bgColors));
 
-                    binding.collapsedPlayer.title.setTextColor(ios);
-                    binding.collapsedPlayer.subtitle.setTextColor(io);
+            binding.expandedPlayer.repeatModeButton.setIconTint(isOledTheme? ColorStateList.valueOf(0xffbdbdbd) : new ColorStateList(states, iconColors));
+            binding.expandedPlayer.repeatModeButton.setRippleColor(ColorStateList.valueOf(io));
+            binding.expandedPlayer.repeatModeButton.setBackgroundTintList(isOledTheme? ColorStateList.valueOf(iop) : new ColorStateList(states, bgColors));
 
-                    binding.expandedPlayer.currentDurationText.setTextColor(iosc);
-                    binding.expandedPlayer.totalDurationText.setTextColor(iosc);
-                    binding.expandedPlayer.songInfoText.setTextColor(iosc);
-                });
+            binding.expandedPlayer.shuffleModeButton.setIconTint(isOledTheme? ColorStateList.valueOf(0xffbdbdbd) : new ColorStateList(states, iconColors));
+            binding.expandedPlayer.shuffleModeButton.setRippleColor(ColorStateList.valueOf(io));
+            binding.expandedPlayer.shuffleModeButton.setBackgroundTintList(isOledTheme? ColorStateList.valueOf(iop) : new ColorStateList(states, bgColors));
+
+            binding.expandedPlayer.playQueueButton.setIconTint(isOledTheme? ColorStateList.valueOf(0xffbdbdbd) : new ColorStateList(states, iconColors));
+            binding.expandedPlayer.playQueueButton.setRippleColor(ColorStateList.valueOf(io));
+            binding.expandedPlayer.playQueueButton.setBackgroundTintList(isOledTheme? ColorStateList.valueOf(iop) : new ColorStateList(states, bgColors));
+
+            binding.expandedPlayer.sleepTimerButton.setIconTint(isOledTheme? ColorStateList.valueOf(0xffbdbdbd) : new ColorStateList(states, iconColors));
+            binding.expandedPlayer.sleepTimerButton.setRippleColor(ColorStateList.valueOf(io));
+            binding.expandedPlayer.sleepTimerButton.setBackgroundTintList(isOledTheme? ColorStateList.valueOf(iop) : new ColorStateList(states, bgColors));
+
+            binding.expandedPlayer.speedButton.setIconTint(isOledTheme? ColorStateList.valueOf(0xffbdbdbd) : new ColorStateList(states, iconColors));
+            binding.expandedPlayer.speedButton.setRippleColor(ColorStateList.valueOf(io));
+            binding.expandedPlayer.speedButton.setBackgroundTintList(isOledTheme? ColorStateList.valueOf(iop) : new ColorStateList(states, bgColors));
+
+            binding.expandedPlayer.artistBigTitle.setTextColor(iosc);
+            binding.expandedPlayer.songBigTitle.setTextColor(ios);
+
+            binding.collapsedPlayer.title.setTextColor(ios);
+            binding.collapsedPlayer.subtitle.setTextColor(io);
+
+            binding.expandedPlayer.currentDurationText.setTextColor(iosc);
+            binding.expandedPlayer.totalDurationText.setTextColor(iosc);
+            binding.expandedPlayer.songInfoText.setTextColor(iosc);
+        });
         va.addListener(new AnimatorListenerAdapter() {
             private boolean canceled;
 
@@ -735,7 +752,7 @@ public class UIManager implements PlaybackControlListener {
             @Override
             public void onAnimationEnd(Animator animation) {
                 if (!canceled) {
-                            effectiveOldColors = new HashMap<>(colors);
+                    effectiveOldColors = new HashMap<>(colors);
                 }
             }
         });
@@ -748,6 +765,8 @@ public class UIManager implements PlaybackControlListener {
     }
 
     public void updateContent(int position, boolean isResuming) {
+        restoreRepeatButton();
+        restoreShuffleButton();
         if (position == -1) {
             if (activity.getController() == null) return;
             else position = activity.getController().getCurrentMediaItemIndex();
@@ -901,7 +920,8 @@ public class UIManager implements PlaybackControlListener {
         binding.collapsedPlayer.title.setAlpha(Math.max(0f, 1f - progress * 5));
         binding.collapsedPlayer.subtitle.setAlpha(Math.max(0f, 1f - progress * 5));
         binding.collapsedPlayer.action.setAlpha(Math.max(0f, 1f - progress * 5));
-        binding.collapsedPlayer.musicProgress.setAlpha(Math.max(0f, 1f - progress * 20));
+        binding.collapsedPlayer.musicProgress.setAlpha(Math.max(0f, 1f - progress * 100));
+        binding.expandedPlayer.getRoot().setAlpha(Math.max(0f, (float) Math.pow(progress, 5)));
     }
 
     public void restoreCoverExpansion() {
@@ -914,6 +934,7 @@ public class UIManager implements PlaybackControlListener {
 
     public void maybeRestoreUIState() {
         restoreRepeatButton();
+        restoreShuffleButton();
         if (viewModel.isDataSaved()) {
             int savedState = viewModel.getLayoutState();
 
@@ -940,6 +961,7 @@ public class UIManager implements PlaybackControlListener {
                     if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateVumeter(playing);
                 });
                 if (playing) binding.expandedPlayer.toggleView.forcePlayState();
+                else binding.expandedPlayer.toggleView.forcePauseState();
                 binding.expandedPlayer.songSeekbar.setAnimate(playing);
                 binding.collapsedPlayer.action.setIconResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
             }
@@ -955,7 +977,7 @@ public class UIManager implements PlaybackControlListener {
                 if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateVumeter(playing);
             });
             if (playing) binding.expandedPlayer.toggleView.forcePlayState();
-
+            else binding.expandedPlayer.toggleView.forcePauseState();
             binding.expandedPlayer.songSeekbar.setAnimate(playing);
             binding.collapsedPlayer.action.setIconResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
 
@@ -979,6 +1001,12 @@ public class UIManager implements PlaybackControlListener {
                 return Unit.INSTANCE;
             });
         }
+    }
+
+    private void restoreShuffleButton() {
+        if (activity == null || activity.getController() == null) return;
+        binding.expandedPlayer.shuffleModeButton.setIconResource(activity.getController().getShuffleModeEnabled()? R.drawable.ic_shuffle : R.drawable.ic_shuffle_off);
+        binding.expandedPlayer.shuffleModeButton.setChecked(activity.getController().getShuffleModeEnabled());
     }
 
     private void restoreRepeatButton() {
@@ -1057,9 +1085,41 @@ public class UIManager implements PlaybackControlListener {
         binding.lyricsView.setLyricAnticipation(DataManager.getLyricsAnticipationState());
         binding.gradientView.setVisibility((DataManager.sp.getBoolean("enable_lyrics_gradient", false) && !isOledTheme )? View.VISIBLE : View.GONE);
         binding.lyricsView.setEnableBlurs(DataManager.getLyricsBlurState());
+        if (!DataManager.getUseLyricsSystemFont()) binding.lyricsView.setFontConfig("'wdth' " + 100 + ", " + "'wght' " + DataManager.getLyricsWeight() + ", " + "'opsz' " + 18 + ", " + "'GRAD' " + 0 + ", " + "'ROND' " + (DataManager.getRoundedLyricsState() ? 100 : 0) + ", " + "'slnt' " + 0);
+        binding.lyricsView.setUseSystemFont(DataManager.getUseLyricsSystemFont());
+        binding.lyricsView.setTextSize((float) DataManager.getLyricsSize());
     }
 
     public void updateFontConfig() {
         binding.lyricsView.setFontConfig(DataManager.getFontConfig());
+    }
+
+    public void updateRepeatButton(int repeatMode) {
+        if (activity == null) return;
+        this.repeatMode = repeatMode;
+        switch (repeatMode) {
+            case Player.REPEAT_MODE_ALL -> {
+                binding.expandedPlayer.repeatModeButton.setIconResource(R.drawable.ic_repeat);
+                binding.expandedPlayer.repeatModeButton.setChecked(true);
+            }
+            case Player.REPEAT_MODE_ONE -> {
+                binding.expandedPlayer.repeatModeButton.setIconResource(R.drawable.ic_repeat_one);
+                binding.expandedPlayer.repeatModeButton.setChecked(true);
+            }
+            case Player.REPEAT_MODE_OFF -> {
+                binding.expandedPlayer.repeatModeButton.setIconResource(R.drawable.ic_repeat_off);
+                binding.expandedPlayer.repeatModeButton.setChecked(false);
+            }
+            default -> {
+                throw new IllegalStateException("Player repeat mode:" + String.valueOf(activity.getController().getRepeatMode()) + " not handled");
+            }
+        }
+    }
+
+    public void updateShuffleButton(boolean shuffleEnabled) {
+        if (activity == null) return;
+        this.shuffleEnabled = shuffleEnabled;
+        binding.expandedPlayer.shuffleModeButton.setIconResource(shuffleEnabled? R.drawable.ic_shuffle : R.drawable.ic_shuffle_off);
+        binding.expandedPlayer.shuffleModeButton.setChecked(shuffleEnabled);
     }
 }

@@ -1,6 +1,7 @@
 package com.xapps.media.xmusic.widget;
 
 import android.content.Context;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -8,10 +9,12 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.os.SystemClock;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
@@ -157,7 +160,7 @@ public class XLyricsLineView extends View {
         invalidate();
     }
 
-    public void setBlurFilter(android.graphics.BlurMaskFilter filter) {
+    public void setBlurFilter(BlurMaskFilter filter) {
         textPaint.setMaskFilter(filter);
         invalidate();
     }
@@ -166,14 +169,41 @@ public class XLyricsLineView extends View {
         this.alignment = alignment;
     }
 
+    private boolean isSystemFont = false;
+
+    private void invalidateLayoutCache() {
+        layoutCache = null;
+        if (lyricLine != null && staticLayout != null && getWidth() > 0) {
+            setText(lyricLine.line.toString(), getWidth());
+        }
+        requestLayout();
+        invalidate();
+    }
+
+    public void setUseSystemFont(boolean useSystemFont) {
+        if (this.isSystemFont == useSystemFont) return;
+        this.isSystemFont = useSystemFont;
+        if (isSystemFont) {
+            textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        } else {
+            if (sharedTypeface == null) {
+                Typeface customFont = ResourcesCompat.getFont(getContext(), R.font.gsans_flex_full);
+                sharedTypeface = Typeface.create(customFont, Typeface.BOLD);
+            }
+            textPaint.setTypeface(sharedTypeface);
+        }
+        invalidateLayoutCache();
+    }
+
     public void setFontConfig(String s) {
-        if (textPaint.setFontVariationSettings(s)) {
-            invalidate();
+        if (s != null && textPaint.setFontVariationSettings(s)) {
+            invalidateLayoutCache();
         }
     }
 
-    public void setTextSize(int dp) {
+    public void setTextSize(float dp) {
         textPaint.setTextSize(spToPx(dp));
+        invalidateLayoutCache();
     }
 
     public LyricLine getLyricLine() {
@@ -705,7 +735,7 @@ public class XLyricsLineView extends View {
     @Override
     protected void onDraw(@NonNull Canvas canvas) {
         if (staticLayout == null || clusters.isEmpty() || lyricLine == null) return;
-        long now = android.os.SystemClock.uptimeMillis();
+        long now = SystemClock.uptimeMillis();
         if (lastFrameTime == 0) lastFrameTime = now;
         float dt = (now - lastFrameTime) / 1000f;
         lastFrameTime = now;
@@ -878,6 +908,10 @@ public class XLyricsLineView extends View {
     }
 
     private float spToPx(float sp) {
-        return sp * getResources().getDisplayMetrics().scaledDensity;
+        return TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP,
+                sp,
+                getResources().getDisplayMetrics()
+        );
     }
 }

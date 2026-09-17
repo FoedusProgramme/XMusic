@@ -159,14 +159,12 @@ public class DataManager {
     }
 
     public static String getFontConfig() {
-		return sp.getString("font_config", new StringBuilder()
-            .append("'wdth' ").append(100).append(", ")
-            .append("'wght' ").append(500).append(", ")
-            .append("'opsz' ").append(18).append(", ")
-            .append("'GRAD' ").append(0).append(", ")
-            .append("'ROND' ").append(0).append(", ")
-            .append("'slnt' ").append(0)
-        .toString());
+		return sp.getString("font_config", "'wdth' " + 100 + ", " +
+                "'wght' " + 500 + ", " +
+                "'opsz' " + 18 + ", " +
+                "'GRAD' " + 0 + ", " +
+                "'ROND' " + 0 + ", " +
+                "'slnt' " + 0);
 	}
 
     public static void setFontConfig(String config) {
@@ -195,5 +193,59 @@ public class DataManager {
 
     public static boolean getKeepScreenAwakeState() {
         return sp.getBoolean("lyrics_keep_screen_awake", false);
+    }
+
+    public static void markPlayerTipAsShown() {
+        sp.edit().putBoolean("miniplayer_tip_shown", true).apply();
+    }
+
+    public static boolean isPlayerTipShown() {
+        return sp.getBoolean("miniplayer_tip_shown", false);
+    }
+
+    public static void increasePlayerShowCount() {
+        int i = sp.getInt("player_show_count", 0);
+        i++;
+        sp.edit().putInt("player_show_count", i).apply();
+    }
+
+    public static int getPlayerSHowCount() {
+        return sp.getInt("player_show_count", 0);
+    }
+
+    public static void markSeekTipAsShown() {
+        sp.edit().putBoolean("seek_tip_shown", true).apply();
+    }
+
+    public static boolean isSeekTipShown() {
+        return sp.getBoolean("seek_tip_shown", false);
+    }
+
+    public static void setRoundedLyricsFont(boolean b) {
+        sp.edit().putBoolean("rounded_lyrics_font", b).apply();
+    }
+
+    public static boolean getRoundedLyricsState() {
+        return sp.getBoolean("rounded_font", false);
+    }
+
+    public static void setLyricsWeight(int w) {
+        sp.edit().putInt("lyrics_weight", w).apply();
+    }
+
+    public static int getLyricsWeight() {
+        return sp.getInt("lyrics_weight", 500);
+    }
+
+    public static boolean getUseLyricsSystemFont() {
+        return sp.getBoolean("use_system_font", false);
+    }
+
+    public static void setLyricsSize(int s) {
+        sp.edit().putInt("lyrics_size", s).apply();
+    }
+
+    public static int getLyricsSize() {
+        return sp.getInt("lyrics_size", 24);
     }
 }

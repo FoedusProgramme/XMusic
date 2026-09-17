@@ -1,7 +1,9 @@
 package com.xapps.media.xmusic.widget;
 
 import android.content.Context;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
@@ -42,7 +44,7 @@ public class XLyricsContainerView extends ScrollingView2 {
     private boolean lyricAnticipation = false;
     private boolean enableBlurs = false;
 
-    private android.graphics.BlurMaskFilter[] blurFilters;
+    private BlurMaskFilter[] blurFilters;
 
     private float touchStartY = 0f;
     private int touchSlop;
@@ -52,6 +54,8 @@ public class XLyricsContainerView extends ScrollingView2 {
 
     private int currentColor;
     private String currentFontConfig;
+    private float currentTextSizeDp = -1f;
+    private boolean useSystemFont = false;
 
     private final ExecutorService bgExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -68,9 +72,9 @@ public class XLyricsContainerView extends ScrollingView2 {
     }
 
     private void initBlurFilters() {
-        blurFilters = new android.graphics.BlurMaskFilter[5];
+        blurFilters = new BlurMaskFilter[5];
         for (int i = 0; i < 5; i++) {
-            blurFilters[i] = new android.graphics.BlurMaskFilter((i + 1) * 4f, android.graphics.BlurMaskFilter.Blur.NORMAL);
+            blurFilters[i] = new BlurMaskFilter((i + 1) * 4f, BlurMaskFilter.Blur.NORMAL);
         }
     }
 
@@ -114,6 +118,24 @@ public class XLyricsContainerView extends ScrollingView2 {
         this.currentFontConfig = config;
         for (LyricItemDelegate delegate : lineDelegates) {
             delegate.setFontConfig(config);
+        }
+        requestLayout();
+        invalidate();
+    }
+
+    public void setTextSize(float textSizeDp) {
+        this.currentTextSizeDp = textSizeDp;
+        for (LyricItemDelegate delegate : lineDelegates) {
+            delegate.setTextSize(textSizeDp);
+        }
+        requestLayout();
+        invalidate();
+    }
+
+    public void setUseSystemFont(boolean useSystemFont) {
+        this.useSystemFont = useSystemFont;
+        for (LyricItemDelegate delegate : lineDelegates) {
+            delegate.setUseSystemFont(useSystemFont);
         }
         requestLayout();
         invalidate();
@@ -189,6 +211,8 @@ public class XLyricsContainerView extends ScrollingView2 {
                 LyricItemDelegate delegate = new LyricItemDelegate(getContext(), item);
                 if (currentColor != 0) delegate.setLyricColor(currentColor);
                 if (currentFontConfig != null) delegate.setFontConfig(currentFontConfig);
+                if (currentTextSizeDp > 0) delegate.setTextSize(currentTextSizeDp);
+                if (useSystemFont) delegate.setUseSystemFont(useSystemFont);
                 delegate.setEnableSparkles(enableSparkles);
                 int pLeft = (int) (contentWidth * 0.05f);
                 int pRight = (int) (contentWidth * 0.2f);
@@ -280,7 +304,7 @@ public class XLyricsContainerView extends ScrollingView2 {
 
             if (!justSeeked) {
                 long delayMs = Math.min(400L, indexDelta * STAGGER_DELAY_MS);
-                lastTargetChangeTime = android.os.SystemClock.uptimeMillis() + delayMs;
+                lastTargetChangeTime = SystemClock.uptimeMillis() + delayMs;
             } else {
                 lastTargetChangeTime = 0;
                 scrollVelocityY = 0f;
@@ -357,11 +381,11 @@ public class XLyricsContainerView extends ScrollingView2 {
     @Override
     protected void onDrawForChild(@NonNull Canvas canvas) {
         if (lineDelegates.isEmpty()) return;
-        long now = android.os.SystemClock.uptimeMillis();
+        long now = SystemClock.uptimeMillis();
         if (lastFrameTime == 0) lastFrameTime = now;
         float dt = (now - lastFrameTime) / 1000f;
         lastFrameTime = now;
-        if (dt > 0.016f) dt = 0.016f;
+        if (dt > 0.033f) dt = 0.033f;
         for (LyricItemDelegate delegate : lineDelegates) delegate.updatePhysics(dt);
         float density = getResources().getDisplayMetrics().density;
         int screenHeight = getHeight();

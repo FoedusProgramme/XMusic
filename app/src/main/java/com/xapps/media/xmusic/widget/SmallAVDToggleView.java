@@ -1,6 +1,9 @@
 package com.xapps.media.xmusic.widget;
 
 import android.content.Context;
+import android.graphics.drawable.Animatable2;
+import android.graphics.drawable.AnimatedVectorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
@@ -12,7 +15,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.transition.TransitionManager;
 import com.google.android.material.transition.MaterialSharedAxis;
 
-public class SmallToggleView extends FrameLayout {
+public class SmallAVDToggleView extends FrameLayout {
 
     private AppCompatImageView mainIcon;
     private AppCompatImageView holdIcon;
@@ -20,6 +23,11 @@ public class SmallToggleView extends FrameLayout {
     private boolean pressedInside = false;
     private boolean isEnabled = true;
     private boolean isHolding = false;
+    private boolean isAnimating = false;
+    private boolean isToggled = false;
+
+    private int forwardAvdResId = 0;
+    private int reverseAvdResId = 0;
 
     private int currentDelay = 500;
     private int holdIconResId;
@@ -49,17 +57,24 @@ public class SmallToggleView extends FrameLayout {
         }
     };
 
-    public SmallToggleView(Context c) {
+    private final Animatable2.AnimationCallback animationCallback = new Animatable2.AnimationCallback() {
+        @Override
+        public void onAnimationEnd(Drawable drawable) {
+            isAnimating = false;
+        }
+    };
+
+    public SmallAVDToggleView(Context c) {
         super(c);
         init(c, null);
     }
 
-    public SmallToggleView(Context c, AttributeSet a) {
+    public SmallAVDToggleView(Context c, AttributeSet a) {
         super(c, a);
         init(c, a);
     }
 
-    public SmallToggleView(Context c, AttributeSet a, int s) {
+    public SmallAVDToggleView(Context c, AttributeSet a, int s) {
         super(c, a, s);
         init(c, a);
     }
@@ -84,6 +99,37 @@ public class SmallToggleView extends FrameLayout {
         holdIcon = new AppCompatImageView(context);
         holdIcon.setVisibility(View.INVISIBLE);
         addView(holdIcon, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+    }
+
+    public void setAvdResources(int forwardResId, int reverseResId) {
+        this.forwardAvdResId = forwardResId;
+        this.reverseAvdResId = reverseResId;
+        mainIcon.setImageResource(isToggled ? reverseResId : forwardResId);
+    }
+
+    public void setToggled(boolean toggled, boolean animate) {
+        if (this.isToggled == toggled) return;
+        this.isToggled = toggled;
+
+        if (forwardAvdResId != 0 && reverseAvdResId != 0) {
+            mainIcon.setImageResource(isToggled ? forwardAvdResId : reverseAvdResId);
+            if (animate) {
+                Drawable drawable = mainIcon.getDrawable();
+                if (drawable instanceof AnimatedVectorDrawable) {
+                    AnimatedVectorDrawable avd = (AnimatedVectorDrawable) drawable;
+                    avd.clearAnimationCallbacks();
+                    avd.registerAnimationCallback(animationCallback);
+                    isAnimating = true;
+                    avd.start();
+                }
+            } else {
+                isAnimating = false;
+            }
+        }
+    }
+
+    public boolean isToggled() {
+        return isToggled;
     }
 
     public void setOnHoldListener(int holdIconResId, OnHoldListener listener) {
@@ -114,7 +160,9 @@ public class SmallToggleView extends FrameLayout {
                 boolean wasHolding = isHolding;
                 handleRelease();
                 if (pressedInside && isInside(e) && isEnabled && !wasHolding) {
-                    performClick();
+                    if (!isAnimating) {
+                        performClick();
+                    }
                 }
                 pressedInside = false;
                 return true;
@@ -138,7 +186,6 @@ public class SmallToggleView extends FrameLayout {
         }
     }
 
-
     private void applyTransition(boolean resetting) {
         MaterialSharedAxis axis = new MaterialSharedAxis(MaterialSharedAxis.Z, resetting);
         TransitionManager.beginDelayedTransition(this, axis);
@@ -151,6 +198,24 @@ public class SmallToggleView extends FrameLayout {
 
     @Override
     public boolean performClick() {
+        if (isAnimating) {
+            return false;
+        }
+
+        if (forwardAvdResId != 0 && reverseAvdResId != 0) {
+            isToggled = !isToggled;
+            mainIcon.setImageResource(isToggled ? forwardAvdResId : reverseAvdResId);
+
+            Drawable drawable = mainIcon.getDrawable();
+            if (drawable instanceof AnimatedVectorDrawable) {
+                AnimatedVectorDrawable avd = (AnimatedVectorDrawable) drawable;
+                avd.clearAnimationCallbacks();
+                avd.registerAnimationCallback(animationCallback);
+                isAnimating = true;
+                avd.start();
+            }
+        }
+
         return super.performClick();
     }
 

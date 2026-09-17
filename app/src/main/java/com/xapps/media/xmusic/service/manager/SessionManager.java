@@ -15,7 +15,6 @@ import androidx.media3.session.CommandButton;
 import androidx.media3.session.MediaLibraryService;
 import androidx.media3.session.MediaSession;
 import androidx.media3.session.SessionCommand;
-import androidx.media3.session.SessionCommands;
 import androidx.media3.session.SessionResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -58,6 +57,56 @@ public class SessionManager {
         this.context = context;
     }
 
+    public void rebuildCustomLayout(int repeatMode) {
+        String loopMode = "LOOP_OFF";
+        switch (repeatMode) {
+            case Player.REPEAT_MODE_ALL -> loopMode = "LOOP_ALL";
+            case Player.REPEAT_MODE_ONE -> loopMode = "LOOP_SINGLE";
+            case Player.REPEAT_MODE_OFF -> loopMode = "LOOP_OFF";
+        }
+        DataManager.saveLatestRepeatMode(loopMode);
+        SessionCommand loopCommand = new SessionCommand(loopMode, Bundle.EMPTY);
+        String shuffleMode = DataManager.getLatestShuffleMode();
+        SessionCommand shuffleCommand = new SessionCommand(shuffleMode, Bundle.EMPTY);
+
+        CommandButton loopButton = new CommandButton.Builder(getLoopMedia3Icon(loopMode))
+                .setDisplayName("repeat")
+                .setSessionCommand(loopCommand)
+                .setSlots(CommandButton.SLOT_FORWARD)
+                .build();
+
+        CommandButton shuffleButton = new CommandButton.Builder(getShuffleMedia3Icon(shuffleMode))
+                .setDisplayName("shuffle")
+                .setSessionCommand(shuffleCommand)
+                .setSlots(CommandButton.SLOT_FORWARD_SECONDARY)
+                .build();
+
+        List<CommandButton> commandsList = ImmutableList.of(loopButton, shuffleButton);
+        session.setCustomLayout(commandsList);
+    }
+
+    public void rebuildCustomLayout(boolean shuffleEnabled) {
+        String loopMode = DataManager.getLatestRepeatMode();
+        SessionCommand loopCommand = new SessionCommand(loopMode, Bundle.EMPTY);
+        String shuffleMode = shuffleEnabled? "SHUFFLE_ON" : "SHUFFLE_OFF";
+        SessionCommand shuffleCommand = new SessionCommand(shuffleMode, Bundle.EMPTY);
+
+        CommandButton loopButton = new CommandButton.Builder(getLoopMedia3Icon(loopMode))
+                .setDisplayName("repeat")
+                .setSessionCommand(loopCommand)
+                .setSlots(CommandButton.SLOT_FORWARD)
+                .build();
+
+        CommandButton shuffleButton = new CommandButton.Builder(getShuffleMedia3Icon(shuffleMode))
+                .setDisplayName("shuffle")
+                .setSessionCommand(shuffleCommand)
+                .setSlots(CommandButton.SLOT_FORWARD_SECONDARY)
+                .build();
+
+        List<CommandButton> commandsList = ImmutableList.of(loopButton, shuffleButton);
+        session.setCustomLayout(commandsList);
+    }
+
     public class MediaSessionCallback implements MediaLibraryService.MediaLibrarySession.Callback {
         private String loopMode = DataManager.getLatestRepeatMode();
         private String shuffleMode = DataManager.getLatestShuffleMode();
@@ -76,13 +125,6 @@ public class SessionManager {
                                         .setSlots(CommandButton.SLOT_FORWARD_SECONDARY)
                                         .build();
         List<CommandButton> commandsList = ImmutableList.of(loopButton, shuffleButton);
-        SessionCommands sessionCommands = SessionCommands.EMPTY.buildUpon()
-                                            .add(new SessionCommand("LOOP_ALL", Bundle.EMPTY))
-                                            .add(new SessionCommand("LOOP_SINGLE", Bundle.EMPTY))
-                                            .add(new SessionCommand("LOOP_OFF", Bundle.EMPTY))
-                                            .add(new SessionCommand("SHUFFLE_ON", Bundle.EMPTY))
-                                            .add(new SessionCommand("SHUFFLE_OFF", Bundle.EMPTY))
-                                            .build();
                                             
         @NonNull
         @Override
@@ -204,10 +246,7 @@ public class SessionManager {
     }
 
     private int getShuffleMedia3Icon(String mode) {
-        return switch (mode) {
-            case "SHUFFLE_ON" -> CommandButton.ICON_SHUFFLE_ON;
-            default -> CommandButton.ICON_SHUFFLE_OFF;
-        };
+        return (mode.equals("SHUFFLE_ON")? CommandButton.ICON_SHUFFLE_ON : CommandButton.ICON_SHUFFLE_OFF);
     }
 
     private ResumeState loadResumeState() {
@@ -253,7 +292,7 @@ public class SessionManager {
                 .build()
             );
         }
-        Log.d("RESUMPTION", "state found : index "+String.valueOf(state.currentIndex)+" | position : "+String.valueOf(state.positionMs));
+        Log.d("RESUMPTION", "state found : index "+ state.currentIndex + " | position : "+ state.positionMs);
 
         return new MediaSession.MediaItemsWithStartPosition(
             items,

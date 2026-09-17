@@ -67,4 +67,9 @@
         <item name="toolbarNavigationButtonStyle">@style/Widget.Material3.Toolbar.Button.Navigation.Circle</item>
     </style>
 
+    <style name="ShapeAppearance.App.FloatingToolbar" parent="ShapeAppearance.Material3.Corner.Full">
+        <item name="cornerSize">24dp</item>
+        <item name="cornerFamily">rounded</item>
+    </style>
+
 </resources>

@@ -1,5 +1,16 @@
 package com.xapps.media.xmusic.fragment;
 
+import android.content.Context;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+
+import androidx.annotation.NonNull;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.slider.LabelFormatter;
+import com.google.android.material.slider.Slider;
+import com.google.android.material.textview.MaterialTextView;
 import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.common.SettingsItem;
 import com.xapps.media.xmusic.data.DataManager;
@@ -43,17 +54,153 @@ public class LyricsCustomizeFragment extends BasePrefsFragment {
     @Override
     protected void onItemSelected(SettingsItem item) {
         switch (item.id) {
+            case "font_size" -> {
+                showFontSizeDialog();
+            }
+            case "font_weight" -> {
+                showFontWeightDialog();
+            }
             default -> {
                 XUtils.showMessage(getActivity(), "Feature to be added soon");
             }
         }
     }
 
+    private void showFontWeightDialog() {
+        Context context = requireContext();
+        float density = context.getResources().getDisplayMetrics().density;
+        int paddingH = (int) (12 * density);
+        int paddingT = (int) (16 * density);
+        int paddingB = (int) (8 * density);
+        int trackPadding = (int) (12 * density);
+
+        LinearLayout container = new LinearLayout(context);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(paddingH, paddingT, paddingH, paddingB);
+
+        Slider slider = new Slider(context);
+        slider.setValueFrom(500f);
+        slider.setValueTo(1000f);
+        slider.setValue((float) DataManager.getLyricsWeight());
+        slider.setStepSize(50f);
+        slider.setLabelBehavior(LabelFormatter.LABEL_FLOATING);
+
+        container.addView(slider, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        RelativeLayout labelsLayout = new RelativeLayout(context);
+        labelsLayout.setPadding(trackPadding, 0, trackPadding, 0);
+
+        MaterialTextView minLabel = new MaterialTextView(context);
+        minLabel.setText(String.valueOf((int) slider.getValueFrom()));
+        minLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall);
+        RelativeLayout.LayoutParams minParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        minParams.addRule(RelativeLayout.ALIGN_PARENT_START);
+        labelsLayout.addView(minLabel, minParams);
+
+        MaterialTextView maxLabel = new MaterialTextView(context);
+        maxLabel.setText(String.valueOf((int) slider.getValueTo()));
+        maxLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall);
+        RelativeLayout.LayoutParams maxParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        maxParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        labelsLayout.addView(maxLabel, maxParams);
+
+        container.addView(labelsLayout, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        assert getActivity() != null;
+        new MaterialAlertDialogBuilder(getActivity())
+                .setTitle("Adjust Lyrics Font Weight")
+                .setView(container)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    float finalValue = slider.getValue();
+                    DataManager.setLyricsWeight((int) finalValue);
+                    activity.updateLyrics();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private void showFontSizeDialog() {
+        @NonNull Context context = requireContext();
+        float density = context.getResources().getDisplayMetrics().density;
+        int paddingH = (int) (12 * density);
+        int paddingT = (int) (16 * density);
+        int paddingB = (int) (8 * density);
+        int trackPadding = (int) (12 * density);
+
+        LinearLayout container = new LinearLayout(context);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(paddingH, paddingT, paddingH, paddingB);
+
+        Slider slider = new Slider(context);
+        slider.setValueFrom(12f);
+        slider.setValueTo(40f);
+        slider.setValue((float) DataManager.getLyricsSize());
+        slider.setStepSize(2f);
+        slider.setLabelBehavior(LabelFormatter.LABEL_FLOATING);
+
+        container.addView(slider, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        RelativeLayout labelsLayout = new RelativeLayout(context);
+        labelsLayout.setPadding(trackPadding, 0, trackPadding, 0);
+
+        MaterialTextView minLabel = new MaterialTextView(context);
+        minLabel.setText(String.valueOf((int) slider.getValueFrom()) + "sp");
+        minLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall);
+        RelativeLayout.LayoutParams minParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        minParams.addRule(RelativeLayout.ALIGN_PARENT_START);
+        labelsLayout.addView(minLabel, minParams);
+
+        MaterialTextView maxLabel = new MaterialTextView(context);
+        maxLabel.setText(String.valueOf((int) slider.getValueTo()) + "sp");
+        maxLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall);
+        RelativeLayout.LayoutParams maxParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        maxParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        labelsLayout.addView(maxLabel, maxParams);
+
+        container.addView(labelsLayout, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        assert getActivity() != null;
+        new MaterialAlertDialogBuilder(getActivity())
+                .setTitle("Adjust Lyrics Font Size")
+                .setView(container)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    float finalValue = slider.getValue();
+                    DataManager.setLyricsSize((int) finalValue);
+                    activity.updateLyrics();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
     @Override
     protected void onSwitchChanged(SettingsItem item, boolean value) {
         super.onSwitchChanged(item, value);
         switch (item.id) {
-            case "lyrics_elastic_scroll", "lyrics_elastic_manual_scroll", "lyrics_sparkles", "lyrics_anticipation", "enable_lyrics_gradient", "lyrics_blur", "lyrics_keep_screen_awake" -> {
+            case "lyrics_elastic_scroll", "lyrics_elastic_manual_scroll", "lyrics_sparkles", "lyrics_anticipation", "enable_lyrics_gradient", "lyrics_blur", "lyrics_keep_screen_awake", "rounded_font", "use_system_font" -> {
                 activity.updateLyrics();
             }
             default -> {

@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -58,9 +59,8 @@ public class ExpressiveSliderLayout extends FrameLayout {
     private SpringAnimation settleSpringAnim;
     private SpringAnimation settleXSpringAnim;
 
-    private SpringAnimation jumpBoostAnim;
-    private int currentJumpBoost = 0;
-    private boolean hasTriggeredBoost = false;
+    private boolean hasTriggeredVerticalHaptic = false;
+    private boolean hasTriggeredHorizontalHaptic = false;
     private int accumulatedFingerDrag = 0;
     private int currentXOffset = 0;
 
@@ -74,6 +74,7 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
     private float rawHorizontalDrag = 0f;
     private float rawVerticalOverdrag = 0f;
+    private int capturedTop;
 
     private int collapsedTop;
     private int expandedTop;
@@ -168,37 +169,6 @@ public class ExpressiveSliderLayout extends FrameLayout {
                     }
                     return insets;
                 });
-
-        FloatValueHolder boostHolder = new FloatValueHolder(0f);
-        jumpBoostAnim = new SpringAnimation(boostHolder);
-        SpringForce boostForce = new SpringForce();
-        boostForce.setStiffness(SpringForce.STIFFNESS_MEDIUM);
-        boostForce.setDampingRatio(SpringForce.DAMPING_RATIO_NO_BOUNCY);
-        jumpBoostAnim.setSpring(boostForce);
-
-        jumpBoostAnim.addUpdateListener(
-                (animation, value, velocity) -> {
-                    if (sheetView != null
-                            && dragHelper.getViewDragState() == ViewDragHelper.STATE_DRAGGING) {
-                        int newBoost = Math.round(value);
-                        int dyBoost = newBoost - currentJumpBoost;
-                        currentJumpBoost = newBoost;
-                        int currentTop = sheetView.getTop();
-                        if (currentTop + dyBoost > physicalBottom) {
-                            dyBoost = physicalBottom - currentTop;
-                        }
-                        if (dyBoost != 0) {
-                            ViewCompat.offsetTopAndBottom(sheetView, dyBoost);
-                            float progress = calculateSlideOffset(sheetView.getTop());
-                            applyExponentialMorph(progress, sheetView.getTop());
-                            for (SliderCallback callback : sliderCallbacks) {
-                                callback.onSlide(progress);
-                            }
-                        }
-                    }
-                });
-
-        jumpBoostAnim.addEndListener((animation, canceled, value, velocity) -> checkQueuedLayout());
     }
 
     @Override
@@ -292,7 +262,7 @@ public class ExpressiveSliderLayout extends FrameLayout {
     }
 
     public void setSlideOffset(float offset) {
-        if (sheetView == null || isLaidOut()) return;
+        if (sheetView == null || !ViewCompat.isLaidOut(this)) return;
         float safeOffset = Math.max(0f, Math.min(1f, offset));
         int range = collapsedTop - expandedTop;
         int targetTop = collapsedTop - (int) (range * safeOffset);
@@ -307,14 +277,14 @@ public class ExpressiveSliderLayout extends FrameLayout {
     }
 
     public float getSlideOffset() {
-        if (sheetView == null || isLaidOut()) return 0f;
+        if (sheetView == null || !ViewCompat.isLaidOut(this)) return 0f;
         return calculateSlideOffset(sheetView.getTop());
     }
 
     public void setState(int state) {
         if (this.currentState == state) return;
         this.targetState = state;
-        if (sheetView == null || isLaidOut() || getHeight() == 0) {
+        if (sheetView == null || !ViewCompat.isLaidOut(this) || getHeight() == 0) {
             this.currentState = state;
             if (state == STATE_HIDDEN) {
                 sheetAlpha = 0f;
@@ -481,8 +451,7 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
     private boolean isAnimating() {
         return (settleSpringAnim != null && settleSpringAnim.isRunning())
-                || (settleXSpringAnim != null && settleXSpringAnim.isRunning())
-                || (jumpBoostAnim != null && jumpBoostAnim.isRunning());
+                || (settleXSpringAnim != null && settleXSpringAnim.isRunning());
     }
 
     private void checkQueuedLayout() {
@@ -685,7 +654,7 @@ public class ExpressiveSliderLayout extends FrameLayout {
 
         @Override
         public void onViewCaptured(@NonNull View capturedChild, int activePointerId) {
-            int capturedTop = capturedChild.getTop();
+            capturedTop = capturedChild.getTop();
             float max = MAX_SWIPE_DISTANCE;
             float tension = max * 0.5f;
             float safeCurrent = Math.min(Math.abs(currentXOffset), max * 0.999f);
@@ -731,15 +700,15 @@ public class ExpressiveSliderLayout extends FrameLayout {
                 }
             }
             settleXWithSpring(0, activeXvel);
-            if (jumpBoostAnim != null && jumpBoostAnim.isRunning()) {
-                jumpBoostAnim.cancel();
-            }
-            hasTriggeredBoost = false;
-            currentJumpBoost = 0;
+
+            hasTriggeredVerticalHaptic = false;
+            hasTriggeredHorizontalHaptic = false;
+
             int targetTop;
             int targetStateLocal;
             boolean passedThreshold = accumulatedFingerDrag >= DISMISS_THRESHOLD;
             accumulatedFingerDrag = 0;
+
             if (activeYvel < -500) {
                 targetTop = expandedTop;
                 targetStateLocal = STATE_EXPANDED;
@@ -784,11 +753,6 @@ public class ExpressiveSliderLayout extends FrameLayout {
             int currentTop = child.getTop();
             if (top > collapsedTop) {
                 if (dy < 0) {
-                    if (hasTriggeredBoost) {
-                        hasTriggeredBoost = false;
-                        jumpBoostAnim.cancel();
-                        currentJumpBoost = 0;
-                    }
                     rawVerticalOverdrag += dy;
                     if (rawVerticalOverdrag < 0) rawVerticalOverdrag = 0;
                 } else {
@@ -802,33 +766,29 @@ public class ExpressiveSliderLayout extends FrameLayout {
                 float maxV = DISMISS_THRESHOLD * 1.5f;
                 float clampedV = maxV * (1.0f - (float) Math.exp(-rawVerticalOverdrag / (DISMISS_THRESHOLD * 0.8f)));
                 int targetTopLocal = collapsedTop + Math.round(clampedV);
-                if (rawVerticalOverdrag < DISMISS_THRESHOLD) {
-                    if (hasTriggeredBoost) {
-                        hasTriggeredBoost = false;
-                        jumpBoostAnim.cancel();
-                        currentJumpBoost = 0;
+
+                if (rawVerticalOverdrag >= DISMISS_THRESHOLD) {
+                    if (!hasTriggeredVerticalHaptic) {
+                        hasTriggeredVerticalHaptic = true;
+                        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
                     }
-                    return Math.min(targetTopLocal, physicalBottom);
                 } else {
-                    if (!hasTriggeredBoost) {
-                        hasTriggeredBoost = true;
-                        currentJumpBoost = 0;
-                        jumpBoostAnim.setStartValue(0f);
-                        int overdrag = currentTop - collapsedTop;
-                        int catchUpAmount = Math.max(0, accumulatedFingerDrag - overdrag);
-                        jumpBoostAnim.getSpring().setFinalPosition((float) catchUpAmount);
-                        jumpBoostAnim.start();
+                    if (hasTriggeredVerticalHaptic) {
+                        hasTriggeredVerticalHaptic = false;
+                        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
                     }
-                    return Math.min(targetTopLocal, physicalBottom);
                 }
+                return Math.min(targetTopLocal, physicalBottom);
             }
+
             rawVerticalOverdrag = 0f;
             accumulatedFingerDrag = 0;
-            if (hasTriggeredBoost) {
-                hasTriggeredBoost = false;
-                jumpBoostAnim.cancel();
-                currentJumpBoost = 0;
+
+            if (hasTriggeredVerticalHaptic) {
+                hasTriggeredVerticalHaptic = false;
+                performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
             }
+
             return Math.max(expandedTop, Math.min(top, collapsedTop));
         }
 
@@ -845,7 +805,23 @@ public class ExpressiveSliderLayout extends FrameLayout {
             if (rawHorizontalDrag < 0) {
                 clampedOffset = -clampedOffset;
             }
+
             int allowedDx = Math.round(clampedOffset) - currentXOffset;
+            int newOffset = currentXOffset + allowedDx;
+            float swipeThreshold = MAX_SWIPE_DISTANCE * 2.0f / 3.0f;
+
+            if (Math.abs(newOffset) >= swipeThreshold) {
+                if (!hasTriggeredHorizontalHaptic) {
+                    hasTriggeredHorizontalHaptic = true;
+                    performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                }
+            } else {
+                if (hasTriggeredHorizontalHaptic) {
+                    hasTriggeredHorizontalHaptic = false;
+                    performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                }
+            }
+
             return child.getLeft() + allowedDx;
         }
 

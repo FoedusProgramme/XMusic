@@ -41,13 +41,21 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this).setKeepOnScreenCondition(() -> isReady);
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+        if (savedInstanceState == null) {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (!XUtils.areAllPermsGranted(this)) {
+                    startActivity(new Intent(this, WelcomeActivity.class));
+                    finish();
+                }
+                isReady = false;
+            }, 800);
+        } else {
             if (!XUtils.areAllPermsGranted(this)) {
                 startActivity(new Intent(this, WelcomeActivity.class));
                 finish();
             }
             isReady = false;
-        }, savedInstanceState == null? 800 : 1);
+        }
         EdgeToEdge.enable(this, 
             SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
             SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
@@ -182,5 +190,15 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
 
     public void updateLyrics() {
         uiManager.updateLyrics();
+    }
+
+    @Override
+    public void onNotificationButtonsUsed(int repeatMode) {
+        uiManager.updateRepeatButton(repeatMode);
+    }
+
+    @Override
+    public void onNotificationButtonsUsed(boolean shuffleEnabled) {
+        uiManager.updateShuffleButton(shuffleEnabled);
     }
 }

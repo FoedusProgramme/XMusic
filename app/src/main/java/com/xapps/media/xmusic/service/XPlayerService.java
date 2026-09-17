@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 
 import androidx.annotation.Nullable;
@@ -35,7 +34,6 @@ import com.xapps.media.xmusic.stats.StatsAudioAnalyzer;
 import com.xapps.media.xmusic.utils.ColorPaletteUtils;
 import com.xapps.media.xmusic.utils.Log;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
-import com.xapps.media.xmusic.utils.XUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -55,7 +53,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
     private StatsAudioAnalyzer statsAnalyzer;
     private volatile boolean handlerRunning;
     private volatile boolean saveHandlerRunning;
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private volatile long currentProgress;
     private volatile int currentPosition;
     private List<MediaItem> mediaItems;
@@ -178,48 +176,47 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
 
                 @Override
                 public void onRepeatModeChanged(int repeatMode) {
-
+                    sessionManager.rebuildCustomLayout(repeatMode);
+                    if (CallbackInterface.activity() != null) CallbackInterface.activity().onNotificationButtonsUsed(repeatMode);
                 }
 
                 @Override
                 public void onShuffleModeEnabledChanged(boolean shuffleEnabled) {
-
+                    sessionManager.rebuildCustomLayout(shuffleEnabled);
+                    if (CallbackInterface.activity() != null) CallbackInterface.activity().onNotificationButtonsUsed(shuffleEnabled);
                 }
             });
         });
     }
 
     private void genColors(int index) {
-        executor.execute(
-                () -> {
-                    Bitmap transparentBitmap =
-                            BitmapFactory.decodeResource(getResources(), R.drawable.transparent);
-                    Bitmap bmp;
-                    if (RuntimeData.songs.isEmpty()) {
-                        bmp = transparentBitmap;
-                    } else {
-                        Uri thumb = RuntimeData.songs.get(index).getArtworkUri();
-                        boolean exists = false;
-                        try (ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(thumb, "r")) {
-                            exists = pfd != null;
-                        } catch (Exception ignored) {
-                        }
-                        bmp = exists ? loadBitmapFromPath(thumb) : transparentBitmap;
-                    }
+        executor.execute(() -> {
+            Bitmap transparentBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.transparent);
+            Bitmap bmp;
+            if (RuntimeData.songs.isEmpty()) {
+                bmp = transparentBitmap;
+            } else {
+                Uri thumb = RuntimeData.songs.get(index).getArtworkUri();
+                boolean exists = false;
+                try (ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(thumb, "r")) {
+                    exists = pfd != null;
+                } catch (Exception ignored) { }
+                bmp = exists ? loadBitmapFromPath(thumb) : transparentBitmap;
+            }
 
-                    if (DataManager.areStableColors()) {
-                        ColorPaletteUtils.generateFromColor(MaterialColorUtils.colorPrimary, (light, dark) -> {
-                            ActivityCallback activityCallback = CallbackInterface.activity();
-                            if (activityCallback != null)
-                                activityCallback.onColorsChanged();
-                        });
-                    } else {
-                        ColorPaletteUtils.generateFromBitmap(bmp, (light, dark) -> {
-                            ActivityCallback activityCallback = CallbackInterface.activity();
-                            if (activityCallback != null) activityCallback.onColorsChanged();
-                        });
-                    }
+            if (DataManager.areStableColors()) {
+                ColorPaletteUtils.generateFromColor(MaterialColorUtils.colorPrimary, (light, dark) -> {
+                    ActivityCallback activityCallback = CallbackInterface.activity();
+                    if (activityCallback != null)
+                        activityCallback.onColorsChanged();
                 });
+            } else {
+                ColorPaletteUtils.generateFromBitmap(bmp, (light, dark) -> {
+                    ActivityCallback activityCallback = CallbackInterface.activity();
+                    if (activityCallback != null) activityCallback.onColorsChanged();
+                });
+            }
+        });
     }
 
     private Bitmap loadBitmapFromPath(Uri uri) {

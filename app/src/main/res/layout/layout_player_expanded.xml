@@ -11,7 +11,7 @@
     android:focusableInTouchMode="true"
     android:clipToOutline="true">
 
-    <com.xapps.media.xmusic.widget.SmallToggleView
+    <com.xapps.media.xmusic.widget.SmallAVDToggleView
         android:id="@+id/favorite_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
@@ -19,7 +19,7 @@
         android:padding="12dp"
         android:scaleType="fitCenter"
         android:background="@drawable/circle_shape"
-        android:src="@drawable/ic_favorite_outlined"
+        android:src="@drawable/favorite_avd"
         android:tint="?attr/colorOnSurface"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/title_container"
@@ -181,7 +181,8 @@
         android:gravity="center_horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.App.FloatingToolbar">
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -195,7 +196,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/lyrics_button"
-                    style="@style/Widget.Material3Expressive.Button.IconButton.Standard"
+                    style="@style/Widget.Material3Expressive.Button.IconButton.Tonal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checkable="true"
@@ -203,10 +204,41 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/repeat_mode_button"
-                    style="@style/Widget.Material3Expressive.Button.IconButton.Standard"
+                    style="@style/Widget.Material3Expressive.Button.IconButton.Tonal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checkable="true" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/shuffle_mode_button"
+                    style="@style/Widget.Material3Expressive.Button.IconButton.Tonal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="true" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/play_queue_button"
+                    style="@style/Widget.Material3Expressive.Button.IconButton.Tonal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/playlist_play_24px"
+                    android:checkable="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/sleep_timer_button"
+                    style="@style/Widget.Material3Expressive.Button.IconButton.Tonal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/bedtime_24px"
+                    android:checkable="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/speed_button"
+                    style="@style/Widget.Material3Expressive.Button.IconButton.Tonal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/speed_24px"
+                    android:checkable="false" />
 
             </LinearLayout>
 
