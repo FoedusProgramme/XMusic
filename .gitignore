@@ -11,3 +11,5 @@ local.properties
 google-services.json
 app/build/
 .acside/
+.vscode/
+.artifacts/
