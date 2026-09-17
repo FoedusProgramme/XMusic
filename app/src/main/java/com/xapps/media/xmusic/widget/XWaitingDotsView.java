@@ -9,14 +9,14 @@ import android.view.animation.PathInterpolator;
 import androidx.core.graphics.ColorUtils;
 
 public class XWaitingDotsView extends View {
-    
+
     private final Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private long startTime, endTime;
     private int currentProgress = 0;
-    
+
     private float actualScale = 1.0f;
     private final PathInterpolator yosEasing = new PathInterpolator(0.75f, 0f, 0.25f, 1f);
-    
+
     private int primaryColor = 0xFFFFFFFF;
     private int inactiveColor = 0x4DFFFFFF;
 
@@ -56,7 +56,7 @@ public class XWaitingDotsView extends View {
         long exitDuration = 250;
         long readyDuration = 400;
         long fillDuration = duration - exitDuration - readyDuration;
-        
+
         if (fillDuration < 500) {
             exitDuration = duration / 4;
             readyDuration = duration / 4;
@@ -72,15 +72,15 @@ public class XWaitingDotsView extends View {
             globalAlphaMult = 1.0f - exitP;
         } else if (timeLeft <= exitDuration + readyDuration) {
             float readyP = 1.0f - ((float)(timeLeft - exitDuration) / readyDuration);
-            actualScale = 1.0f + (0.4f * yosEasing.getInterpolation(readyP));
+            actualScale = 0.85f + (0.55f * yosEasing.getInterpolation(readyP));
         } else {
             float targetCycle = 3000f;
             int cycles = Math.max(1, Math.round(fillDuration / targetCycle));
             float actualCycleTime = (float) fillDuration / cycles;
-            
+
             float cycleProgress = ((float) timeInto % actualCycleTime) / actualCycleTime;
-            
-            float rawWave = (float) Math.sin(cycleProgress * Math.PI * 2);
+
+            float rawWave = (float) -Math.cos(cycleProgress * Math.PI * 2);
             actualScale = 1.0f + (0.15f * rawWave);
         }
 
@@ -92,13 +92,13 @@ public class XWaitingDotsView extends View {
             float beforePadding = (i - 1) * average;
             float segmentProgress = (fillProgress - beforePadding) / average;
             float progressClamped = Math.max(0f, Math.min(1f, segmentProgress));
-            
+
             int blendedColor = ColorUtils.blendARGB(inactiveColor, primaryColor, progressClamped);
             dotPaint.setColor(blendedColor);
             dotPaint.setAlpha((int) (Color.alpha(blendedColor) * globalAlphaMult));
             canvas.drawCircle(startX + (i - 1) * spacing, centerY, dotRadius, dotPaint);
         }
-        
+
         canvas.restore();
 
         if (currentProgress >= startTime && currentProgress <= endTime) {
