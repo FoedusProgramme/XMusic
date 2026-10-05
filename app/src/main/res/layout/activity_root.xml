@@ -171,6 +171,8 @@
         android:elevation="0dp"
         app:menu="@menu/bnv_menu"
         app:labelVisibilityMode="selected"
+        app:itemTextAppearanceActive="@style/TabTextStyle"
+        app:itemTextAppearanceInactive="@style/TabTextStyle"
         app:paddingBottomSystemWindowInsets="false" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

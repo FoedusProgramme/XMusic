@@ -48,7 +48,7 @@ public final class ExoPlayerManager {
         
         DefaultRenderersFactory renderers = new DefaultRenderersFactory(context)
                                                 .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-                                                .setEnableAudioFloatOutput(true);
+                                                .setEnableAudioFloatOutput(false);
 
         AudioAttributes attrs = new AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)

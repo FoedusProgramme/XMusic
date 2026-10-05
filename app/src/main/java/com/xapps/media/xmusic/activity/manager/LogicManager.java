@@ -1,32 +1,37 @@
 package com.xapps.media.xmusic.activity.manager;
 
+import static com.google.android.material.slider.LabelFormatter.LABEL_GONE;
+
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
-import android.graphics.drawable.AnimatedVectorDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.SeekBar;
 
 import androidx.activity.BackEventCompat;
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.core.view.ViewKt;
 import androidx.fragment.app.FragmentActivity;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackParameters;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.session.MediaController;
-import androidx.media3.session.SessionCommand;
 import androidx.media3.session.SessionToken;
 import androidx.transition.TransitionManager;
 import androidx.transition.TransitionSeekController;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.search.SearchView;
+import com.google.android.material.slider.Slider;
 import com.google.android.material.transition.MaterialFadeThrough;
-import com.google.common.collect.ImmutableList;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.activity.controller.ActivityMediaController;
@@ -34,6 +39,9 @@ import com.xapps.media.xmusic.callback.CallbackInterface;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.data.RuntimeData;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
+import com.xapps.media.xmusic.databinding.LayoutSpeedTempoSheetBinding;
+
+import java.util.Locale;
 import com.xapps.media.xmusic.lyric.LyricsExtractor;
 import com.xapps.media.xmusic.service.XPlayerService;
 import com.xapps.media.xmusic.utils.XUtils;
@@ -162,6 +170,7 @@ public class LogicManager {
 
         MaterialFadeThrough transition = new MaterialFadeThrough();
         transition.setDuration(500);
+        transition.excludeTarget(binding.bottomNavigation, true);
 
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
 
@@ -246,6 +255,227 @@ public class LogicManager {
 
             lyricsCallback.setEnabled(checked);
         });
+
+        binding.expandedPlayer.speedButton.setOnClickListener(v -> showSpeedDialog());
+    }
+
+    public void applySavedPlaybackParameters() {
+        if (activity != null && activity.getController() != null) {
+            float speed = DataManager.getPlaybackSpeed();
+            float pitch = DataManager.getPlaybackPitch();
+            boolean locked = DataManager.isSpeedTempoLocked();
+            if (locked) {
+                pitch = speed;
+            }
+            activity.getController().setPlaybackParameters(new PlaybackParameters(speed, pitch));
+        }
+    }
+
+    private void applyPlaybackParameters(float speed, float pitch) {
+        if (activity != null && activity.getController() != null) {
+            activity.getController().setPlaybackParameters(new PlaybackParameters(speed, pitch));
+        }
+    }
+
+    private static void setContainerEnabled(ViewGroup container, boolean enabled) {
+        container.setEnabled(enabled);
+        for (int i = 0; i < container.getChildCount(); i++) {
+            View child = container.getChildAt(i);
+            child.setEnabled(enabled);
+            if (child instanceof ViewGroup) {
+                setContainerEnabled((ViewGroup) child, enabled);
+            }
+        }
+    }
+
+    private static class SpeedTempoDialogState {
+        float speed;
+        float pitch;
+        boolean isLocked;
+        boolean isConfirmed;
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void showSpeedDialog() {
+        if (activity == null) return;
+
+        float activeSpeed = (activity.getController() != null) ? activity.getController().getPlaybackParameters().speed : DataManager.getPlaybackSpeed();
+        float activePitch = (activity.getController() != null) ? activity.getController().getPlaybackParameters().pitch : DataManager.getPlaybackPitch();
+        boolean activeLocked = DataManager.isSpeedTempoLocked();
+
+        final float originalSpeed = activeSpeed;
+        final float originalPitch = activePitch;
+
+        SpeedTempoDialogState state = new SpeedTempoDialogState();
+        state.speed = Math.max(0.25f, Math.min(4.0f, originalSpeed));
+        state.isLocked = activeLocked;
+        state.pitch = state.isLocked ? state.speed : Math.max(0.25f, Math.min(4.0f, originalPitch));
+        state.isConfirmed = false;
+
+        LayoutSpeedTempoSheetBinding sheetBinding = LayoutSpeedTempoSheetBinding.inflate(activity.getLayoutInflater());
+        BottomSheetDialog bs = new BottomSheetDialog(activity);
+        bs.getBehavior().setFitToContents(true);
+        bs.getBehavior().setSkipCollapsed(true);
+        bs.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+        bs.setContentView(sheetBinding.getRoot());
+
+        bs.setOnShowListener(dialog -> {
+            BottomSheetDialog d = (BottomSheetDialog) dialog;
+            FrameLayout bottomSheet = d.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
+                behavior.setFitToContents(true);
+                behavior.setSkipCollapsed(true);
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+        });
+
+        sheetBinding.speedSlider.setValue(state.speed);
+        sheetBinding.speedSlider.setLabelBehavior(LABEL_GONE);
+        sheetBinding.speedValueText.setText(String.format(Locale.US, "%.2fx", state.speed));
+
+        sheetBinding.tempoSlider.setValue(state.pitch);
+        sheetBinding.tempoSlider.setLabelBehavior(LABEL_GONE);
+        sheetBinding.tempoValueText.setText(String.format(Locale.US, "%.2fx", state.pitch));
+
+        sheetBinding.lockSwitch.setChecked(state.isLocked);
+        sheetBinding.tempoSlider.setEnabled(!state.isLocked);
+        sheetBinding.tempoPresetsContainer.setAlpha(state.isLocked ? 0.5f : 1.0f);
+        setContainerEnabled(sheetBinding.tempoPresetsContainer, !state.isLocked);
+
+        sheetBinding.lockSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            state.isLocked = isChecked;
+            sheetBinding.tempoSlider.setEnabled(!isChecked);
+            sheetBinding.tempoPresetsContainer.setAlpha(isChecked ? 0.5f : 1.0f);
+            setContainerEnabled(sheetBinding.tempoPresetsContainer, !isChecked);
+
+            if (isChecked) {
+                state.pitch = state.speed;
+                sheetBinding.tempoSlider.setValue(state.speed);
+                sheetBinding.tempoValueText.setText(String.format(Locale.US, "%.2fx", state.speed));
+                applyPlaybackParameters(state.speed, state.pitch);
+            }
+        });
+
+        sheetBinding.speedSlider.addOnChangeListener((slider, value, fromUser) -> {
+            state.speed = value;
+            sheetBinding.speedValueText.setText(String.format(Locale.US, "%.2fx", value));
+            if (state.isLocked) {
+                state.pitch = value;
+                sheetBinding.tempoSlider.setValue(value);
+                sheetBinding.tempoValueText.setText(String.format(Locale.US, "%.2fx", value));
+            }
+            if (fromUser) {
+                applyPlaybackParameters(state.speed, state.pitch);
+            }
+        });
+
+        sheetBinding.speedSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override
+            public void onStartTrackingTouch(@NonNull Slider slider) {}
+
+            @Override
+            public void onStopTrackingTouch(@NonNull Slider slider) {
+                applyPlaybackParameters(state.speed, state.pitch);
+            }
+        });
+
+        sheetBinding.tempoSlider.addOnChangeListener((slider, value, fromUser) -> {
+            if (!state.isLocked) {
+                state.pitch = value;
+                sheetBinding.tempoValueText.setText(String.format(Locale.US, "%.2fx", value));
+                if (fromUser) {
+                    applyPlaybackParameters(state.speed, state.pitch);
+                }
+            }
+        });
+
+        sheetBinding.tempoSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override
+            public void onStartTrackingTouch(@NonNull Slider slider) {}
+
+            @Override
+            public void onStopTrackingTouch(@NonNull Slider slider) {
+                if (!state.isLocked) {
+                    applyPlaybackParameters(state.speed, state.pitch);
+                }
+            }
+        });
+
+        View.OnClickListener speedPresetListener = v -> {
+            float val = 1.0f;
+            int id = v.getId();
+            if (id == R.id.btn_speed_05) val = 0.5f;
+            else if (id == R.id.btn_speed_075) val = 0.75f;
+            else if (id == R.id.btn_speed_10) val = 1.0f;
+            else if (id == R.id.btn_speed_125) val = 1.25f;
+            else if (id == R.id.btn_speed_15) val = 1.5f;
+            else if (id == R.id.btn_speed_20) val = 2.0f;
+
+            sheetBinding.speedSlider.setValue(val);
+            state.speed = val;
+            sheetBinding.speedValueText.setText(String.format(Locale.US, "%.2fx", val));
+
+            if (state.isLocked) {
+                state.pitch = val;
+                sheetBinding.tempoSlider.setValue(val);
+                sheetBinding.tempoValueText.setText(String.format(Locale.US, "%.2fx", val));
+            }
+            applyPlaybackParameters(state.speed, state.pitch);
+        };
+
+        sheetBinding.btnSpeed05.setOnClickListener(speedPresetListener);
+        sheetBinding.btnSpeed075.setOnClickListener(speedPresetListener);
+        sheetBinding.btnSpeed10.setOnClickListener(speedPresetListener);
+        sheetBinding.btnSpeed125.setOnClickListener(speedPresetListener);
+        sheetBinding.btnSpeed15.setOnClickListener(speedPresetListener);
+        sheetBinding.btnSpeed20.setOnClickListener(speedPresetListener);
+
+        View.OnClickListener tempoPresetListener = v -> {
+            if (state.isLocked) return;
+            float val = 1.0f;
+            int id = v.getId();
+            if (id == R.id.btn_tempo_05) val = 0.5f;
+            else if (id == R.id.btn_tempo_075) val = 0.75f;
+            else if (id == R.id.btn_tempo_10) val = 1.0f;
+            else if (id == R.id.btn_tempo_125) val = 1.25f;
+            else if (id == R.id.btn_tempo_15) val = 1.5f;
+            else if (id == R.id.btn_tempo_20) val = 2.0f;
+
+            sheetBinding.tempoSlider.setValue(val);
+            state.pitch = val;
+            sheetBinding.tempoValueText.setText(String.format(Locale.US, "%.2fx", val));
+            applyPlaybackParameters(state.speed, state.pitch);
+        };
+
+        sheetBinding.btnTempo05.setOnClickListener(tempoPresetListener);
+        sheetBinding.btnTempo075.setOnClickListener(tempoPresetListener);
+        sheetBinding.btnTempo10.setOnClickListener(tempoPresetListener);
+        sheetBinding.btnTempo125.setOnClickListener(tempoPresetListener);
+        sheetBinding.btnTempo15.setOnClickListener(tempoPresetListener);
+        sheetBinding.btnTempo20.setOnClickListener(tempoPresetListener);
+
+        sheetBinding.btnCancel.setOnClickListener(v -> bs.dismiss());
+
+        sheetBinding.btnSave.setOnClickListener(v -> {
+            state.isConfirmed = true;
+            DataManager.setPlaybackSpeed(state.speed);
+            DataManager.setPlaybackPitch(state.pitch);
+            DataManager.setSpeedTempoLocked(state.isLocked);
+            applyPlaybackParameters(state.speed, state.pitch);
+            bs.dismiss();
+        });
+
+        sheetBinding.lockCard.setOnClickListener(v -> sheetBinding.lockSwitch.toggle());
+
+        bs.setOnDismissListener(dialog -> {
+            if (!state.isConfirmed) {
+                applyPlaybackParameters(originalSpeed, originalPitch);
+            }
+        });
+
+
+        bs.show();
     }
 
     private void handleShuffleButtonClick() {
@@ -385,8 +615,12 @@ public class LogicManager {
         controller.initialize(c -> {
             mediaController = c;
             controller.setupListener((RootActivity) activity);
+            applySavedPlaybackParameters();
             onReady.accept(c);
-        }, onError::accept, onRestore);
+        }, onError::accept, () -> {
+            applySavedPlaybackParameters();
+            onRestore.run();
+        });
     }
 
     public void playSong(int position) {

@@ -38,7 +38,7 @@ public class ExperimentsFragment extends SubPrefsFragment {
         items.add(new SettingsItem(SettingsItem.TYPE_NAV, "export_logs", "Export app logs", "This collect all XMusic logs and allow to share them as a file", null));
         items.add(new SettingsItem(SettingsItem.TYPE_NAV, "show_bs", "Collapse Bottom sheet", "This will set miniplayer State to STATE_COLLAPSED", null));
         // items.add(new SettingsItem(SettingsItem.TYPE_NAV, "test_frag", "Open test fragment", "Test some new components under testing", new TestFragment()));
-        
+
         return items;
     }
 
@@ -64,15 +64,15 @@ public class ExperimentsFragment extends SubPrefsFragment {
         executorService.execute(() -> {
             try {
                 java.lang.Process p = new ProcessBuilder()
-                    .command("logcat", "-dball", "--uid=" + android.os.Process.myUid())
-                    .redirectErrorStream(true)
-                    .start();
+                        .command("logcat", "-dball", "--uid=" + android.os.Process.myUid())
+                        .redirectErrorStream(true)
+                        .start();
 
                 File dir = new File(c.getCacheDir(), "logs");
                 dir.mkdirs();
 
                 File out = new File(dir, "xmusic_log.txt");
-				if (out.exists())
+                if (out.exists())
                     out.delete();
 
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -91,9 +91,9 @@ public class ExperimentsFragment extends SubPrefsFragment {
                 p.destroy();
 
                 Uri uri = FileProvider.getUriForFile(
-                    c,
-                    c.getPackageName() + ".provider",
-                    out
+                        c,
+                        c.getPackageName() + ".provider",
+                        out
                 );
 
                 c.runOnUiThread(() -> {
@@ -112,12 +112,12 @@ public class ExperimentsFragment extends SubPrefsFragment {
 
     private void openFragment(Fragment f) {
         requireActivity()
-        .getSupportFragmentManager()
-        .beginTransaction()
-        .setReorderingAllowed(true)
-        .replace(R.id.settings_frag, f)
-        .addToBackStack(null)
-        .commit();
+                .getSupportFragmentManager()
+                .beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.settings_frag, f)
+                .addToBackStack(null)
+                .commit();
     }
 
     @Override

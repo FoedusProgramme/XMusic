@@ -221,10 +221,6 @@ public class DataManager {
         return sp.getBoolean("seek_tip_shown", false);
     }
 
-    public static void setRoundedLyricsFont(boolean b) {
-        sp.edit().putBoolean("rounded_lyrics_font", b).apply();
-    }
-
     public static boolean getRoundedLyricsState() {
         return sp.getBoolean("rounded_font", false);
     }
@@ -247,5 +243,29 @@ public class DataManager {
 
     public static int getLyricsSize() {
         return sp.getInt("lyrics_size", 24);
+    }
+
+    public static void setPlaybackSpeed(float speed) {
+        sp.edit().putFloat("playback_speed", speed).apply();
+    }
+
+    public static float getPlaybackSpeed() {
+        return sp.getFloat("playback_speed", 1.0f);
+    }
+
+    public static void setPlaybackPitch(float pitch) {
+        sp.edit().putFloat("playback_pitch", pitch).apply();
+    }
+
+    public static float getPlaybackPitch() {
+        return sp.getFloat("playback_pitch", 1.0f);
+    }
+
+    public static void setSpeedTempoLocked(boolean b) {
+        sp.edit().putBoolean("speed_tempo_locked", b).apply();
+    }
+
+    public static boolean isSpeedTempoLocked() {
+        return sp.getBoolean("speed_tempo_locked", false);
     }
 }

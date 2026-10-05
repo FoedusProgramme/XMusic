@@ -10,7 +10,6 @@ import android.view.ViewConfiguration;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.xapps.media.xmusic.common.PlaybackControlListener;
-import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.models.LyricLine;
 import com.xapps.media.xmusic.models.LyricItem;
 import java.util.ArrayList;
@@ -29,6 +28,7 @@ public class XLyricsContainerView extends ScrollingView2 {
     private int activeBlurIndex = -1;
 
     private float scrollVelocityY = 0f;
+    private float preciseScrollY = -1f;
     private long lastFrameTime = 0;
     private long lastTargetChangeTime = 0;
     private static final long STAGGER_DELAY_MS = 35L;
@@ -56,6 +56,7 @@ public class XLyricsContainerView extends ScrollingView2 {
     private String currentFontConfig;
     private float currentTextSizeDp = -1f;
     private boolean useSystemFont = false;
+    private int lastLyricsHash;
 
     private final ExecutorService bgExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -150,12 +151,15 @@ public class XLyricsContainerView extends ScrollingView2 {
         invalidate();
     }
 
-    public void setLyrics(List<LyricLine> newLyrics) {
+    public void setLyrics(List<LyricLine> newLyrics, int hash) {
+        if (lastLyricsHash == hash) return;
+        lastLyricsHash = hash;
         if (newLyrics == null || newLyrics.isEmpty()) {
             lineDelegates.clear();
             targetIndex = -1;
             activeBlurIndex = -1;
             scrollVelocityY = 0f;
+            preciseScrollY = -1f;
             invalidate();
             return;
         }
@@ -169,6 +173,7 @@ public class XLyricsContainerView extends ScrollingView2 {
         targetIndex = -1;
         activeBlurIndex = -1;
         scrollVelocityY = 0f;
+        preciseScrollY = -1f;
         invalidate();
         final int finalAvailableWidth = getWidth() != 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
         final int parentPaddingLeft = getPaddingLeft();
@@ -228,6 +233,7 @@ public class XLyricsContainerView extends ScrollingView2 {
                 lineDelegates.clear();
                 lineDelegates.addAll(tempDelegates);
                 scrollTo(0, 0);
+                preciseScrollY = 0f;
                 requestLayout();
                 invalidate();
                 animate().alpha(1f).setDuration(250L).withEndAction(() -> isInteractive = true).start();
@@ -353,6 +359,9 @@ public class XLyricsContainerView extends ScrollingView2 {
     @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
         super.onScrollChanged(l, t, oldl, oldt);
+        if (!isPhysicsScrolling) {
+            preciseScrollY = t;
+        }
         int dy = t - oldt;
         if (dy == 0) return;
         if (!isPhysicsScrolling) {
@@ -362,6 +371,7 @@ public class XLyricsContainerView extends ScrollingView2 {
         }
         if (useStaticScroll) return;
         if (!isPhysicsScrolling && userStaticScroll) return;
+
         int anchor = 0;
         for (int i = 0; i < lineDelegates.size(); i++) {
             if (lineDelegates.get(i).getBottom() > t) {
@@ -370,10 +380,12 @@ public class XLyricsContainerView extends ScrollingView2 {
             }
             if (i == lineDelegates.size() - 1) anchor = i;
         }
+
         for (int i = 0; i < lineDelegates.size(); i++) {
             LyricItemDelegate delegate = lineDelegates.get(i);
             int dist = Math.abs(i - anchor);
             delegate.staggerY += dy;
+            delegate.staggerY = Math.max(-150f, Math.min(150f, delegate.staggerY));
             delegate.stiffness = Math.max(20f, 120f - (dist * 20f));
         }
     }
@@ -397,21 +409,39 @@ public class XLyricsContainerView extends ScrollingView2 {
                 LyricItemDelegate activeDelegate = lineDelegates.get(targetIndex);
                 float activeMainCenterY = activeDelegate.getTop() + (4 * density) + (activeDelegate.rawMainHeight / 2f);
                 float desiredScrollY = Math.max(0, Math.min(activeMainCenterY - (screenHeight / 4f), getScrollRange()));
-                float displacement = getScrollY() - desiredScrollY;
+
+                if (preciseScrollY < 0f || Math.abs(preciseScrollY - getScrollY()) > 2f) {
+                    preciseScrollY = getScrollY();
+                }
+
+                float displacement = preciseScrollY - desiredScrollY;
                 if (Math.abs(displacement) > 0.5f || Math.abs(scrollVelocityY) > 0.5f) {
                     float stiffness = 120f;
                     float damping = 22f;
                     float acceleration = (-stiffness * displacement) - (damping * scrollVelocityY);
                     scrollVelocityY += acceleration * dt;
-                    isPhysicsScrolling = true;
-                    scrollTo(getScrollX(), Math.round(getScrollY() + (scrollVelocityY * dt)));
-                    isPhysicsScrolling = false;
+                    preciseScrollY += scrollVelocityY * dt;
+
+                    int newY = Math.round(preciseScrollY);
+                    if (newY != getScrollY()) {
+                        isPhysicsScrolling = true;
+                        scrollTo(getScrollX(), newY);
+                        isPhysicsScrolling = false;
+                    }
                 } else {
                     scrollVelocityY = 0f;
+                    preciseScrollY = desiredScrollY;
+                    int newY = Math.round(preciseScrollY);
+                    if (newY != getScrollY()) {
+                        isPhysicsScrolling = true;
+                        scrollTo(getScrollX(), newY);
+                        isPhysicsScrolling = false;
+                    }
                 }
             }
         } else {
             scrollVelocityY = 0f;
+            preciseScrollY = getScrollY();
         }
 
         int scrollY = getScrollY();

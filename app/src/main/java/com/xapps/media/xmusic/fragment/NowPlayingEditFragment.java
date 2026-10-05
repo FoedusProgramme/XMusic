@@ -57,14 +57,6 @@ public class NowPlayingEditFragment extends SubPrefsFragment {
                         "Change the way lyrics are displayed to your liking",
                         new LyricsCustomizeFragment()));
 
-        items.add(
-                new SettingsItem(
-                        SettingsItem.TYPE_SWITCH,
-                        "enable_lyrics_gradient",
-                        "Enable Lyrics Gradient",
-                        "Display a beautiful gradient behind lyrics, Might impact performance",
-                        null));
-
         return items;
     }
 

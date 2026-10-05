@@ -134,4 +134,5 @@
     <string name="text_nick_big_help">Big help and advice with a lotttt of stuff, Thanks!</string>
     <string name="person_piyush">Piyush</string>
     <string name="text_big_help_piyush">Helped me a lot with optimizing my lyrics module, Thanks!</string>
+    <string name="bs_playback_speed_tempo_title"><![CDATA[Playback Speed & Tempo]]></string>
 </resources>

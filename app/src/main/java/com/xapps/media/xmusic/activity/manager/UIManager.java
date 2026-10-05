@@ -941,7 +941,6 @@ public class UIManager implements PlaybackControlListener {
             ViewKt.doOnLayout(binding.bottomNavigation, v -> {
                 ViewKt.doOnLayout(binding.tabLayout, v2 -> {
                     binding.miniPlayer.setFloatingMargins(sideMargins, savedState >= 4 ? XUtils.getNavigationBarHeight(activity) : bottomMargin);
-
                     setLayoutState(savedState, "restore state - viemodel");
                     updateColors();
 
@@ -951,6 +950,7 @@ public class UIManager implements PlaybackControlListener {
             });
 
             if (CallbackInterface.service() != null && CallbackInterface.service().isAnythingPlaying()) {
+                loadLyrics(RuntimeData.songs.get(CallbackInterface.service().getCurrentPosition()).path);
                 syncPlayerUI(CallbackInterface.service().getCurrentPosition(), true);
                 if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
                 if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
@@ -1043,7 +1043,7 @@ public class UIManager implements PlaybackControlListener {
             if (lyrics != null && !lyrics.isEmpty()) {
                 LyricsParser.parse(lyrics, result -> {
                     binding.lyricsView.post(() -> {
-                        binding.lyricsView.setLyrics(result.lines());
+                        binding.lyricsView.setLyrics(result.lines(), lyrics.hashCode());
                         binding.lyricsView.setListener(UIManager.this);
 
                         MaterialFadeThrough mft = new MaterialFadeThrough();
@@ -1085,13 +1085,14 @@ public class UIManager implements PlaybackControlListener {
         binding.lyricsView.setLyricAnticipation(DataManager.getLyricsAnticipationState());
         binding.gradientView.setVisibility((DataManager.sp.getBoolean("enable_lyrics_gradient", false) && !isOledTheme )? View.VISIBLE : View.GONE);
         binding.lyricsView.setEnableBlurs(DataManager.getLyricsBlurState());
-        if (!DataManager.getUseLyricsSystemFont()) binding.lyricsView.setFontConfig("'wdth' " + 100 + ", " + "'wght' " + DataManager.getLyricsWeight() + ", " + "'opsz' " + 18 + ", " + "'GRAD' " + 0 + ", " + "'ROND' " + (DataManager.getRoundedLyricsState() ? 100 : 0) + ", " + "'slnt' " + 0);
         binding.lyricsView.setUseSystemFont(DataManager.getUseLyricsSystemFont());
+        updateFontConfig();
         binding.lyricsView.setTextSize((float) DataManager.getLyricsSize());
     }
 
     public void updateFontConfig() {
-        binding.lyricsView.setFontConfig(DataManager.getFontConfig());
+        String fontConfig = "'wdth' " + 100 + ", " + "'wght' " + DataManager.getLyricsWeight() + ", " + "'opsz' " + 18 + ", " + "'GRAD' " + 0 + ", " + "'ROND' " + (DataManager.getRoundedLyricsState() ? 100 : 0) + ", " + "'slnt' " + 0;
+        binding.lyricsView.setFontConfig(fontConfig);
     }
 
     public void updateRepeatButton(int repeatMode) {

@@ -128,8 +128,8 @@
                         android:src="@drawable/ic_tune_round"
                         android:layout_marginEnd="16dp"
                         android:layout_marginStart="8dp"
-                        android:backgroundTint="?colorSecondary"
-                        app:tint="?colorOnSecondary" />
+                        android:backgroundTint="?colorPrimary"
+                        app:tint="?colorOnPrimary" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -176,8 +176,8 @@
                         android:src="@drawable/ic_construction"
                         android:layout_marginEnd="16dp"
                         android:layout_marginStart="8dp"
-                        app:tint="?colorOnTertiary"
-                        android:backgroundTint="?colorTertiary" />
+                        app:tint="?colorOnPrimary"
+                        android:backgroundTint="?colorPrimary" />
 
                     <LinearLayout
                         android:layout_width="match_parent"

@@ -140,6 +140,15 @@ public class LyricItemDelegate {
         }
     }
 
+    private void invalidateMetrics() {
+        isPrepped = false;
+        rawDotsHeight = 0;
+        rawMainHeight = 0;
+        rawBgHeight = 0;
+        rawRomajiHeight = 0;
+        preppedWidth = -1;
+    }
+
     private void prep(int textWidth) {
         if (isPrepped) return;
         if (mainLineView != null) {
@@ -364,21 +373,21 @@ public class LyricItemDelegate {
         if (mainLineView != null) mainLineView.setFontConfig(config);
         if (bgLineView != null) bgLineView.setFontConfig(config);
         if (romajiView != null) romajiView.setFontConfig(config);
-        isPrepped = false;
+        invalidateMetrics();
     }
 
     public void setTextSize(float textSizeDp) {
         if (mainLineView != null) mainLineView.setTextSize(textSizeDp);
         if (bgLineView != null) bgLineView.setTextSize(textSizeDp > 0 ? textSizeDp * 0.75f : -1f);
         if (romajiView != null) romajiView.setTextSize(textSizeDp > 0 ? textSizeDp * 0.5f : -1f);
-        isPrepped = false;
+        invalidateMetrics();
     }
 
     public void setUseSystemFont(boolean useSystemFont) {
         if (mainLineView != null) mainLineView.setUseSystemFont(useSystemFont);
         if (bgLineView != null) bgLineView.setUseSystemFont(useSystemFont);
         if (romajiView != null) romajiView.setUseSystemFont(useSystemFont);
-        isPrepped = false;
+        invalidateMetrics();
     }
 
     public void setEnableSparkles(boolean enableSparkles) {

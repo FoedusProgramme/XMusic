@@ -49,7 +49,7 @@ public abstract class BasePrefsFragment extends BaseFragment {
         binding.toolbar.setTitle(getFragmentTitle());
 		binding.toolbar.setNavigationOnClickListener(v -> {
             getActivity().getOnBackPressedDispatcher().onBackPressed();
-            activity.getUIManager().hideBnv(false);
+            activity.getUIManager().hideComponents(activity.getUIManager().playerHidden, false, activity.getUIManager().tabsHidden, "BasePrefsFragment");
         });
     }
 
@@ -204,8 +204,8 @@ public abstract class BasePrefsFragment extends BaseFragment {
         }
 
         void bind(BasePrefsFragment host, SettingsItem item) {
-            binding.prefSwitch.setChecked(DataManager.sp.getBoolean(item.id, false));
             binding.prefSwitch.setOnCheckedChangeListener(null);
+            binding.prefSwitch.setChecked(DataManager.sp.getBoolean(item.id, false));
             binding.prefTitle.setText(item.title);
             binding.prefDescription.setText(item.description);
             binding.prefItem.setOnClickListener(v -> {

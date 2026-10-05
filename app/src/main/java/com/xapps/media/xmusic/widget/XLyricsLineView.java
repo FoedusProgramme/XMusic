@@ -170,35 +170,45 @@ public class XLyricsLineView extends View {
     }
 
     private boolean isSystemFont = false;
+    private String currentFontConfig = null;
 
     private void invalidateLayoutCache() {
         layoutCache = null;
-        if (lyricLine != null && staticLayout != null && getWidth() > 0) {
-            setText(lyricLine.line.toString(), getWidth());
-        }
+        staticLayout = null;
         requestLayout();
         invalidate();
     }
 
-    public void setUseSystemFont(boolean useSystemFont) {
-        if (this.isSystemFont == useSystemFont) return;
-        this.isSystemFont = useSystemFont;
+    private void applyTypefaceAndConfig() {
         if (isSystemFont) {
             textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            textPaint.setFontVariationSettings(null);
         } else {
             if (sharedTypeface == null) {
                 Typeface customFont = ResourcesCompat.getFont(getContext(), R.font.gsans_flex_full);
                 sharedTypeface = Typeface.create(customFont, Typeface.BOLD);
             }
             textPaint.setTypeface(sharedTypeface);
+            if (currentFontConfig != null && !currentFontConfig.isEmpty()) {
+                textPaint.setFontVariationSettings(currentFontConfig);
+            } else {
+                textPaint.setFontVariationSettings(null);
+            }
         }
         invalidateLayoutCache();
     }
 
+    public void setUseSystemFont(boolean useSystemFont) {
+        if (this.isSystemFont == useSystemFont) return;
+        this.isSystemFont = useSystemFont;
+        applyTypefaceAndConfig();
+    }
+
     public void setFontConfig(String s) {
-        if (s != null && textPaint.setFontVariationSettings(s)) {
-            invalidateLayoutCache();
-        }
+        if (s == null) return;
+        if (s.equals(this.currentFontConfig) && !isSystemFont) return;
+        this.currentFontConfig = s;
+        applyTypefaceAndConfig();
     }
 
     public void setTextSize(float dp) {

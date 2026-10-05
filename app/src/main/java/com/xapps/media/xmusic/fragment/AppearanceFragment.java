@@ -3,7 +3,6 @@ package com.xapps.media.xmusic.fragment;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +39,7 @@ public class AppearanceFragment extends SubFragment {
 	}
 
     private void setupUI() {
+        assert getActivity() != null;
         DefaultThumbDrawer dtd = new DefaultThumbDrawer(XUtils.convertToPx(getActivity(), 35), Color.WHITE, Color.WHITE);
         dtd.setRingBorderSize(XUtils.convertToPx(getActivity(), 1.5f));
         binding.colorSeekBar.setThumbDrawer(dtd);
@@ -74,10 +74,7 @@ public class AppearanceFragment extends SubFragment {
                 binding.lightTheme.setChecked(true);
                 break;
         }
-        
-        if (Build.VERSION.SDK_INT < 31) {
-            
-        }
+
         ViewKt.doOnLayout(activity.getBinding().bottomNavigation, v -> {
             binding.mainContainer.setPadding(binding.mainContainer.getPaddingRight(), binding.mainContainer.getPaddingTop(), binding.mainContainer.getPaddingLeft(), binding.mainContainer.getPaddingLeft());
             return Unit.INSTANCE;
@@ -86,9 +83,10 @@ public class AppearanceFragment extends SubFragment {
     }
 
     private void setupListeners() {
+        assert  getActivity() != null;
         binding.toolbar.setNavigationOnClickListener(v -> {
             getActivity().getOnBackPressedDispatcher().onBackPressed();
-			activity.getUIManager().hideBnv(false);
+			activity.getUIManager().hideComponents(activity.getUIManager().playerHidden, false, activity.getUIManager().tabsHidden, "AppearanceFragment");
         });
         binding.secondPref.setOnClickListener(v -> {
             binding.secondSwitch.setChecked(!binding.secondSwitch.isChecked());
@@ -113,9 +111,7 @@ public class AppearanceFragment extends SubFragment {
             activity.getUIManager().saveState();
             getActivity().recreate();
         });
-        binding.colorSeekBar.setOnColorChangeListener((progress, color) -> {
-            binding.applyButton.setEnabled(binding.colorSeekBar.getProgress() != DataManager.getCustomColor());
-        });
+        binding.colorSeekBar.setOnColorChangeListener((progress, color) -> binding.applyButton.setEnabled(binding.colorSeekBar.getProgress() != DataManager.getCustomColor()));
         binding.icon1.setOnClickListener(v -> {
             activity.showInfoDialog("Experimental feature", R.drawable.ic_test_tube, "This is a feature that's still under testing and might be unstable or buggy for some users.", "OK", activity.getBinding().Coordinator);
         });
@@ -166,6 +162,7 @@ public class AppearanceFragment extends SubFragment {
     }
     
     private void setNewIconEnabled(boolean b) {
+        assert getActivity() != null;
         PackageManager pm = getActivity().getPackageManager();
 
 
