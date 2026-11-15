@@ -98,6 +98,9 @@
     <string name="customize_toggle_shapes">Customize toggle shapes</string>
     <string name="granted">Granted</string>
     <string name="songs_count_format">%1$d Songs</string>
+    <string name="artists_count_format">%1$d Artists</string>
+    <string name="sort_artist_count">Artist song count</string>
+    <string name="sort_artist_alpha">Alphabetic</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
 
@@ -135,4 +138,5 @@
     <string name="person_piyush">Piyush</string>
     <string name="text_big_help_piyush">Helped me a lot with optimizing my lyrics module, Thanks!</string>
     <string name="bs_playback_speed_tempo_title"><![CDATA[Playback Speed & Tempo]]></string>
+    <string name="tab_layout_desc">Navigate Tabs</string>
 </resources>

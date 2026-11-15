@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/popup_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/popup_card"
+        android:layout_width="230dp"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="?colorSurfaceContainerHighest"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="6dp"
+        app:strokeWidth="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="16dp"
+                android:text="@string/sort_by"
+                android:fontFamily="@font/google_sans_flex"
+                android:gravity="start|center_vertical"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="?colorPrimary" />
+
+            <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
+                android:id="@+id/card_sort_alpha"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:background="@drawable/rv_ripple_top"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="12dp"
+                android:paddingVertical="10dp">
+
+                <TextView
+                    android:id="@+id/text_sort_alpha"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sort_artist_alpha"
+                    android:fontFamily="@font/google_sans_flex"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?colorOnSurface" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/radio_sort_alpha"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:buttonTint="?colorPrimary"
+                    android:clickable="false"
+                    android:focusable="false" />
+
+            </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
+
+            <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
+                android:id="@+id/card_sort_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rv_ripple_bottom"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="12dp"
+                android:paddingVertical="10dp">
+
+                <TextView
+                    android:id="@+id/text_sort_count"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sort_artist_count"
+                    android:fontFamily="@font/google_sans_flex"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?colorOnSurface" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/radio_sort_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:buttonTint="?colorPrimary"
+                    android:clickable="false"
+                    android:focusable="false" />
+
+            </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>

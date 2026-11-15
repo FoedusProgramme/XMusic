@@ -28,7 +28,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout
+    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout
         android:layout_height="match_parent"
         android:layout_width="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -50,6 +50,6 @@
 
         </androidx.core.widget.NestedScrollView>
 
-    </com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout>
+    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

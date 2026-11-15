@@ -1,0 +1,182 @@
+package com.xapps.media.xmusic.utils;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
+
+import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
+
+import com.google.android.material.color.utilities.Hct;
+import com.google.android.material.color.utilities.QuantizerCelebi;
+import com.google.android.material.color.utilities.Score;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class CoverArtThemeExtractor {
+
+    public static volatile Map<String, Integer> lightColors;
+    public static volatile Map<String, Integer> darkColors;
+
+    public static volatile Map<String, Integer> oldLightColors;
+    public static volatile Map<String, Integer> oldDarkColors;
+
+    private static final ExecutorService executor =
+            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+    private static volatile long lastBitmapHash = Long.MIN_VALUE;
+
+    public interface ResultCallback {
+        void onResult(
+                Map<String, Integer> lightColors,
+                Map<String, Integer> darkColors
+        );
+    }
+
+    public static void generateFromBitmap(Bitmap bitmap, ResultCallback callback) {
+        if (bitmap == null) return;
+
+        executor.execute(() -> {
+            try {
+                long hash = hashBitmap(bitmap);
+
+                if (hash == lastBitmapHash && lightColors != null && darkColors != null) {
+                    return;
+                }
+
+                Bitmap scaled = Bitmap.createScaledBitmap(bitmap, 128, 128, false);
+
+                int[] pixels = new int[scaled.getWidth() * scaled.getHeight()];
+                scaled.getPixels(
+                        pixels, 0, scaled.getWidth(),
+                        0, 0, scaled.getWidth(), scaled.getHeight()
+                );
+
+                @SuppressLint("RestrictedApi") Map<Integer, Integer> colorMap =
+                        QuantizerCelebi.quantize(pixels, 16);
+
+                @SuppressLint("RestrictedApi") List<Integer> ranked =
+                        Score.score(colorMap, 0, 1, false);
+
+                int seedColor = ranked.isEmpty() ? 0xFF6750A4 : ranked.get(0);
+                @SuppressLint("RestrictedApi") Hct seed = Hct.fromInt(seedColor);
+
+                Map<String, Integer> newLight =
+                        generateMaterialTones(seed, false);
+                Map<String, Integer> newDark =
+                        generateMaterialTones(seed, true);
+
+                if (lightColors == null || darkColors == null) {
+                    oldLightColors = new HashMap<>(newLight);
+                    oldDarkColors = new HashMap<>(newDark);
+                } else {
+                    oldLightColors = new HashMap<>(lightColors);
+                    oldDarkColors = new HashMap<>(darkColors);
+                }
+
+                lightColors = newLight;
+                darkColors = newDark;
+
+                lastBitmapHash = hash;
+
+                if (callback != null) {
+                    callback.onResult(lightColors, darkColors);
+                }
+
+            } catch (Exception e) {
+                if (callback != null) {
+                    callback.onResult(
+                            oldLightColors != null ? oldLightColors : new HashMap<>(),
+                            oldDarkColors != null ? oldDarkColors : new HashMap<>()
+                    );
+                }
+            }
+        });
+    }
+
+    public static void generateFromColor(int color, ResultCallback callback) {
+
+        if (color == lastBitmapHash && lightColors != null && darkColors != null) {
+            return;
+        }
+        @SuppressLint("RestrictedApi") Hct seed = Hct.fromInt(color);
+
+        Map<String, Integer> newLight =
+                generateMaterialTones(seed, false);
+        Map<String, Integer> newDark =
+                generateMaterialTones(seed, true);
+
+        if (lightColors == null || darkColors == null) {
+            oldLightColors = new HashMap<>(newLight);
+            oldDarkColors = new HashMap<>(newDark);
+        } else {
+            oldLightColors = new HashMap<>(lightColors);
+            oldDarkColors = new HashMap<>(darkColors);
+        }
+
+        lightColors = newLight;
+        darkColors = newDark;
+
+        lastBitmapHash = color;
+
+        if (callback != null) {
+            callback.onResult(lightColors, darkColors);
+        }
+    }
+
+    private static long hashBitmap(Bitmap bitmap) {
+        Bitmap scaled = Bitmap.createScaledBitmap(bitmap, 64, 64, false);
+
+        int[] pixels = new int[scaled.getWidth() * scaled.getHeight()];
+        scaled.getPixels(
+                pixels, 0, scaled.getWidth(),
+                0, 0, scaled.getWidth(), scaled.getHeight()
+        );
+
+        long hash = 1125899906842597L;
+        for (int p : pixels) {
+            hash = 31 * hash + p;
+        }
+        return hash;
+    }
+
+    @SuppressLint("RestrictedApi")
+    private static Map<String, Integer> generateMaterialTones(Hct hct, boolean isDark) {
+        Map<String, Integer> tones = new HashMap<>();
+
+        @SuppressLint("RestrictedApi") double hue = hct.getHue() % 360;
+        @SuppressLint("RestrictedApi") double chroma = hct.getChroma();
+        boolean lowChroma = chroma < 10;
+
+        tones.put("primary", Hct.from(hue, lowChroma ? chroma : 40, isDark ? 80 : 30).toInt());
+        tones.put("onPrimary", Hct.from(hue, lowChroma ? chroma : 40, isDark ? 20 : 80).toInt());
+        tones.put("onPrimaryDark", Hct.from(hue, lowChroma ? chroma : 40, isDark ? 10 : 90).toInt());
+
+        tones.put("tertiary", Hct.from((hue + 25) % 360, lowChroma ? chroma : 40, isDark ? 80 : 40).toInt());
+        tones.put("onTertiary", Hct.from((hue + 25) % 360, lowChroma ? chroma : 40, isDark ? 20 : 80).toInt());
+
+        tones.put("primaryContainer", Hct.from(hue, chroma, isDark ? 30 : 90).toInt());
+        tones.put("onPrimaryContainer", Hct.from(hue, chroma, isDark ? 90 : 10).toInt());
+
+        tones.put("surface", Hct.from(hue, lowChroma ? chroma : 25, isDark ? 7 : 92).toInt());
+        tones.put("onSurface", Hct.from(hue, lowChroma ? chroma : 30, isDark ? 90 : 10).toInt());
+
+        tones.put("surfaceContainer", Hct.from(hue, lowChroma ? chroma : 25, isDark ? 15 : 88).toInt());
+        tones.put("onSurfaceContainer", Hct.from(hue, lowChroma ? chroma : 30, isDark ? 70 : 10).toInt());
+
+        tones.put("outline", Hct.from(hue, lowChroma ? chroma : 25, isDark ? 60 : 70).toInt());
+
+        return tones;
+    }
+}

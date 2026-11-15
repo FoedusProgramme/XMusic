@@ -1,10 +1,21 @@
 package com.xapps.media.xmusic.callback;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 
 public final class CallbackInterface {
 
     private static ActivityCallback activityCallback;
     private static ServiceCallback serviceCallback;
-    private static FragmentCallback mlfCallback, searchFragmentCallback, settingsFragmentCallback, subFragmentCallback;
+    private static FragmentCallback songsFragmentCallback, searchFragmentCallback, settingsFragmentCallback, subFragmentCallback;
 
     private CallbackInterface() {
     }
@@ -19,34 +30,58 @@ public final class CallbackInterface {
         }
     }
     
-    public static void setMlFragCallback(FragmentCallback callback) {
-        mlfCallback = callback;
+    public static void setSongsFragCallback(FragmentCallback callback) {
+        songsFragmentCallback = callback;
     }
 
-    public static void clearMlFragCallback(FragmentCallback callback) {
-        if (mlfCallback == callback) {
-            mlfCallback = null;
+    public static void clearSongsFragCallback(FragmentCallback callback) {
+        if (songsFragmentCallback == callback) {
+            songsFragmentCallback = null;
         }
     }
     
-    public static void setSgFragCallback(FragmentCallback callback) {
+    public static void setMlFragCallback(FragmentCallback callback) {
+        setSongsFragCallback(callback);
+    }
+
+    public static void clearMlFragCallback(FragmentCallback callback) {
+        clearSongsFragCallback(callback);
+    }
+    
+    public static void setSettingsFragCallback(FragmentCallback callback) {
         settingsFragmentCallback = callback;
     }
 
-    public static void clearSgFragCallback(FragmentCallback callback) {
+    public static void clearSettingsFragCallback(FragmentCallback callback) {
         if (settingsFragmentCallback == callback) {
             settingsFragmentCallback = null;
         }
     }
+
+    public static void setSgFragCallback(FragmentCallback callback) {
+        setSettingsFragCallback(callback);
+    }
+
+    public static void clearSgFragCallback(FragmentCallback callback) {
+        clearSettingsFragCallback(callback);
+    }
     
-    public static void setSrFragCallback(FragmentCallback callback) {
+    public static void setSearchFragCallback(FragmentCallback callback) {
         searchFragmentCallback = callback;
     }
 
-    public static void clearSrFragCallback(FragmentCallback callback) {
+    public static void clearSearchFragCallback(FragmentCallback callback) {
         if (searchFragmentCallback == callback) {
             searchFragmentCallback = null;
         }
+    }
+
+    public static void setSrFragCallback(FragmentCallback callback) {
+        setSearchFragCallback(callback);
+    }
+
+    public static void clearSrFragCallback(FragmentCallback callback) {
+        clearSearchFragCallback(callback);
     }
     
     public static void setSubFragmentCallback(FragmentCallback callback) {
@@ -65,16 +100,28 @@ public final class CallbackInterface {
         return subFragmentCallback;
     }
     
+    public static FragmentCallback songsFrag() {
+        return songsFragmentCallback;
+    }
+
     public static FragmentCallback mlFrag() {
-        return mlfCallback;
+        return songsFrag();
     }
     
-    public static FragmentCallback sgFrag() {
+    public static FragmentCallback settingsFrag() {
         return settingsFragmentCallback;
     }
+
+    public static FragmentCallback sgFrag() {
+        return settingsFrag();
+    }
     
-    public static FragmentCallback srFrag() {
+    public static FragmentCallback searchFrag() {
         return searchFragmentCallback;
+    }
+
+    public static FragmentCallback srFrag() {
+        return searchFrag();
     }
 
     public static void setServiceCallback(ServiceCallback callback) {

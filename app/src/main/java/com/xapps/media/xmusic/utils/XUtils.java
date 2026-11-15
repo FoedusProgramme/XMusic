@@ -1,4 +1,15 @@
 package com.xapps.media.xmusic.utils;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 
 import android.Manifest;
 import android.animation.Animator;
@@ -46,7 +57,15 @@ public class XUtils {
     private static String theme = "auto";
 	
 	public static void increaseMarginsSmoothly(View view, int increaseLeft, int increaseTop, int increaseRight, int increaseBottom, long duration) {
-		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+		if (view == null) return;
+		ViewGroup.LayoutParams lp = view.getLayoutParams();
+		if (!(lp instanceof ViewGroup.MarginLayoutParams)) return;
+		Object old = view.getTag(R.id.tag_margin_animator);
+		if (old instanceof ValueAnimator) {
+			((ValueAnimator) old).cancel();
+			view.setTag(R.id.tag_margin_animator, null);
+		}
+		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) lp;
 		int startLeft = params.leftMargin;
 		int startTop = params.topMargin;
 		int startRight = params.rightMargin;
@@ -65,22 +84,64 @@ public class XUtils {
 			params.bottomMargin = (int) (startBottom + progress * (endBottom - startBottom));
 			view.setLayoutParams(params);
 		});
-		
+		animator.addListener(new android.animation.AnimatorListenerAdapter() {
+			@Override
+			public void onAnimationEnd(Animator animation) {
+				if (view.getTag(R.id.tag_margin_animator) == animation) {
+					view.setTag(R.id.tag_margin_animator, null);
+				}
+			}
+			@Override
+			public void onAnimationCancel(Animator animation) {
+				if (view.getTag(R.id.tag_margin_animator) == animation) {
+					view.setTag(R.id.tag_margin_animator, null);
+				}
+			}
+		});
+		view.setTag(R.id.tag_margin_animator, animator);
 		animator.start();
 	}
 	
 	public static void setMargins(View view, int left, int top, int right, int bottom) {
-		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+		if (view == null) return;
+		ViewGroup.LayoutParams lp = view.getLayoutParams();
+		if (!(lp instanceof ViewGroup.MarginLayoutParams)) return;
+		Object old = view.getTag(R.id.tag_margin_animator);
+		if (old instanceof ValueAnimator) {
+			((ValueAnimator) old).cancel();
+			view.setTag(R.id.tag_margin_animator, null);
+		}
+		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) lp;
 		params.setMargins(left, top, right, bottom);
 		view.setLayoutParams(params);
 	}
     
     public static void animateMarginsTo(View view, int left, int top, int right, int bottom, long duration, android.view.animation.Interpolator interpolator) {
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        if (view == null) return;
+        ViewGroup.LayoutParams lp = view.getLayoutParams();
+        if (!(lp instanceof ViewGroup.MarginLayoutParams)) return;
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) lp;
+
+        Object old = view.getTag(R.id.tag_margin_animator);
+        if (old instanceof ValueAnimator) {
+            ((ValueAnimator) old).cancel();
+            view.setTag(R.id.tag_margin_animator, null);
+        }
+
         int initialTop = params.topMargin;
         int initialBottom = params.bottomMargin;
         int initialLeft = params.leftMargin;
         int initialRight = params.rightMargin;
+
+        if (initialLeft == left && initialTop == top && initialRight == right && initialBottom == bottom) {
+            return;
+        }
+
+        if (duration <= 0) {
+            params.setMargins(left, top, right, bottom);
+            view.setLayoutParams(params);
+            return;
+        }
         
         int diffTop = top - initialTop;
         int diffBottom = bottom - initialBottom;
@@ -100,7 +161,21 @@ public class XUtils {
 			params.bottomMargin = (int) (initialBottom + progress * diffBottom);
 			view.setLayoutParams(params);
 		});
-		
+		animator.addListener(new android.animation.AnimatorListenerAdapter() {
+			@Override
+			public void onAnimationEnd(Animator animation) {
+				if (view.getTag(R.id.tag_margin_animator) == animation) {
+					view.setTag(R.id.tag_margin_animator, null);
+				}
+			}
+			@Override
+			public void onAnimationCancel(Animator animation) {
+				if (view.getTag(R.id.tag_margin_animator) == animation) {
+					view.setTag(R.id.tag_margin_animator, null);
+				}
+			}
+		});
+		view.setTag(R.id.tag_margin_animator, animator);
 		animator.start();
     }
 	

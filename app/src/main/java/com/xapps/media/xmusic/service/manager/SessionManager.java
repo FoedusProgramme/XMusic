@@ -1,4 +1,15 @@
 package com.xapps.media.xmusic.service.manager;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -275,18 +286,25 @@ public class SessionManager {
         ArrayList<MediaItem> items = new ArrayList<>();
 
         for (ResumeSong song : state.songs) {
-            MediaMetadata metadata = new MediaMetadata.Builder()
-                .setTitle(song.title)
-                .setArtist(song.artist)
-                .setArtworkUri(
-                    song.artworkUri != null
+            String title = (song.title != null && !song.title.trim().isEmpty())
+                    ? song.title
+                    : (song.path != null ? new File(song.path).getName() : "Unknown Title");
+            String artist = (song.artist != null && !song.artist.trim().isEmpty())
+                    ? song.artist
+                    : "Unknown Artist";
+            Uri artworkUri = (song.artworkUri != null && !song.artworkUri.trim().isEmpty())
                     ? Uri.parse(song.artworkUri)
-                    : fallbackUri
-                )
+                    : fallbackUri;
+
+            MediaMetadata metadata = new MediaMetadata.Builder()
+                .setTitle(title)
+                .setArtist(artist)
+                .setArtworkUri(artworkUri)
                 .build();
 
             items.add(
             new MediaItem.Builder()
+                .setMediaId(song.path)
                 .setMediaMetadata(metadata)
                 .setUri(Uri.fromFile(new File(song.path)))
                 .build()

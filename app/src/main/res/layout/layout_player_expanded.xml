@@ -11,7 +11,7 @@
     android:focusableInTouchMode="true"
     android:clipToOutline="true">
 
-    <com.xapps.media.xmusic.widget.SmallAVDToggleView
+    <com.xapps.media.xmusic.ui.widget.SmallAVDToggleView
         android:id="@+id/favorite_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
@@ -38,7 +38,7 @@
         app:layout_constraintEnd_toStartOf="@id/save_button"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.xapps.media.xmusic.widget.MarqueeTextView
+        <com.xapps.media.xmusic.ui.widget.MarqueeTextView
             android:id="@+id/song_big_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -48,7 +48,7 @@
             android:gravity="center_horizontal"
             android:textColor="?colorOnSurface" />
 
-        <com.xapps.media.xmusic.widget.MarqueeTextView
+        <com.xapps.media.xmusic.ui.widget.MarqueeTextView
             android:id="@+id/artist_big_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -61,7 +61,7 @@
 
     </LinearLayout>
 
-    <com.xapps.media.xmusic.widget.SmallToggleView
+    <com.xapps.media.xmusic.ui.widget.SmallToggleView
         android:id="@+id/save_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
@@ -75,7 +75,7 @@
         app:layout_constraintTop_toTopOf="@id/title_container"
         app:layout_constraintBottom_toBottomOf="@id/title_container" />
 
-    <com.xapps.media.xmusic.widget.XSeekbar
+    <com.xapps.media.xmusic.ui.widget.XSeekbar
         android:id="@+id/song_seekbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -128,7 +128,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <com.xapps.media.xmusic.widget.SmallToggleView
+    <com.xapps.media.xmusic.ui.widget.SmallToggleView
         android:id="@+id/previous_button"
         android:layout_width="60dp"
         android:layout_height="60dp"
@@ -137,13 +137,13 @@
         android:src="@drawable/icon_skip_previous_outline"
         android:tint="?attr/colorOnSurface" />
 
-    <com.xapps.media.xmusic.widget.NewPlayerToggle
+    <com.xapps.media.xmusic.ui.widget.NewPlayerToggle
         android:id="@+id/toggle_view"
         android:layout_width="105dp"
         android:layout_height="105dp"
         android:gravity="center" />
 
-    <com.xapps.media.xmusic.widget.SmallToggleView
+    <com.xapps.media.xmusic.ui.widget.SmallToggleView
         android:id="@+id/next_button"
         android:layout_width="60dp"
         android:layout_height="60dp"
@@ -152,7 +152,7 @@
         android:src="@drawable/icon_skip_next_outline"
         android:tint="?attr/colorOnSurface" />
 
-    <com.xapps.media.xmusic.widget.PillBackgroundView
+    <com.xapps.media.xmusic.ui.widget.PillBackgroundView
         android:id="@+id/song_info_layout"
         android:layout_width="match_parent"
         android:layout_height="0dp"

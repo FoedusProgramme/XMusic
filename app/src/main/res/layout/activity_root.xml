@@ -8,12 +8,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.xapps.media.xmusic.widget.ExpressiveTabs
+    <com.xapps.media.xmusic.ui.widget.ExpressiveTabs
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="15dp"
-        android:background="@null" />
+        android:background="@null"
+        android:contentDescription="@string/tab_layout_desc"/>
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/root_card"
@@ -52,7 +53,8 @@
             android:id="@+id/search_frag"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:name="com.xapps.media.xmusic.fragment.SearchFragment" />
+            android:name="com.xapps.media.xmusic.fragment.main.SearchFragment"
+            tools:layout="@layout/fragment_search" />
 
     </com.google.android.material.card.MaterialCardView>
 
@@ -69,8 +71,9 @@
             android:id="@+id/settings_frag"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:name="com.xapps.media.xmusic.fragment.SettingsFragment"
-            android:background="?colorSurfaceContainer" />
+            android:name="com.xapps.media.xmusic.fragment.settings.SettingsFragment"
+            android:background="?colorSurfaceContainer"
+            tools:layout="@layout/fragment_settings" />
 
     </com.google.android.material.card.MaterialCardView>
 
@@ -83,12 +86,12 @@
         android:background="#000000"
         android:alpha="0" />
 
-    <com.xapps.media.xmusic.widget.ExpressiveSliderLayout
+    <com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout
         android:id="@+id/mini_player"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.xapps.media.xmusic.widget.RemainingHeightLinearLayout
+        <com.xapps.media.xmusic.ui.widget.RemainingHeightLinearLayout
             android:id="@+id/container_root"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -103,7 +106,7 @@
                 android:clipToPadding="false"
                 layout="@layout/layout_player_collapsed" />
 
-            <com.xapps.media.xmusic.widget.CoverSpaceLayout
+            <com.xapps.media.xmusic.ui.widget.CoverSpaceLayout
                 android:id="@+id/maximum_size_view"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -115,7 +118,7 @@
                 android:id="@+id/expanded_player"
                 layout="@layout/layout_player_expanded" />
 
-        </com.xapps.media.xmusic.widget.RemainingHeightLinearLayout>
+        </com.xapps.media.xmusic.ui.widget.RemainingHeightLinearLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/lyrics_container"
@@ -125,7 +128,7 @@
             android:layout_width="match_parent"
             android:visibility="gone"
             tools:ignore="PxUsage">
-            <com.xapps.media.xmusic.widget.GradientView
+            <com.xapps.media.xmusic.ui.widget.GradientView
                 android:id="@+id/gradient_view"
                 android:visibility="gone"
                 android:layout_width="match_parent"
@@ -146,7 +149,7 @@
                     android:textSize="24sp" />
             </FrameLayout>
 
-            <com.xapps.media.xmusic.widget.XLyricsContainerView
+            <com.xapps.media.xmusic.ui.lyrics.XLyricsContainerView
                 android:id="@+id/lyrics_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -154,7 +157,7 @@
                 android:clipToPadding="false" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </com.xapps.media.xmusic.widget.ExpressiveSliderLayout>
+    </com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"

@@ -1,0 +1,101 @@
+<com.xapps.media.xmusic.ui.widget.CheckableConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item"
+    android:padding="12dp"
+    android:background="@drawable/rv_ripple_bottom_inverse"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <FrameLayout
+        android:id="@+id/frame"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/artistCover"
+            android:focusable="false"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+
+        <FrameLayout
+            android:id="@+id/vumeter_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="invisible"
+            android:background="@drawable/active_item_scrim">
+
+            <com.xapps.media.xmusic.ui.widget.VuMeterView
+                android:id="@+id/vumeter_view"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:padding="6dp"
+                app:vumeter_blockSpacing="4dp"
+                app:vumeter_blockNumber="3"
+                app:vumeter_backgroundColor="?colorPrimary" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/artistName"
+        android:focusable="false"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="2dp"
+        android:text="TextView"
+        android:textSize="17sp"
+        android:fontFamily="@font/google_sans_flex"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:lines="1"
+        android:textColor="?colorOnSurface"
+        android:ellipsize="end"
+        app:layout_constraintStart_toEndOf="@+id/frame"
+        app:layout_constraintEnd_toStartOf="@+id/options_icon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/artistInfo"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/artistInfo"
+        android:focusable="false"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="2dp"
+        android:text="TextView"
+        android:textSize="13sp"
+        android:fontFamily="@font/google_sans_flex"
+        android:singleLine="true"
+        android:lines="1"
+        android:textColor="?colorOutline"
+        android:ellipsize="end"
+        app:layout_constraintStart_toEndOf="@+id/frame"
+        app:layout_constraintTop_toBottomOf="@+id/artistName"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/options_icon" />
+
+    <ImageView
+        android:id="@+id/options_icon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="8dp"
+        android:scaleType="center"
+        android:src="@drawable/ic_dots_vertical"
+        android:background="?selectableItemBackgroundBorderless"
+        android:tint="?colorOutline"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</com.xapps.media.xmusic.ui.widget.CheckableConstraintLayout>

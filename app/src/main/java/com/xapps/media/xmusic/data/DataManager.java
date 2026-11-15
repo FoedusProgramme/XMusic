@@ -1,4 +1,15 @@
 package com.xapps.media.xmusic.data;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
@@ -147,6 +158,27 @@ public class DataManager {
             return SongSorter.SortBy.valueOf(value);
         } catch (IllegalArgumentException e) {
             return SongSorter.SortBy.TITLE;
+        }
+    }
+
+    public static void setArtistDescendingOrder(boolean b) {
+        sp.edit().putBoolean("artist_descending_order", b).apply();
+    }
+
+    public static boolean isArtistDescendingOrder() {
+        return sp.getBoolean("artist_descending_order", true);
+    }
+
+    public static void setArtistFilterType(com.xapps.media.xmusic.helper.ArtistSorter.SortBy sortBy) {
+        sp.edit().putString("artist_filter_type", sortBy.name()).apply();
+    }
+
+    public static com.xapps.media.xmusic.helper.ArtistSorter.SortBy getArtistFilterType() {
+        String value = sp.getString("artist_filter_type", com.xapps.media.xmusic.helper.ArtistSorter.SortBy.ALPHABETIC.name());
+        try {
+            return com.xapps.media.xmusic.helper.ArtistSorter.SortBy.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            return com.xapps.media.xmusic.helper.ArtistSorter.SortBy.ALPHABETIC;
         }
     }
     

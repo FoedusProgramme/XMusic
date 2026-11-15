@@ -42,7 +42,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout
+    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingVertical="16dp"
@@ -91,7 +91,7 @@
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="18sp"
+                            android:textSize="16sp"
                             android:textColor="?colorOnSurface"
                             android:text="@string/settings_appearance" />
 
@@ -139,7 +139,7 @@
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="18sp"
+                            android:textSize="16sp"
                             android:textColor="?colorOnSurface"
                             android:text="@string/settings_now_playing" />
 
@@ -187,7 +187,7 @@
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="18sp"
+                            android:textSize="16sp"
                             android:textColor="?colorOnSurface"
                             android:text="@string/settings_advanced" />
 
@@ -235,7 +235,7 @@
                         <TextView
                             android:layout_height="wrap_content"
                             android:layout_width="wrap_content"
-                            android:textSize="18sp"
+                            android:textSize="16sp"
                             android:textColor="?colorOnSurface"
                             android:text="@string/about_title" />
 
@@ -254,7 +254,7 @@
 
         </androidx.core.widget.NestedScrollView>
 
-    </com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout>
+    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout>
 
     <FrameLayout
         android:id="@+id/blocking_overlay"

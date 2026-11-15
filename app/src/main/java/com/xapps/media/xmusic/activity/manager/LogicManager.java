@@ -1,4 +1,15 @@
 package com.xapps.media.xmusic.activity.manager;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 
 import static com.google.android.material.slider.LabelFormatter.LABEL_GONE;
 
@@ -45,8 +56,8 @@ import java.util.Locale;
 import com.xapps.media.xmusic.lyric.LyricsExtractor;
 import com.xapps.media.xmusic.service.XPlayerService;
 import com.xapps.media.xmusic.utils.XUtils;
-import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
-import com.xapps.media.xmusic.widget.RichTooltip;
+import com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout;
+import com.xapps.media.xmusic.ui.widget.RichTooltip;
 
 import java.util.List;
 import java.util.Objects;
@@ -171,6 +182,17 @@ public class LogicManager {
         MaterialFadeThrough transition = new MaterialFadeThrough();
         transition.setDuration(500);
         transition.excludeTarget(binding.bottomNavigation, true);
+
+        binding.tabLayout.setOnTabSelectedListener((index, text) -> {
+            binding.viewpager.setCurrentItem(index, true);
+        });
+
+        binding.viewpager.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                binding.tabLayout.setSelectedIndex(position);
+            }
+        });
 
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
 
@@ -519,7 +541,6 @@ public class LogicManager {
                 if (state == ExpressiveSliderLayout.STATE_HIDDEN) {
                     uiManager.onPlayerHidden();
                     mediaController.stop();
-                    mediaController.clearMediaItems();
                 } else if (state == ExpressiveSliderLayout.STATE_COLLAPSED) {
                     DataManager.increasePlayerShowCount();
                     if (DataManager.getPlayerSHowCount() >= 5 && !DataManager.isPlayerTipShown()) {
@@ -629,9 +650,14 @@ public class LogicManager {
 
         String songPath = RuntimeData.songs.get(position).path;
         uiManager.loadLyrics(songPath);
-        if (!samePlaylistByPath(mediaController, CallbackInterface.service().getMediaItems())) {
-            mediaController.setMediaItems(CallbackInterface.service().getMediaItems(), position, 0);
-            mediaController.play();
+        List<MediaItem> serviceItems = CallbackInterface.service() != null
+                ? CallbackInterface.service().getMediaItems()
+                : null;
+        if (!samePlaylistByPath(mediaController, serviceItems)) {
+            if (serviceItems != null && !serviceItems.isEmpty()) {
+                mediaController.setMediaItems(serviceItems, position, 0);
+                mediaController.play();
+            }
         } else {
             mediaController.seekTo(position, 0);
             mediaController.play();
@@ -640,16 +666,16 @@ public class LogicManager {
     }
 
     private static boolean samePlaylistByPath(MediaController controller, List<MediaItem> serviceItems) {
+        if (controller == null || serviceItems == null) return false;
         int count = controller.getMediaItemCount();
-        if (count != serviceItems.size()) return false;
+        if (count != serviceItems.size() || count == 0) return false;
 
         for (int i = 0; i < count; i++) {
             MediaItem cItem = controller.getMediaItemAt(i);
             MediaItem sItem = serviceItems.get(i);
 
-            assert cItem.localConfiguration != null;
+            if (cItem == null || cItem.localConfiguration == null || sItem == null || sItem.localConfiguration == null) return false;
             String cPath = cItem.localConfiguration.uri.getPath();
-            assert sItem.localConfiguration != null;
             String sPath = sItem.localConfiguration.uri.getPath();
 
             if (!Objects.equals(cPath, sPath)) return false;

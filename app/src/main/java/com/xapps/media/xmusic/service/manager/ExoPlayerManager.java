@@ -1,4 +1,15 @@
 package com.xapps.media.xmusic.service.manager;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -97,22 +108,33 @@ public final class ExoPlayerManager {
     };
     
     public void updateMediaItems() {
-        ArrayList<Song> songs = RuntimeData.songs;
+        ArrayList<Song> songs = new ArrayList<>(RuntimeData.songs);
         executor.execute(() -> {
             ArrayList<MediaItem> items = new ArrayList<>(songs.size());
 
             for (Song song : songs) {
+                String title = (song.title != null && !song.title.trim().isEmpty())
+                        ? song.title
+                        : (song.path != null ? new File(song.path).getName() : "Unknown Title");
+                String artist = (song.artist != null && !song.artist.trim().isEmpty())
+                        ? song.artist
+                        : "Unknown Artist";
+                Uri artworkUri = song.getArtworkUri() != null ? song.getArtworkUri() : fallbackUri;
+
                 MediaMetadata metadata = new MediaMetadata.Builder()
-                .setTitle(song.title)
-                .setArtist(song.artist)
-                .setArtworkUri(song.getArtworkUri() != null? song.getArtworkUri() : fallbackUri)
-                .build();
+                        .setTitle(title)
+                        .setDisplayTitle(title)
+                        .setArtist(artist)
+                        .setSubtitle(artist)
+                        .setArtworkUri(artworkUri)
+                        .build();
 
                 items.add(
                     new MediaItem.Builder()
-                    .setMediaMetadata(metadata)
-                    .setUri(Uri.fromFile(new File(song.path)))
-                    .build()
+                        .setMediaId(song.path)
+                        .setMediaMetadata(metadata)
+                        .setUri(Uri.fromFile(new File(song.path)))
+                        .build()
                 );
             }
             new Handler(Looper.getMainLooper()).post(() -> mediaItems = items);

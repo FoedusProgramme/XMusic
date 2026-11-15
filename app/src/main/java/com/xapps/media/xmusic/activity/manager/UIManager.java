@@ -1,4 +1,15 @@
 package com.xapps.media.xmusic.activity.manager;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -13,6 +24,7 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.AnimationUtils;
@@ -33,26 +45,27 @@ import com.google.android.material.transition.MaterialFadeThrough;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.callback.CallbackInterface;
-import com.xapps.media.xmusic.common.PlaybackControlListener;
+import com.xapps.media.xmusic.callback.PlaybackControlListener;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.data.LiveColors;
 import com.xapps.media.xmusic.data.RuntimeData;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
-import com.xapps.media.xmusic.fragment.SettingsFragment;
-import com.xapps.media.xmusic.fragment.SongsListFragment;
+import com.xapps.media.xmusic.fragment.main.ArtistsFragment;
+import com.xapps.media.xmusic.fragment.main.SongsListFragment;
 import com.xapps.media.xmusic.lyric.LyricsExtractor;
-import com.xapps.media.xmusic.utils.LyricsParser;
-import com.xapps.media.xmusic.utils.ColorPaletteUtils;
+import com.xapps.media.xmusic.lyrics.LyricsParser;
+import com.xapps.media.xmusic.utils.CoverArtThemeExtractor;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 import com.xapps.media.xmusic.utils.XUtils;
 import com.xapps.media.xmusic.viewmodel.MainActivityViewModel;
-import com.xapps.media.xmusic.widget.*;
+import com.xapps.media.xmusic.ui.widget.*; import com.xapps.media.xmusic.ui.lyrics.*; import com.xapps.media.xmusic.ui.scroll.*; import com.xapps.media.xmusic.ui.behavior.*;
 
 import kotlin.Unit;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -213,6 +226,7 @@ public class UIManager implements PlaybackControlListener {
         binding.tabLayout.addTab("Browse");
 
         binding.viewpager.setAdapter(new PagerAdapter(activity));
+        binding.viewpager.setOffscreenPageLimit(Objects.requireNonNull(binding.viewpager.getAdapter()).getItemCount());
 
         binding.containerRoot.setClipChildren(false);
         binding.collapsedPlayer.motionRoot.setClipChildren(false);
@@ -572,6 +586,19 @@ public class UIManager implements PlaybackControlListener {
         setLayoutState(state, fragment);
     }
 
+    public void onPlayerReady() {
+        updateContent(activity.getController().getCurrentMediaItemIndex(), false);
+        
+        boolean isPlaying = (activity.getController() != null && activity.getController().isPlaying()) || (CallbackInterface.service() != null && CallbackInterface.service().isPlaying());
+        if (isPlaying) {
+            binding.expandedPlayer.toggleView.forcePlayState();
+        } else {
+            binding.expandedPlayer.toggleView.forcePauseState();
+        }
+        
+        if (binding.miniPlayer.getState() == ExpressiveSliderLayout.STATE_HIDDEN) hideComponents(false, bnvHidden, tabsHidden, "null (UIManager)");
+    }
+
     // --------------- Fragments Viewpager Adapter ----------------- ]
 
     public class PagerAdapter extends FragmentStateAdapter {
@@ -583,24 +610,25 @@ public class UIManager implements PlaybackControlListener {
         @Override
         public Fragment createFragment(int position) {
             if (position == 0) return new SongsListFragment();
-            return new SettingsFragment();
+            if (position == 1) return new ArtistsFragment();
+            return new SongsListFragment();
         }
 
         @Override
         public int getItemCount() {
-            return 1;
+            return 2;
         }
     }
 
     // PLAYER ANIMATION AND UPDATES LOGIC -------------
 
     public void updateColors() {
-        if (ColorPaletteUtils.lightColors == null && ColorPaletteUtils.darkColors == null) {
+        if (CoverArtThemeExtractor.lightColors == null && CoverArtThemeExtractor.darkColors == null) {
             return;
         }
 
-        Map<String, Integer> colors = XUtils.isDarkMode(activity) ? ColorPaletteUtils.darkColors : ColorPaletteUtils.lightColors;
-        Map<String, Integer> oldColors = XUtils.isDarkMode(activity) ? ColorPaletteUtils.oldDarkColors : ColorPaletteUtils.oldLightColors;
+        Map<String, Integer> colors = XUtils.isDarkMode(activity) ? CoverArtThemeExtractor.darkColors : CoverArtThemeExtractor.lightColors;
+        Map<String, Integer> oldColors = XUtils.isDarkMode(activity) ? CoverArtThemeExtractor.oldDarkColors : CoverArtThemeExtractor.oldLightColors;
 
         effectiveOldColors = new HashMap<>(oldColors);
 
@@ -768,29 +796,46 @@ public class UIManager implements PlaybackControlListener {
         restoreRepeatButton();
         restoreShuffleButton();
         if (position == -1) {
-            if (activity.getController() == null) return;
-            else position = activity.getController().getCurrentMediaItemIndex();
+            if (activity.getController() != null) {
+                position = activity.getController().getCurrentMediaItemIndex();
+            } else if (CallbackInterface.service() != null) {
+                position = CallbackInterface.service().getCurrentPosition();
+            }
         }
-        if (position >= 0 && !RuntimeData.songs.isEmpty() && position < RuntimeData.songs.size()) syncPlayerUI(position, isResuming);
-        loadLyrics(RuntimeData.songs.get(position).path);
-        if (isResuming && CallbackInterface.service() != null) {
-            if (CallbackInterface.service().isPlaying())
+        syncPlayerUI(position, isResuming);
+        if (position >= 0 && RuntimeData.songs != null && !RuntimeData.songs.isEmpty() && position < RuntimeData.songs.size()) {
+            loadLyrics(RuntimeData.songs.get(position).path);
+        }
+        if (isResuming) {
+            boolean isPlaying = (activity.getController() != null && activity.getController().isPlaying())
+                    || (CallbackInterface.service() != null && CallbackInterface.service().isPlaying());
+            if (isPlaying)
                 binding.expandedPlayer.toggleView.forcePlayState();
-            else binding.expandedPlayer.toggleView.forcePauseState();
+            else
+                binding.expandedPlayer.toggleView.forcePauseState();
         }
     }
 
     public void syncPlayerUI(int position, boolean isResuming) {
         updateMaxValue(position, isResuming);
         updateCoverPager(position);
-        binding.collapsedPlayer.title.setText(RuntimeData.songs.get(position).title);
-        binding.collapsedPlayer.subtitle.setText(RuntimeData.songs.get(position).artist);
+        boolean hasSong = RuntimeData.songs != null && !RuntimeData.songs.isEmpty() && position >= 0 && position < RuntimeData.songs.size();
+        if (hasSong) {
+            binding.collapsedPlayer.title.setText(RuntimeData.songs.get(position).title);
+            binding.collapsedPlayer.subtitle.setText(RuntimeData.songs.get(position).artist);
+        } else if (activity.getController() != null && activity.getController().getCurrentMediaItem() != null) {
+            androidx.media3.common.MediaMetadata metadata = activity.getController().getCurrentMediaItem().mediaMetadata;
+            if (metadata != null) {
+                if (metadata.title != null) binding.collapsedPlayer.title.setText(metadata.title);
+                if (metadata.artist != null) binding.collapsedPlayer.subtitle.setText(metadata.artist);
+            }
+        }
         if (!isResuming) {
             binding.expandedPlayer.artistBigTitle.animate().alpha(0f).translationX(-20f).setDuration(100).start();
             binding.expandedPlayer.songBigTitle.animate().alpha(0f).translationX(-20f).setDuration(100).start();
             binding.expandedPlayer.totalDurationText.animate().alpha(0f).translationX(-20f).setDuration(100).start();
             binding.expandedPlayer.currentDurationText.animate().alpha(0f).translationX(-20f).setDuration(100).start();
-            if (!isResuming) binding.expandedPlayer.songInfoText.animate().alpha(0f).setDuration(100).start();
+            binding.expandedPlayer.songInfoText.animate().alpha(0f).setDuration(100).start();
             handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(() -> {
                 updateSongInfoLayout(position, true);
@@ -807,39 +852,51 @@ public class UIManager implements PlaybackControlListener {
     }
 
     public void updateMaxValue(int pos, boolean isRestoring) {
-        if (RuntimeData.songs.size() > 0 && activity.getController() != null) {
-            int p = activity.getController().getCurrentMediaItemIndex();
-            if (pos == -1) return;
-            int max = (int) RuntimeData.songs.get(pos == -1 ? p : pos).duration;
+        int targetPos = pos;
+        if (targetPos == -1) {
+            if (activity.getController() != null) {
+                targetPos = activity.getController().getCurrentMediaItemIndex();
+            } else if (CallbackInterface.service() != null) {
+                targetPos = CallbackInterface.service().getCurrentPosition();
+            }
+        }
+        if (RuntimeData.songs != null && !RuntimeData.songs.isEmpty() && targetPos >= 0 && targetPos < RuntimeData.songs.size()) {
+            int max = (int) RuntimeData.songs.get(targetPos).duration;
             binding.expandedPlayer.songSeekbar.setMax(max);
             binding.collapsedPlayer.musicProgress.setMax(max);
-        } else if (isRestoring) {
-            int p = CallbackInterface.service().getCurrentPosition();
-            if (p == -1) return;
-            int max = (int) RuntimeData.songs.get(pos == -1 ? p : pos).duration;
+            return;
+        }
+        if (activity.getController() != null && activity.getController().getDuration() > 0) {
+            int max = (int) activity.getController().getDuration();
             binding.expandedPlayer.songSeekbar.setMax(max);
             binding.collapsedPlayer.musicProgress.setMax(max);
         }
     }
 
     public void updateTexts(int pos, boolean isRestoring) {
-        if (RuntimeData.songs.size() > 0 && activity.getController() != null) {
-            if (pos == -1) return;
+        int targetPos = pos;
+        if (targetPos == -1) {
+            if (activity.getController() != null) {
+                targetPos = activity.getController().getCurrentMediaItemIndex();
+            } else if (CallbackInterface.service() != null) {
+                targetPos = CallbackInterface.service().getCurrentPosition();
+            }
+        }
+        if (RuntimeData.songs != null && !RuntimeData.songs.isEmpty() && targetPos >= 0 && targetPos < RuntimeData.songs.size()) {
             binding.expandedPlayer.totalDurationText.setText(
-                    RuntimeData.songs.get(pos).getFormattedDuration());
-            binding.expandedPlayer.artistBigTitle.setText(RuntimeData.songs.get(pos).artist);
-            binding.expandedPlayer.songBigTitle.setText(RuntimeData.songs.get(pos).title);
-
-        } else if (isRestoring
-                && CallbackInterface.service() != null
-                && CallbackInterface.service().isAnythingPlaying()) {
-            int p = CallbackInterface.service().getCurrentPosition();
-            if (p == -1) return;
-
-            binding.expandedPlayer.totalDurationText.setText(
-                    RuntimeData.songs.get(p).getFormattedDuration());
-            binding.expandedPlayer.artistBigTitle.setText(RuntimeData.songs.get(p).artist);
-            binding.expandedPlayer.songBigTitle.setText(RuntimeData.songs.get(p).title);
+                    RuntimeData.songs.get(targetPos).getFormattedDuration());
+            binding.expandedPlayer.artistBigTitle.setText(RuntimeData.songs.get(targetPos).artist);
+            binding.expandedPlayer.songBigTitle.setText(RuntimeData.songs.get(targetPos).title);
+        } else if (activity.getController() != null && activity.getController().getCurrentMediaItem() != null) {
+            androidx.media3.common.MediaMetadata metadata = activity.getController().getCurrentMediaItem().mediaMetadata;
+            if (metadata != null) {
+                if (metadata.title != null) binding.expandedPlayer.songBigTitle.setText(metadata.title);
+                if (metadata.artist != null) binding.expandedPlayer.artistBigTitle.setText(metadata.artist);
+            }
+            long duration = activity.getController().getDuration();
+            if (duration > 0) {
+                binding.expandedPlayer.totalDurationText.setText(XUtils.millisecondsToDuration(duration));
+            }
         }
     }
 
@@ -897,9 +954,7 @@ public class UIManager implements PlaybackControlListener {
                 float effectiveWidth = Math.min(binding.expandedPlayer.songInfoText.getPaint().measureText(binding.expandedPlayer.songInfoText.getText().toString())  + binding.expandedPlayer.songInfoText.getPaddingLeft() + binding.expandedPlayer.songInfoText.getPaddingRight(), binding.expandedPlayer.songInfoText.getWidth());
                 binding.expandedPlayer.songInfoLayout.update(effectiveWidth);
                 updateTexts(pos, !animate);
-                binding.expandedPlayer.songInfoText.post(() -> {
-                    binding.miniPlayer.requestLayout();
-                });
+                binding.expandedPlayer.songInfoText.post(binding.miniPlayer::requestLayout);
                 binding.expandedPlayer.artistBigTitle.animate().alpha(1f).translationX(0f).setDuration(120).start();
                 binding.expandedPlayer.songBigTitle.animate().alpha(1f).translationX(0f).setDuration(120).start();
                 binding.expandedPlayer.currentDurationText.animate().alpha(1f).translationX(0f).setDuration(120).start();
@@ -910,8 +965,9 @@ public class UIManager implements PlaybackControlListener {
     }
 
     private void updateCoverPager(int index) {
-        if (RuntimeData.songs.isEmpty()) return;
+        if (RuntimeData.songs == null || RuntimeData.songs.isEmpty()) return;
         if (activity.isDestroyed() || activity.isFinishing()) return;
+        if (index < 0 || index >= RuntimeData.songs.size()) return;
         Uri cover = RuntimeData.songs.get(index).getArtworkUri();
         binding.collapsedPlayer.cover.load(cover);
     }
@@ -935,6 +991,9 @@ public class UIManager implements PlaybackControlListener {
     public void maybeRestoreUIState() {
         restoreRepeatButton();
         restoreShuffleButton();
+        boolean isAnythingPlaying = (activity.getController() != null && (activity.getController().isPlaying() || activity.getController().getMediaItemCount() > 0))
+                || (CallbackInterface.service() != null && CallbackInterface.service().isAnythingPlaying());
+
         if (viewModel.isDataSaved()) {
             int savedState = viewModel.getLayoutState();
 
@@ -949,38 +1008,32 @@ public class UIManager implements PlaybackControlListener {
                 return Unit.INSTANCE;
             });
 
-            if (CallbackInterface.service() != null && CallbackInterface.service().isAnythingPlaying()) {
-                loadLyrics(RuntimeData.songs.get(CallbackInterface.service().getCurrentPosition()).path);
-                syncPlayerUI(CallbackInterface.service().getCurrentPosition(), true);
-                if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
-                if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
+            if (isAnythingPlaying) {
+                try {
+                    int pos = activity.getController() != null ? activity.getController().getCurrentMediaItemIndex() : (CallbackInterface.service() != null ? CallbackInterface.service().getCurrentPosition() : -1);
+                    if (pos >= 0 && RuntimeData.songs != null && !RuntimeData.songs.isEmpty() && pos < RuntimeData.songs.size()) {
+                        loadLyrics(RuntimeData.songs.get(pos).path);
+                    }
+                    syncPlayerUI(pos, true);
+                    if (CallbackInterface.mlFrag() != null && pos >= 0) CallbackInterface.mlFrag().updateActiveItem(pos);
+                    if (CallbackInterface.srFrag() != null && pos >= 0) CallbackInterface.srFrag().updateActiveItem(pos);
 
-                boolean playing = CallbackInterface.service().isPlaying();
-                activity.runOnUiThread(() -> {
-                    if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateVumeter(playing);
-                    if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateVumeter(playing);
-                });
-                if (playing) binding.expandedPlayer.toggleView.forcePlayState();
-                else binding.expandedPlayer.toggleView.forcePauseState();
-                binding.expandedPlayer.songSeekbar.setAnimate(playing);
-                binding.collapsedPlayer.action.setIconResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
+                    boolean playing = activity.getController() != null ? activity.getController().isPlaying() : (CallbackInterface.service() != null && CallbackInterface.service().isPlaying());
+                    activity.runOnUiThread(() -> {
+                        if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateVumeter(playing);
+                        if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateVumeter(playing);
+                    });
+                    if (playing) binding.expandedPlayer.toggleView.forcePlayState();
+                    else binding.expandedPlayer.toggleView.forcePauseState();
+                    binding.expandedPlayer.songSeekbar.setAnimate(playing);
+                    binding.collapsedPlayer.action.setIconResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
+                } catch (Exception e) {
+                    Log.e("UIManager", "Error syncing player UI during restore with saved data", e);
+                }
             }
 
             viewModel.markDataAsSaved(false);
-        } else if (CallbackInterface.service() != null && CallbackInterface.service().isAnythingPlaying()) {
-            syncPlayerUI(CallbackInterface.service().getCurrentPosition(), true);
-            if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
-            if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateActiveItem(CallbackInterface.service().getCurrentPosition());
-            boolean playing = CallbackInterface.service().isPlaying();
-            activity.runOnUiThread(() -> {
-                if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateVumeter(playing);
-                if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateVumeter(playing);
-            });
-            if (playing) binding.expandedPlayer.toggleView.forcePlayState();
-            else binding.expandedPlayer.toggleView.forcePauseState();
-            binding.expandedPlayer.songSeekbar.setAnimate(playing);
-            binding.collapsedPlayer.action.setIconResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
-
+        } else if (isAnythingPlaying) {
             ViewKt.doOnLayout(binding.bottomNavigation, v -> {
                 ViewKt.doOnLayout(binding.tabLayout, v2 -> {
                     binding.miniPlayer.setFloatingMargins(sideMargins, bottomMargin);
@@ -990,6 +1043,27 @@ public class UIManager implements PlaybackControlListener {
                 });
                 return Unit.INSTANCE;
             });
+
+            try {
+                int pos = activity.getController() != null ? activity.getController().getCurrentMediaItemIndex() : (CallbackInterface.service() != null ? CallbackInterface.service().getCurrentPosition() : -1);
+                if (pos >= 0 && RuntimeData.songs != null && !RuntimeData.songs.isEmpty() && pos < RuntimeData.songs.size()) {
+                    loadLyrics(RuntimeData.songs.get(pos).path);
+                }
+                syncPlayerUI(pos, true);
+                if (CallbackInterface.mlFrag() != null && pos >= 0) CallbackInterface.mlFrag().updateActiveItem(pos);
+                if (CallbackInterface.srFrag() != null && pos >= 0) CallbackInterface.srFrag().updateActiveItem(pos);
+                boolean playing = activity.getController() != null ? activity.getController().isPlaying() : (CallbackInterface.service() != null && CallbackInterface.service().isPlaying());
+                activity.runOnUiThread(() -> {
+                    if (CallbackInterface.mlFrag() != null) CallbackInterface.mlFrag().updateVumeter(playing);
+                    if (CallbackInterface.srFrag() != null) CallbackInterface.srFrag().updateVumeter(playing);
+                });
+                if (playing) binding.expandedPlayer.toggleView.forcePlayState();
+                else binding.expandedPlayer.toggleView.forcePauseState();
+                binding.expandedPlayer.songSeekbar.setAnimate(playing);
+                binding.collapsedPlayer.action.setIconResource(playing ? R.drawable.ic_pause : R.drawable.ic_play);
+            } catch (Exception e) {
+                Log.e("UIManager", "Error syncing player UI during restore from service", e);
+            }
         } else {
             ViewKt.doOnLayout(binding.bottomNavigation, v -> {
                 ViewKt.doOnLayout(binding.tabLayout, v2 -> {
@@ -1039,6 +1113,11 @@ public class UIManager implements PlaybackControlListener {
     }
 
     public void loadLyrics(String path) {
+        if (path == null || path.isEmpty()) {
+            binding.lyricsView.setVisibility(View.GONE);
+            binding.lyricsPlaceholder.setVisibility(View.VISIBLE);
+            return;
+        }
         LyricsExtractor.extract(path, lyrics -> {
             if (lyrics != null && !lyrics.isEmpty()) {
                 LyricsParser.parse(lyrics, result -> {

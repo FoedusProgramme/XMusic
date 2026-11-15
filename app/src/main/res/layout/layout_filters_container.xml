@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
     android:gravity="center_horizontal"
@@ -14,72 +14,88 @@
         android:layout_width="wrap_content" />
 
     <TextView
+        android:id="@+id/title_text"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:textSize="34.0sp"
         android:textColor="?colorPrimary"
-        android:layout_marginLeft="8dp"
-        android:layout_marginBottom="24dp"
-        android:gravity="left"
+        android:layout_marginStart="8dp"
+        android:gravity="start"
         android:textStyle="bold"
         android:text="@string/sort_by" />
 
-    <com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout
+    <TextView
+        android:id="@+id/title_desc"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:textSize="14.0sp"
+        android:textColor="?colorOutline"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="24dp"
+        android:gravity="start"
+        android:text="Choose how your songs are organized" />
+
+    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/nested_scroll_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:paddingHorizontal="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple_top"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/first_item">
 
                     <TextView
+                        android:id="@+id/first_text"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:textSize="16.0sp"
                         android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:text="@string/sort_name" />
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
-                        android:id="@+id/firstRadio"
+                        android:id="@+id/first_radio"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/second_item">
 
                     <TextView
+                        android:id="@+id/second_text"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:textSize="16.0sp"
                         android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:text="@string/sort_artist" />
 
@@ -90,25 +106,28 @@
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/third_item">
 
                     <TextView
-                        android:layout_height="wrap_content"
+                        android:id="@+id/third_text"
                         android:layout_width="wrap_content"
-                        android:textSize="16.0sp"
-                        android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
-                        android:text="@string/sort_album" />
+                        android:text="@string/sort_album"
+                        android:textColor="?colorOnSurface"
+                        android:textSize="16.0sp"
+                        tools:ignore="TextContrastCheck" />
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
                         android:id="@+id/third_radio"
@@ -117,23 +136,25 @@
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/fourth_item">
 
                     <TextView
+                        android:id="@+id/fourth_text"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:textSize="16.0sp"
                         android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:text="@string/sort_album_artist" />
 
@@ -144,23 +165,25 @@
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/fifth_item">
 
                     <TextView
+                        android:id="@+id/fifth_text"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:textSize="16.0sp"
                         android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:text="@string/sort_year" />
 
@@ -171,23 +194,25 @@
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/sixth_item">
 
                     <TextView
+                        android:id="@+id/sixth_text"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:textSize="16.0sp"
                         android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:text="@string/sort_track" />
 
@@ -198,23 +223,25 @@
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/seventh_item">
 
                     <TextView
+                        android:id="@+id/seventh_text"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:textSize="16.0sp"
                         android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:text="@string/sort_duration" />
 
@@ -225,23 +252,25 @@
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/eighth_item">
 
                     <TextView
+                        android:id="@+id/eighth_text"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:textSize="16.0sp"
                         android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:text="@string/sort_date_added" />
 
@@ -252,50 +281,54 @@
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
-                    android:id="@+id/nineth_item">
+                    android:id="@+id/ninth_item">
 
                     <TextView
+                        android:id="@+id/ninth_text"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:textSize="16.0sp"
                         android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:text="@string/sort_date_modified" />
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
-                        android:id="@+id/nineth_radio"
+                        android:id="@+id/ninth_radio"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
-                <com.xapps.media.xmusic.widget.CheckableLinearLayout
+                <com.xapps.media.xmusic.ui.widget.CheckableLinearLayout
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
                     android:layout_marginBottom="2dp"
                     android:background="@drawable/rv_ripple_bottom"
-                    android:padding="4dp"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="4dp"
                     android:orientation="horizontal"
                     android:id="@+id/tenth_item">
 
                     <TextView
+                        android:id="@+id/tenth_text"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:textSize="16.0sp"
                         android:textColor="?colorOnSurface"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:text="@string/sort_size" />
 
@@ -306,12 +339,12 @@
                         android:clickable="false"
                         android:focusable="false" />
 
-                </com.xapps.media.xmusic.widget.CheckableLinearLayout>
+                </com.xapps.media.xmusic.ui.widget.CheckableLinearLayout>
 
             </LinearLayout>
 
         </androidx.core.widget.NestedScrollView>
 
-    </com.xapps.media.xmusic.widget.SpringOverScrollRelativeLayout>
+    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout>
 
 </LinearLayout>

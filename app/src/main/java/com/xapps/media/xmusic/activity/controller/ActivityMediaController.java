@@ -1,4 +1,15 @@
 package com.xapps.media.xmusic.activity.controller;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 
 import android.content.Context;
 import android.os.Handler;
@@ -9,17 +20,14 @@ import androidx.media3.session.MediaController;
 import androidx.media3.session.SessionToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.xapps.media.xmusic.activity.MainActivity;
 import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.callback.CallbackInterface;
 import com.xapps.media.xmusic.data.RuntimeData;
-import com.xapps.media.xmusic.databinding.ActivityMainBinding;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
-import com.xapps.media.xmusic.models.BottomSheetBehavior;
+import com.xapps.media.xmusic.ui.behavior.BottomSheetBehavior;
 import com.xapps.media.xmusic.models.SquigglyProgress;
-import com.xapps.media.xmusic.service.PlayerService;
 import com.xapps.media.xmusic.utils.XUtils;
-import com.xapps.media.xmusic.widget.ExpressiveSliderLayout;
+import com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout;
 import java.util.function.Consumer;
 
 public class ActivityMediaController {
@@ -62,8 +70,13 @@ public class ActivityMediaController {
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {   
                 if (controller.getPlaybackState() == Player.STATE_BUFFERING || controller.getPlaybackState() == Player.STATE_READY) {
-                    String songPath = RuntimeData.songs.get(controller.getCurrentMediaItemIndex()).path;
-                    //activity.loadLyrics(songPath);
+                    if (RuntimeData.songs != null && !RuntimeData.songs.isEmpty()) {
+                        int index = controller.getCurrentMediaItemIndex();
+                        if (index >= 0 && index < RuntimeData.songs.size()) {
+                            String songPath = RuntimeData.songs.get(index).path;
+                            //activity.loadLyrics(songPath);
+                        }
+                    }
                 }
                 if (mediaItem != null) {
                     //activity.floatBnv(true);

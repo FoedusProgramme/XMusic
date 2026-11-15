@@ -1,4 +1,15 @@
 package com.xapps.media.xmusic.activity;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -18,7 +29,7 @@ import com.xapps.media.xmusic.activity.manager.LogicManager;
 import com.xapps.media.xmusic.activity.manager.UIManager;
 import com.xapps.media.xmusic.callback.ActivityCallback;
 import com.xapps.media.xmusic.callback.CallbackInterface;
-import com.xapps.media.xmusic.common.SongLoadListener;
+import com.xapps.media.xmusic.callback.SongLoadListener;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.data.RuntimeData;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
@@ -36,25 +47,24 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
     private LogicManager logicManager;
     private MediaController mediaController;
 
-    private boolean isReady = true;
+    private volatile boolean isReady = true;
+
+    public void dismissSplashScreen() {
+        isReady = false;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this).setKeepOnScreenCondition(() -> isReady);
-        if (savedInstanceState == null) {
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                if (!XUtils.areAllPermsGranted(this)) {
-                    startActivity(new Intent(this, WelcomeActivity.class));
-                    finish();
-                }
-                isReady = false;
-            }, 800);
-        } else {
-            if (!XUtils.areAllPermsGranted(this)) {
-                startActivity(new Intent(this, WelcomeActivity.class));
-                finish();
-            }
+        if (!XUtils.areAllPermsGranted(this)) {
+            startActivity(new Intent(this, WelcomeActivity.class));
+            finish();
             isReady = false;
+        } else if (savedInstanceState != null || !RuntimeData.songs.isEmpty()) {
+            isReady = false;
+        } else {
+            // Safety timeout: dismiss splash after 5 seconds if scanner hangs
+            new Handler(Looper.getMainLooper()).postDelayed(() -> isReady = false, 5000);
         }
         EdgeToEdge.enable(this, 
             SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
@@ -200,5 +210,10 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
     @Override
     public void onNotificationButtonsUsed(boolean shuffleEnabled) {
         uiManager.updateShuffleButton(shuffleEnabled);
+    }
+
+    @Override
+    public void onPlayerReady() {
+        uiManager.onPlayerReady();
     }
 }

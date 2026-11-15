@@ -1,4 +1,15 @@
 package com.xapps.media.xmusic.service;
+import com.xapps.media.xmusic.fragment.base.*;
+import com.xapps.media.xmusic.fragment.main.*;
+import com.xapps.media.xmusic.fragment.settings.*;
+import com.xapps.media.xmusic.fragment.info.*;
+import com.xapps.media.xmusic.ui.widget.*;
+import com.xapps.media.xmusic.ui.lyrics.*;
+import com.xapps.media.xmusic.ui.scroll.*;
+import com.xapps.media.xmusic.ui.behavior.*;
+import com.xapps.media.xmusic.lyrics.*;
+import com.xapps.media.xmusic.callback.*;
+import com.xapps.media.xmusic.models.*;
 
 import android.content.Context;
 import android.content.Intent;
@@ -31,7 +42,7 @@ import com.xapps.media.xmusic.service.manager.SessionManager;
 import com.xapps.media.xmusic.service.resume.ResumeSong;
 import com.xapps.media.xmusic.service.resume.ResumeState;
 import com.xapps.media.xmusic.stats.StatsAudioAnalyzer;
-import com.xapps.media.xmusic.utils.ColorPaletteUtils;
+import com.xapps.media.xmusic.utils.CoverArtThemeExtractor;
 import com.xapps.media.xmusic.utils.Log;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 
@@ -76,7 +87,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
         sessionManager = new SessionManager(this, playerManager);
         statsAnalyzer = new StatsAudioAnalyzer(getApplicationContext());
 
-        DefaultMediaNotificationProvider cnp = new DefaultMediaNotificationProvider(this);
+        CustomNotificationProvider cnp = new CustomNotificationProvider(this);
         cnp.setSmallIcon(R.drawable.service_icon);
         setMediaNotificationProvider(cnp);
         setupPlayerListeners();
@@ -93,6 +104,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
     @Override
     public void onTaskRemoved(Intent i) {
         if (isIdle) pauseAllPlayersAndStopSelf();
+        super.onTaskRemoved(i);
     }
 
     @Override
@@ -121,6 +133,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
 
                     if (state == Player.STATE_READY) {
                         startUpdates();
+                        playerHandler.postDelayed(CallbackInterface.activity()::onPlayerReady, 500);
                     }
 
                     if (state == Player.STATE_IDLE || state == Player.STATE_ENDED) {
@@ -128,7 +141,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
                         saveResumeState();
                         stopPeriodicSave();
                     }
-                                    
+
                     if (activityCallback != null) CallbackInterface.activity().updateState();
                 }
 
@@ -205,13 +218,13 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
             }
 
             if (DataManager.areStableColors()) {
-                ColorPaletteUtils.generateFromColor(MaterialColorUtils.colorPrimary, (light, dark) -> {
+                CoverArtThemeExtractor.generateFromColor(MaterialColorUtils.colorPrimary, (light, dark) -> {
                     ActivityCallback activityCallback = CallbackInterface.activity();
                     if (activityCallback != null)
                         activityCallback.onColorsChanged();
                 });
             } else {
-                ColorPaletteUtils.generateFromBitmap(bmp, (light, dark) -> {
+                CoverArtThemeExtractor.generateFromBitmap(bmp, (light, dark) -> {
                     ActivityCallback activityCallback = CallbackInterface.activity();
                     if (activityCallback != null) activityCallback.onColorsChanged();
                 });
