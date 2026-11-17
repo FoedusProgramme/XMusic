@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="?colorSurfaceContainer"
     android:orientation="vertical">
-    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollLayout
+    <com.xapps.media.xmusic.ui.scroll.SpringRefreshLayout
         android:id="@+id/swipe_refresh_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true">
-            <com.xapps.media.xmusic.ui.widget.CustomLoadingIndicator
+            <com.xapps.media.xmusic.ui.widget.ExpressiveLoadingIndicator
                 android:id="@+id/indicator"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
@@ -33,7 +33,7 @@
             android:layout_height="match_parent"
             android:transitionGroup="true"
             android:overScrollMode="never" />
-    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollLayout>
+    </com.xapps.media.xmusic.ui.scroll.SpringRefreshLayout>
     <LinearLayout
         android:id="@+id/empty_layout"
         android:layout_width="wrap_content"

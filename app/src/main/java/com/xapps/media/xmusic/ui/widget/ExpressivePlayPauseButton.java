@@ -1,14 +1,4 @@
 package com.xapps.media.xmusic.ui.widget;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
@@ -42,7 +32,7 @@ import com.xapps.media.xmusic.utils.XUtils;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class NewPlayerToggle extends LinearLayout {
+public class ExpressivePlayPauseButton extends LinearLayout {
 
     public static final int SHAPE_SQUARE      = 0;
     public static final int SHAPE_SOFT_BURST  = 1;
@@ -117,8 +107,8 @@ public class NewPlayerToggle extends LinearLayout {
         }).start();
     }
 
-    public NewPlayerToggle(Context c) { super(c); init(c); }
-    public NewPlayerToggle(Context c, AttributeSet a) { super(c, a); init(c); }
+    public ExpressivePlayPauseButton(Context c) { super(c); init(c); }
+    public ExpressivePlayPauseButton(Context c, AttributeSet a) { super(c, a); init(c); }
 
     private void init(Context context) {
         ensureShapesReady();

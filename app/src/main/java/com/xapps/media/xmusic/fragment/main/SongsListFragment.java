@@ -1,15 +1,7 @@
 package com.xapps.media.xmusic.fragment.main;
+import com.xapps.media.xmusic.fastscroll.FastScroller;
+import com.xapps.media.xmusic.fastscroll.FastScrollerBuilder;
 import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.content.*;
 import android.graphics.*;
@@ -22,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.*;
 import androidx.annotation.NonNull;
 import androidx.core.content.*;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.view.ViewKt;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ConcatAdapter;
@@ -49,16 +42,14 @@ import com.xapps.media.xmusic.helper.SongMetadataHelper;
 import com.xapps.media.xmusic.helper.SongSorter;
 import com.xapps.media.xmusic.models.Song;
 import com.xapps.media.xmusic.utils.*;
-import com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout;
-import com.xapps.media.xmusic.ui.widget.VuMeterView;
+import com.xapps.media.xmusic.ui.widget.ExpressiveBottomSheet;
+import com.xapps.media.xmusic.ui.widget.PlayingIndicatorView;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import kotlin.Unit;
-import me.zhanghai.android.fastscroll.FastScroller;
-import me.zhanghai.android.fastscroll.FastScrollerBuilder;
 
 public class SongsListFragment extends BaseFragment implements FragmentCallback {
 
@@ -229,7 +220,7 @@ public class SongsListFragment extends BaseFragment implements FragmentCallback 
 
             binding.item.setOnClickListener(v -> {
                 if (a.getController() == null ) return;
-                if (activity.miniPlayer.getState() == ExpressiveSliderLayout.STATE_SETTLING || activity.miniPlayer.getState() == ExpressiveSliderLayout.STATE_DRAGGING) return;
+                if (activity.miniPlayer.getState() == ExpressiveBottomSheet.STATE_SETTLING || activity.miniPlayer.getState() == ExpressiveBottomSheet.STATE_DRAGGING) return;
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - lastClickTime < DEBOUNCE_MS) {
                     return;
@@ -302,6 +293,8 @@ public class SongsListFragment extends BaseFragment implements FragmentCallback 
         @Override
         public void onBindViewHolder(HeaderViewHolder holder, int position) {
             activity.bottomNavigation.post(() -> {
+                Drawable thumbDrawable = Objects.requireNonNull(ContextCompat.getDrawable(requireContext(), com.xapps.media.xmusic.fastscroll.R.drawable.afs_md2_thumb));
+                DrawableCompat.setTint(thumbDrawable, MaterialColorUtils.colorPrimary);
                 if (scroller == null) scroller = new FastScrollerBuilder(binding.songsList).useMd2Style().setPopupStyle(t -> {
                     t.setTextColor(MaterialColorUtils.colorOnPrimaryContainer);
                     t.setTextSize(XUtils.convertSpToPx(requireContext(), 18f));
@@ -320,7 +313,8 @@ public class SongsListFragment extends BaseFragment implements FragmentCallback 
                     }
 
                     return String.valueOf(Character.toUpperCase(title.charAt(0)));
-                }).setPadding(0, XUtils.convertToPx(requireContext(), 8f) + holder.itemView.getHeight(), 0, XUtils.convertToPx(getActivity(), 8f)).build();
+                }).setPadding(0, XUtils.convertToPx(requireContext(), 8f) + holder.itemView.getHeight(), 0, XUtils.convertToPx(requireContext(), 8f))
+                .setThumbDrawable(thumbDrawable).build();
             });
             View view = holder.itemView;
             TextView sg = view.findViewById(R.id.songs_count);
@@ -574,10 +568,10 @@ public class SongsListFragment extends BaseFragment implements FragmentCallback 
         SongsListAdapter.ViewHolder v = (SongsListAdapter.ViewHolder) binding.songsList.findViewHolderForAdapterPosition(currentPos+1);
         if (v != null) {
             if (b) {
-                VuMeterView view = (VuMeterView) v.itemView.findViewById(R.id.vumeter_view);
+                PlayingIndicatorView view = (PlayingIndicatorView) v.itemView.findViewById(R.id.vumeter_view);
                 if (view != null) view.resume();
             } else {
-                VuMeterView view = (VuMeterView) v.itemView.findViewById(R.id.vumeter_view);
+                PlayingIndicatorView view = (PlayingIndicatorView) v.itemView.findViewById(R.id.vumeter_view);
                 if (view != null) view.stop();
             }
         }
@@ -597,7 +591,7 @@ public class SongsListFragment extends BaseFragment implements FragmentCallback 
                     concatAdapter = new ConcatAdapter(headerAdapter, songsAdapter);
                     mainHandler.post(() -> {
                         binding.songsList.setAdapter(concatAdapter);
-                        binding.swipeRefreshLayout.setRefreshing(false);
+                        mainHandler.postDelayed(() -> binding.swipeRefreshLayout.setRefreshing(false), 1000);
                         if (scroller != null) scroller.setForceHidden(false);
                         binding.songsList.setItemAnimator(null);
                         MaterialSharedAxis msa = new MaterialSharedAxis(MaterialSharedAxis.Y, true);

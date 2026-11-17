@@ -17,17 +17,6 @@
  */
 
 package com.xapps.media.xmusic.ui.scroll;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -69,11 +58,13 @@ import androidx.core.widget.EdgeEffectCompat;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+// From ScrollingView2.java by Nick (@nift4)
+
 /**
  * NestedScrollView variant that is not a ViewGroup.
  */
 @SuppressWarnings("unused")
-public abstract class ScrollingView2 extends View implements NestedScrollingChild3, ScrollingView {
+public abstract class NestedScrollView extends View implements NestedScrollingChild3, ScrollingView {
 	static final int ANIMATED_SCROLL_GAP = 250;
 
 	static final float MAX_SCROLL_FACTOR = 0.5f;
@@ -114,8 +105,8 @@ public abstract class ScrollingView2 extends View implements NestedScrollingChil
 		 * @param oldScrollX Previous horizontal scroll origin.
 		 * @param oldScrollY Previous vertical scroll origin.
 		 */
-		void onScrollChange(@NonNull ScrollingView2 v, int scrollX, int scrollY,
-		                    int oldScrollX, int oldScrollY);
+		void onScrollChange(@NonNull NestedScrollView v, int scrollX, int scrollY,
+                            int oldScrollX, int oldScrollY);
 	}
 
 	private long mLastScroll;
@@ -215,11 +206,11 @@ public abstract class ScrollingView2 extends View implements NestedScrollingChil
 	private final DifferentialMotionFlingController mDifferentialMotionFlingController =
 			new DifferentialMotionFlingController(getContext(), mDifferentialMotionFlingTarget);
 
-	public ScrollingView2(@NonNull Context context) {
+	public NestedScrollView(@NonNull Context context) {
 		this(context, null);
 	}
 
-	public ScrollingView2(@NonNull Context context, @Nullable AttributeSet attrs) {
+	public NestedScrollView(@NonNull Context context, @Nullable AttributeSet attrs) {
 		super(context, attrs);
 		mEdgeGlowTop = EdgeEffectCompat.create(context, attrs);
 		mEdgeGlowBottom = EdgeEffectCompat.create(context, attrs);
@@ -1547,7 +1538,7 @@ public abstract class ScrollingView2 extends View implements NestedScrollingChil
 		final int range = getScrollRange();
 
 		if (Build.VERSION.SDK_INT >= 35) {
-			Api35Impl.setFrameContentVelocity(ScrollingView2.this,
+			Api35Impl.setFrameContentVelocity(NestedScrollView.this,
 					Math.abs(mScroller.getCurrVelocity()));
 		}
 
@@ -1791,7 +1782,7 @@ public abstract class ScrollingView2 extends View implements NestedScrollingChil
 				0, 0); // overscroll
 		runAnimatedScroll(true);
 		if (Build.VERSION.SDK_INT >= 35) {
-			Api35Impl.setFrameContentVelocity(ScrollingView2.this,
+			Api35Impl.setFrameContentVelocity(NestedScrollView.this,
 					Math.abs(mScroller.getCurrVelocity()));
 		}
 	}
@@ -1959,7 +1950,7 @@ public abstract class ScrollingView2 extends View implements NestedScrollingChil
 			if (super.performAccessibilityAction(host, action, arguments)) {
 				return true;
 			}
-			final ScrollingView2 nsvHost = (ScrollingView2) host;
+			final NestedScrollView nsvHost = (NestedScrollView) host;
 			if (!nsvHost.isEnabled()) {
 				return false;
 			}
@@ -2001,7 +1992,7 @@ public abstract class ScrollingView2 extends View implements NestedScrollingChil
 		@Override
 		public void onInitializeAccessibilityNodeInfo(@NonNull View host, @NonNull AccessibilityNodeInfoCompat info) {
 			super.onInitializeAccessibilityNodeInfo(host, info);
-			final ScrollingView2 nsvHost = (ScrollingView2) host;
+			final NestedScrollView nsvHost = (NestedScrollView) host;
 			info.setClassName(ScrollView.class.getName());
 			if (nsvHost.isEnabled()) {
 				final int scrollRange = nsvHost.getScrollRange();
@@ -2026,7 +2017,7 @@ public abstract class ScrollingView2 extends View implements NestedScrollingChil
 		@Override
 		public void onInitializeAccessibilityEvent(@NonNull View host, @NonNull AccessibilityEvent event) {
 			super.onInitializeAccessibilityEvent(host, event);
-			final ScrollingView2 nsvHost = (ScrollingView2) host;
+			final NestedScrollView nsvHost = (NestedScrollView) host;
 			event.setClassName(ScrollView.class.getName());
 			final boolean scrollable = nsvHost.getScrollRange() > 0;
 			event.setScrollable(scrollable);

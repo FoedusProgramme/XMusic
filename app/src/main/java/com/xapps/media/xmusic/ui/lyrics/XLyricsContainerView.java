@@ -1,15 +1,5 @@
 package com.xapps.media.xmusic.ui.lyrics;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
 import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -34,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class XLyricsContainerView extends ScrollingView2 {
+public class XLyricsContainerView extends NestedScrollView {
 
     private final List<LyricItemDelegate> lineDelegates = new ArrayList<>();
     private PlaybackControlListener listener;
@@ -404,8 +394,6 @@ public class XLyricsContainerView extends ScrollingView2 {
         return closestIdx;
     }
 
-    // Gold-standard fluid ease curve (Apple / CSS standard ease: cubic-bezier(0.25, 0.1, 0.25, 1.0))
-    // Soft organic pickup so text doesn't whip away, carrying smooth momentum into a prolonged, velvety landing
     private static final PathInterpolator PREMIUM_STATIC_SCROLL_CURVE = new PathInterpolator(0.25f, 0.1f, 0.25f, 1.0f);
 
     private void performSmoothStaticScroll(float desiredScrollY) {
@@ -436,7 +424,6 @@ public class XLyricsContainerView extends ScrollingView2 {
             delegate.staggerDelay = 0f;
         }
 
-        // Calm, luxurious fluid scroll: 800ms baseline for single-line transitions, smoothly scaling up to 1250ms for larger seeks
         int duration = (int) Math.min(1250, Math.max(800, 720 + (distance / (3.5f * density))));
 
         staticScrollSourceY = currentScrollY;
@@ -518,7 +505,6 @@ public class XLyricsContainerView extends ScrollingView2 {
         long remainingMs = duration - playTime;
 
         if (remainingMs >= 350) {
-            // Ample flight time remaining: seamlessly redirect the scroll destination without restarting
             float fraction = staticScrollAnimator.getAnimatedFraction();
             float currentOffset = 0f;
             if (staticScrollShiftTargetOffset != 0f || staticScrollShiftStartOffset != 0f) {
@@ -533,7 +519,6 @@ public class XLyricsContainerView extends ScrollingView2 {
             staticScrollShiftTargetOffset = newDesiredScrollY - staticScrollBaseTargetY;
             staticScrollTargetY = newDesiredScrollY;
         } else {
-            // In the final resting tail: initiate a calm static scroll into the next line
             performSmoothStaticScroll(newDesiredScrollY);
         }
     }
@@ -595,9 +580,6 @@ public class XLyricsContainerView extends ScrollingView2 {
 
         float delayPerLine = 0.045f;
 
-        // Cascade wave from top visible line DOWNWARDS (line 1 -> line 2 -> line 3...)
-        // For forward scroll (staggerShift > 0): lines move UP one by one (top line moves first, pulling away from line under it).
-        // For backward scroll (staggerShift < 0): lines move DOWN one by one (top line moves down first, getting closer to line under it).
         for (int i = 0; i < lineDelegates.size(); i++) {
             LyricItemDelegate delegate = lineDelegates.get(i);
             int step;
@@ -633,7 +615,6 @@ public class XLyricsContainerView extends ScrollingView2 {
                 lockedTargetIndex = -1;
                 lockedSeekTimestamp = -1L;
             } else {
-                // Discard stale playback updates from ExoPlayer while the seek lands (both forward and backward)!
                 return;
             }
         }
@@ -758,7 +739,6 @@ public class XLyricsContainerView extends ScrollingView2 {
             removeCallbacks(recoveryRunnable);
             postDelayed(recoveryRunnable, 2500);
 
-            // Finger dragging: keep lines strictly glued to scroll position with zero residual stagger
             for (LyricItemDelegate delegate : lineDelegates) {
                 delegate.staggerY = 0f;
                 delegate.staggerVy = 0f;
@@ -836,11 +816,8 @@ public class XLyricsContainerView extends ScrollingView2 {
         activeBlurIndex = index;
 
         if (!isAutoScrollPaused) {
-            // Auto scroll is currently active: scroll view to selected line immediately
             performStaggeredScroll(index, true);
         } else {
-            // Auto scroll is disabled: do not scroll view and do not re-enable auto scroll;
-            // only the runnable cooldown brings auto scroll back!
             removeCallbacks(recoveryRunnable);
             postDelayed(recoveryRunnable, 2500);
             invalidate();

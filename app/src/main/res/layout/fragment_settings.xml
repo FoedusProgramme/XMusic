@@ -42,7 +42,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout
+    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingVertical="16dp"
@@ -254,7 +254,7 @@
 
         </androidx.core.widget.NestedScrollView>
 
-    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout>
+    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollLayout>
 
     <FrameLayout
         android:id="@+id/blocking_overlay"

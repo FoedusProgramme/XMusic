@@ -77,7 +77,7 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
         binding = ActivityRootBinding.inflate(getLayoutInflater());
         passData();
         setContentView(binding.getRoot());
-        init();
+        init(savedInstanceState);
     }
 
     @Override
@@ -108,8 +108,10 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
     
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
-        uiManager.viewModel.markDataAsSaved(true);
         super.onSaveInstanceState(outState);
+        if (uiManager != null) {
+            uiManager.saveInstanceState(outState);
+        }
     }
 
     @Override
@@ -120,8 +122,8 @@ public class RootActivity extends BaseActivity implements ActivityCallback {
         mediaController = null;
     }
 
-    private void init() {
-        uiManager = new UIManager(this);
+    private void init(Bundle savedInstanceState) {
+        uiManager = new UIManager(this, savedInstanceState);
         uiManager.initUI();
         logicManager = new LogicManager(this, uiManager);
         logicManager.initLogic();

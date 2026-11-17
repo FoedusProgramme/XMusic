@@ -24,7 +24,7 @@
             android:text="Preview :"
             android:textColor="?colorOnSurface" />
 
-        <com.xapps.media.xmusic.ui.widget.NewPlayerToggle
+        <com.xapps.media.xmusic.ui.widget.ExpressivePlayPauseButton
             android:id="@+id/preview_toggle"
             android:layout_width="112dp"
             android:layout_height="112dp"

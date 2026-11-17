@@ -40,7 +40,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout
+    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollLayout
         android:layout_height="match_parent"
         android:layout_width="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -128,7 +128,7 @@
 
                     </LinearLayout>
 
-                    <com.appbroker.roundedimageview.RoundedImageView
+                    <com.xapps.media.xmusic.ui.widget.RoundedImageView
                         android:id="@+id/big_pic"
                         android:layout_width="64dp"
                         android:layout_height="64dp"
@@ -158,7 +158,7 @@
                     android:paddingHorizontal="12dp"
                     android:background="@drawable/rv_ripple_top_inverse">
 
-                    <com.appbroker.roundedimageview.RoundedImageView
+                    <com.xapps.media.xmusic.ui.widget.RoundedImageView
                         android:id="@+id/first_icon"
                         android:layout_height="48dp"
                         android:layout_width="48dp"
@@ -202,7 +202,7 @@
                     android:paddingHorizontal="12dp"
                     android:background="@drawable/rv_ripple_inverse">
 
-                    <com.appbroker.roundedimageview.RoundedImageView
+                    <com.xapps.media.xmusic.ui.widget.RoundedImageView
                         android:id="@+id/second_icon"
                         android:layout_height="48dp"
                         android:layout_width="48dp"
@@ -246,7 +246,7 @@
                     android:paddingHorizontal="12dp"
                     android:background="@drawable/rv_ripple_inverse">
 
-                    <com.appbroker.roundedimageview.RoundedImageView
+                    <com.xapps.media.xmusic.ui.widget.RoundedImageView
                         android:id="@+id/third_icon"
                         android:layout_height="48dp"
                         android:layout_width="48dp"
@@ -290,7 +290,7 @@
                     android:paddingHorizontal="12dp"
                     android:background="@drawable/rv_ripple_bottom_inverse">
 
-                    <com.appbroker.roundedimageview.RoundedImageView
+                    <com.xapps.media.xmusic.ui.widget.RoundedImageView
                         android:id="@+id/fourth_icon"
                         android:layout_height="48dp"
                         android:layout_width="48dp"
@@ -345,7 +345,7 @@
                     android:paddingHorizontal="12dp"
                     android:background="@drawable/rv_ripple_top_inverse">
 
-                    <com.appbroker.roundedimageview.RoundedImageView
+                    <com.xapps.media.xmusic.ui.widget.RoundedImageView
                         android:id="@+id/fifth_icon"
                         android:layout_height="48dp"
                         android:layout_width="48dp"
@@ -389,7 +389,7 @@
                     android:paddingHorizontal="12dp"
                     android:background="@drawable/rv_ripple_inverse">
 
-                    <com.appbroker.roundedimageview.RoundedImageView
+                    <com.xapps.media.xmusic.ui.widget.RoundedImageView
                         android:id="@+id/sixth_icon"
                         android:layout_height="48dp"
                         android:layout_width="48dp"
@@ -433,7 +433,7 @@
                     android:paddingHorizontal="12dp"
                     android:background="@drawable/rv_ripple_bottom_inverse">
 
-                    <com.appbroker.roundedimageview.RoundedImageView
+                    <com.xapps.media.xmusic.ui.widget.RoundedImageView
                         android:id="@+id/seventh_icon"
                         android:layout_height="48dp"
                         android:layout_width="48dp"
@@ -469,6 +469,6 @@
 
         </androidx.core.widget.NestedScrollView>
 
-    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout>
+    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

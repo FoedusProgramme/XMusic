@@ -1,15 +1,4 @@
 package com.xapps.media.xmusic.ui.widget;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -25,7 +14,7 @@ import android.view.animation.DecelerateInterpolator;
 
 import androidx.annotation.ColorInt;
 
-public class StatusBarScrimView extends View {
+public class ScrimView extends View {
 
     public static final int TOP_TO_BOTTOM = 0;
     public static final int BOTTOM_TO_TOP = 1;
@@ -34,7 +23,6 @@ public class StatusBarScrimView extends View {
 
     private int scrimColor;
     private float alphaMultiplier = 1f;
-    private float solidPercentage = 0.5f;
 
     private int gradientDirection = TOP_TO_BOTTOM;
 
@@ -42,14 +30,14 @@ public class StatusBarScrimView extends View {
 
     private int currentHeight = 0;
 
-    public StatusBarScrimView(Context c) { super(c); init(c, null); }
-    public StatusBarScrimView(Context c, AttributeSet a) { super(c, a); init(c, a); }
-    public StatusBarScrimView(Context c, AttributeSet a, int d) { super(c, a, d); init(c, a); }
+    public ScrimView(Context c) { super(c); init(c, null); }
+    public ScrimView(Context c, AttributeSet a) { super(c, a); init(c, a); }
+    public ScrimView(Context c, AttributeSet a, int d) { super(c, a, d); init(c, a); }
 
     private void init(Context c, AttributeSet attrs) {
         if (attrs != null) {
-            TypedArray ta = c.obtainStyledAttributes(attrs, com.xapps.media.xmusic.R.styleable.StatusBarScrimView);
-            scrimColor = ta.getColor(com.xapps.media.xmusic.R.styleable.StatusBarScrimView_scrimColor, 0xFF000000);
+            TypedArray ta = c.obtainStyledAttributes(attrs, com.xapps.media.xmusic.R.styleable.ScrimView);
+            scrimColor = ta.getColor(com.xapps.media.xmusic.R.styleable.ScrimView_scrimColor, 0xFF000000);
             ta.recycle();
         } else {
             scrimColor = 0xFF000000;
@@ -139,7 +127,7 @@ public class StatusBarScrimView extends View {
     }
 
     public void setSolidPercentage(float p) {
-        solidPercentage = Math.max(0f, Math.min(1f, p));
+        float solidPercentage = Math.max(0f, Math.min(1f, p));
         invalidate();
     }
 

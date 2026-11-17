@@ -1,15 +1,4 @@
 package com.xapps.media.xmusic.ui.widget;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.content.Context;
 import android.graphics.drawable.Animatable2;
@@ -26,7 +15,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.transition.TransitionManager;
 import com.google.android.material.transition.MaterialSharedAxis;
 
-public class SmallAVDToggleView extends FrameLayout {
+public class ExpressiveAnimatedIconButton extends FrameLayout {
 
     private AppCompatImageView mainIcon;
     private AppCompatImageView holdIcon;
@@ -75,17 +64,17 @@ public class SmallAVDToggleView extends FrameLayout {
         }
     };
 
-    public SmallAVDToggleView(Context c) {
+    public ExpressiveAnimatedIconButton(Context c) {
         super(c);
         init(c, null);
     }
 
-    public SmallAVDToggleView(Context c, AttributeSet a) {
+    public ExpressiveAnimatedIconButton(Context c, AttributeSet a) {
         super(c, a);
         init(c, a);
     }
 
-    public SmallAVDToggleView(Context c, AttributeSet a, int s) {
+    public ExpressiveAnimatedIconButton(Context c, AttributeSet a, int s) {
         super(c, a, s);
         init(c, a);
     }

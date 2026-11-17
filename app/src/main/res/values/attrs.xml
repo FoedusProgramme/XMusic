@@ -1,16 +1,22 @@
 <resources>
-    <declare-styleable name="StatusBarScrimView">
+    <declare-styleable name="ScrimView">
         <attr name="scrimColor" format="color|reference" />
     </declare-styleable>
     
     <attr name="originalSurfaceColor" format="color" />
     
-    <declare-styleable name="vumeter_VuMeterView">
-        <attr name="vumeter_backgroundColor" format="color"/>
-        <attr name="vumeter_blockNumber" format="integer"/>
-        <attr name="vumeter_blockSpacing" format="dimension"/>
-        <attr name="vumeter_speed" format="integer"/>
-        <attr name="vumeter_stopSize" format="dimension"/>
-        <attr name="vumeter_startOff" format="boolean"/>
+    <declare-styleable name="PlayingIndicatorView">
+        <attr name="barColor" format="color"/>
+        <attr name="blockCount" format="integer"/>
+        <attr name="blockSpacing" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="RoundedImageView">
+        <attr name="radius" format="dimension"/>
+        <attr name="topLeftRadius" format="dimension"/>
+        <attr name="topRightRadius" format="dimension"/>
+        <attr name="bottomLeftRadius" format="dimension"/>
+        <attr name="bottomRightRadius" format="dimension"/>
+        <attr name="android:adjustViewBounds"/>
     </declare-styleable>
 </resources>

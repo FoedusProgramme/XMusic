@@ -1,5 +1,6 @@
 package com.xapps.media.xmusic.fragment.main;
 
+import com.xapps.media.xmusic.fastscroll.*;
 import com.xapps.media.xmusic.fragment.base.*;
 import com.xapps.media.xmusic.fragment.settings.*;
 import com.xapps.media.xmusic.fragment.info.*;
@@ -60,8 +61,6 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import kotlin.Unit;
-import me.zhanghai.android.fastscroll.FastScroller;
-import me.zhanghai.android.fastscroll.FastScrollerBuilder;
 
 public class ArtistsFragment extends BaseFragment implements FragmentCallback {
 
@@ -261,9 +260,9 @@ public class ArtistsFragment extends BaseFragment implements FragmentCallback {
                     assert getActivity() != null;
                     scroller = new FastScrollerBuilder(binding.artistsList).useMd2Style().setPopupStyle(t -> {
                         t.setTextColor(MaterialColorUtils.colorOnPrimaryContainer);
-                        t.setTextSize(XUtils.convertSpToPx(getActivity(), 18f));
+                        t.setTextSize(XUtils.convertSpToPx(requireContext(), 18f));
                         t.setGravity(Gravity.CENTER);
-                        t.setBackground(ContextCompat.getDrawable(getActivity(), R.drawable.shape_clover));
+                        t.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.shape_clover));
                     }).setPopupTextProvider((view, position2) -> {
                         if (position2 <= 0 || position2 - 1 >= RuntimeData.artists.size()) {
                             return "—";
@@ -446,9 +445,6 @@ public class ArtistsFragment extends BaseFragment implements FragmentCallback {
                             dispatcher.unregisterOnBackInvokedCallback(windowBackCallback[0]);
                         }
                         windowBackCallback[0] = null;
-                    }
-                    if (DataManager.isBlurOn() && XUtils.areBlursOrDynamicColorsSupported()) {
-                        XUtils.animateBlur(activity.Coordinator, false, 50);
                     }
                 });
 
@@ -677,7 +673,7 @@ public class ArtistsFragment extends BaseFragment implements FragmentCallback {
                     concatAdapter = new ConcatAdapter(headerAdapter, artistsAdapter);
                     mainHandler.post(() -> {
                         binding.artistsList.setAdapter(concatAdapter);
-                        binding.swipeRefreshLayout.setRefreshing(false);
+                        mainHandler.postDelayed(() -> binding.swipeRefreshLayout.setRefreshing(false), 1000);
                         if (scroller != null) scroller.setForceHidden(false);
                         binding.artistsList.setItemAnimator(null);
                         MaterialSharedAxis msa = new MaterialSharedAxis(MaterialSharedAxis.Y, true);

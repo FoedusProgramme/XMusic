@@ -1,32 +1,18 @@
 package com.xapps.media.xmusic.fragment.settings;
 import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.*;
-import android.view.*;
-import androidx.annotation.*;
+
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.models.SettingsItem;
-import com.xapps.media.xmusic.databinding.FragmentExperimentBinding;
-import com.xapps.media.xmusic.ui.behavior.BottomSheetBehavior;
 import com.xapps.media.xmusic.utils.Log;
 import com.xapps.media.xmusic.utils.XUtils;
-import com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout;
+import com.xapps.media.xmusic.ui.widget.ExpressiveBottomSheet;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +48,7 @@ public class ExperimentsFragment extends SubPrefsFragment {
                 exportLogs(getActivity());
                 break;
             case "show_bs" :
-                activity.getBinding().miniPlayer.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
+                activity.getBinding().miniPlayer.setState(ExpressiveBottomSheet.STATE_COLLAPSED);
                 break;
             case "test_frag" :
                 openFragment(item.destinationFragment);

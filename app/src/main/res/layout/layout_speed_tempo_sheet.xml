@@ -25,7 +25,7 @@
         android:textSize="34sp"
         android:textStyle="bold" />
 
-    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout
+    <com.xapps.media.xmusic.ui.scroll.SpringOverScrollLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -369,7 +369,7 @@
 
         </androidx.core.widget.NestedScrollView>
 
-    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollRelativeLayout>
+    </com.xapps.media.xmusic.ui.scroll.SpringOverScrollLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

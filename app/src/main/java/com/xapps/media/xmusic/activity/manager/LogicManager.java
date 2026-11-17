@@ -1,15 +1,4 @@
 package com.xapps.media.xmusic.activity.manager;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import static com.google.android.material.slider.LabelFormatter.LABEL_GONE;
 
@@ -53,10 +42,10 @@ import com.xapps.media.xmusic.databinding.ActivityRootBinding;
 import com.xapps.media.xmusic.databinding.LayoutSpeedTempoSheetBinding;
 
 import java.util.Locale;
-import com.xapps.media.xmusic.lyric.LyricsExtractor;
+
 import com.xapps.media.xmusic.service.XPlayerService;
 import com.xapps.media.xmusic.utils.XUtils;
-import com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout;
+import com.xapps.media.xmusic.ui.widget.ExpressiveBottomSheet;
 import com.xapps.media.xmusic.ui.widget.RichTooltip;
 
 import java.util.List;
@@ -196,7 +185,7 @@ public class LogicManager {
 
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
 
-            uiManager.viewModel.saveBNVPosition(activity.getBinding().bottomNavigation.getSelectedItemId());
+            uiManager.setSavedBnvPosition(activity.getBinding().bottomNavigation.getSelectedItemId());
             if (CallbackInterface.srFrag() == null) return false;
             if (CallbackInterface.srFrag().getSearchViewState() == SearchView.TransitionState.SHOWING) return false;
             int id = item.getItemId();
@@ -246,8 +235,8 @@ public class LogicManager {
         });
 
         ViewKt.doOnLayout(binding.bottomNavigation, v -> {
-            binding.bottomNavigation.setSelectedItemId(uiManager.viewModel.loadBNVPosition());
-            uiManager.viewModel.saveBNVPosition(binding.bottomNavigation.getSelectedItemId());
+            binding.bottomNavigation.setSelectedItemId(uiManager.getSavedBnvPosition());
+            uiManager.setSavedBnvPosition(binding.bottomNavigation.getSelectedItemId());
 
             return Unit.INSTANCE;
         });
@@ -279,7 +268,7 @@ public class LogicManager {
         });
 
         binding.expandedPlayer.speedButton.setOnClickListener(v -> showSpeedDialog());
-        binding.collapsedPlayer.getRoot().setOnClickListener(v -> binding.miniPlayer.setState(ExpressiveSliderLayout.STATE_EXPANDED));
+        binding.collapsedPlayer.getRoot().setOnClickListener(v -> binding.miniPlayer.setState(ExpressiveBottomSheet.STATE_EXPANDED));
     }
 
     public void applySavedPlaybackParameters() {
@@ -534,14 +523,14 @@ public class LogicManager {
 
     private void setupCallbacks() {
         binding.miniPlayer.setupPredictiveBack(activity);
-        binding.miniPlayer.addSliderCallback(new ExpressiveSliderLayout.SliderCallback() {
+        binding.miniPlayer.addSliderCallback(new ExpressiveBottomSheet.SliderCallback() {
             @Override
             public void onStateChanged(int state) {
-                binding.miniPlayer.getPredictiveBackCallback().setEnabled(!(state == ExpressiveSliderLayout.STATE_COLLAPSED || state == ExpressiveSliderLayout.STATE_HIDDEN));
-                if (state == ExpressiveSliderLayout.STATE_HIDDEN) {
+                binding.miniPlayer.getPredictiveBackCallback().setEnabled(!(state == ExpressiveBottomSheet.STATE_COLLAPSED || state == ExpressiveBottomSheet.STATE_HIDDEN));
+                if (state == ExpressiveBottomSheet.STATE_HIDDEN) {
                     uiManager.onPlayerHidden();
                     mediaController.stop();
-                } else if (state == ExpressiveSliderLayout.STATE_COLLAPSED) {
+                } else if (state == ExpressiveBottomSheet.STATE_COLLAPSED) {
                     DataManager.increasePlayerShowCount();
                     if (DataManager.getPlayerSHowCount() >= 5 && !DataManager.isPlayerTipShown()) {
                         new RichTooltip.Builder(activity)
@@ -555,7 +544,7 @@ public class LogicManager {
                                 .show(binding.collapsedPlayer.getRoot());
                         DataManager.markPlayerTipAsShown();
                     }
-                } else if (state == ExpressiveSliderLayout.STATE_EXPANDED) {
+                } else if (state == ExpressiveBottomSheet.STATE_EXPANDED) {
                     if (DataManager.getPlayerSHowCount() >= 8 && !DataManager.isSeekTipShown()) {
                         new RichTooltip.Builder(activity)
                                 .setTitle("Pro tip")

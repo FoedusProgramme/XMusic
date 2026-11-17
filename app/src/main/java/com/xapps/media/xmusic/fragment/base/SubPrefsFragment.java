@@ -1,16 +1,4 @@
 package com.xapps.media.xmusic.fragment.base;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import androidx.activity.BackEventCompat;
@@ -23,7 +11,7 @@ import com.xapps.media.xmusic.callback.CallbackInterface;
 import com.xapps.media.xmusic.callback.FragmentCallback;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
 import com.xapps.media.xmusic.utils.XUtils;
-import com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout;
+import com.xapps.media.xmusic.ui.widget.ExpressiveBottomSheet;
 
 public class SubPrefsFragment extends BasePrefsFragment implements FragmentCallback {
 	
@@ -71,7 +59,7 @@ public class SubPrefsFragment extends BasePrefsFragment implements FragmentCallb
             ra.getUIManager().saveState();
         }
         
-        boolean b1 = ra.getBinding().miniPlayer.getState() == ExpressiveSliderLayout.STATE_COLLAPSED;
+        boolean b1 = ra.getBinding().miniPlayer.getState() == ExpressiveBottomSheet.STATE_COLLAPSED;
         XUtils.animateMarginsTo(ra.getBinding().settingsCard, 0, 0, 0, b1? ra.getUIManager().playerDockedNeededMargin : 0, 200, null);
 
         if (backStackListener != null) {
@@ -129,7 +117,7 @@ public class SubPrefsFragment extends BasePrefsFragment implements FragmentCallb
                 if (!valid) return;
                 ra.getBinding().bottomNavigation.animate().cancel();
                 ra.getBinding().bottomNavigation.setVisibility(View.VISIBLE);
-                animatePlayer = ra.getBinding().miniPlayer.getState() == ExpressiveSliderLayout.STATE_COLLAPSED;
+                animatePlayer = ra.getBinding().miniPlayer.getState() == ExpressiveBottomSheet.STATE_COLLAPSED;
                 bnvHeight = ra.getBinding().bottomNavigation.getHeight();
                 height = animatePlayer? ra.getUIManager().playerNeededMargin : ra.getUIManager().bnvNeededMargin;
             }

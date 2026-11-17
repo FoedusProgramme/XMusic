@@ -86,7 +86,7 @@
         android:background="#000000"
         android:alpha="0" />
 
-    <com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout
+    <com.xapps.media.xmusic.ui.widget.ExpressiveBottomSheet
         android:id="@+id/mini_player"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -157,7 +157,7 @@
                 android:clipToPadding="false" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout>
+    </com.xapps.media.xmusic.ui.widget.ExpressiveBottomSheet>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"

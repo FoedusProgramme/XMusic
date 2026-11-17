@@ -1,15 +1,5 @@
 package com.xapps.media.xmusic.activity.manager;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
 import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -34,7 +24,6 @@ import androidx.core.graphics.ColorUtils;
 import androidx.core.view.*;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.media3.common.Player;
 import androidx.transition.TransitionManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -57,8 +46,6 @@ import com.xapps.media.xmusic.lyrics.LyricsParser;
 import com.xapps.media.xmusic.utils.CoverArtThemeExtractor;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 import com.xapps.media.xmusic.utils.XUtils;
-import com.xapps.media.xmusic.viewmodel.MainActivityViewModel;
-import com.xapps.media.xmusic.ui.widget.*; import com.xapps.media.xmusic.ui.lyrics.*; import com.xapps.media.xmusic.ui.scroll.*; import com.xapps.media.xmusic.ui.behavior.*;
 
 import kotlin.Unit;
 
@@ -116,12 +103,77 @@ public class UIManager implements PlaybackControlListener {
 
     private Map<String, Integer> effectiveOldColors = new HashMap<>();
 
-    public MainActivityViewModel viewModel;
+    private boolean isDataSaved = false;
+    private int savedLayoutState = 6;
+    private boolean savedBnvHidden = false;
+    private int savedLastPosition = 0;
+    private int savedBnvPosition = R.id.menuHomeFragment;
 
-    public UIManager(RootActivity activity) {
+    public UIManager(RootActivity activity, android.os.Bundle savedInstanceState) {
         this.activity = activity;
         this.binding = activity.getBinding();
-        viewModel = new ViewModelProvider(activity).get(MainActivityViewModel.class);
+        restoreInstanceState(savedInstanceState);
+    }
+
+    public void saveInstanceState(android.os.Bundle outState) {
+        computeState();
+        outState.putBoolean("key_data_saved", true);
+        outState.putInt("key_layout_state", layoutState);
+        outState.putBoolean("key_is_bnv_hidden", bnvHidden);
+        if (activity.getController() != null) {
+            outState.putInt("key_last_position", activity.getController().getCurrentMediaItemIndex());
+        }
+        outState.putInt("key_bnv_position", activity.getBinding().bottomNavigation.getSelectedItemId());
+    }
+
+    public void restoreInstanceState(android.os.Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            isDataSaved = savedInstanceState.getBoolean("key_data_saved", false);
+            savedLayoutState = savedInstanceState.getInt("key_layout_state", 6);
+            savedBnvHidden = savedInstanceState.getBoolean("key_is_bnv_hidden", false);
+            savedLastPosition = savedInstanceState.getInt("key_last_position", 0);
+            savedBnvPosition = savedInstanceState.getInt("key_bnv_position", R.id.menuHomeFragment);
+        }
+    }
+
+    public boolean isDataSaved() {
+        return isDataSaved;
+    }
+
+    public void markDataAsSaved(boolean saved) {
+        this.isDataSaved = saved;
+    }
+
+    public int getSavedLayoutState() {
+        return savedLayoutState;
+    }
+
+    public void saveLayoutState(int state) {
+        this.savedLayoutState = state;
+    }
+
+    public boolean wasBnvHidden() {
+        return savedBnvHidden;
+    }
+
+    public void setBnvHidden(boolean hidden) {
+        this.savedBnvHidden = hidden;
+    }
+
+    public int getSavedLastPosition() {
+        return savedLastPosition;
+    }
+
+    public void setSavedLastPosition(int pos) {
+        this.savedLastPosition = pos;
+    }
+
+    public int getSavedBnvPosition() {
+        return savedBnvPosition;
+    }
+
+    public void setSavedBnvPosition(int id) {
+        this.savedBnvPosition = id;
     }
 
     public void initUI() {
@@ -513,8 +565,8 @@ public class UIManager implements PlaybackControlListener {
         playerHidden = hide;
         binding.miniPlayer.setState(
                 hide
-                        ? ExpressiveSliderLayout.STATE_HIDDEN
-                        : ExpressiveSliderLayout.STATE_COLLAPSED);
+                        ? ExpressiveBottomSheet.STATE_HIDDEN
+                        : ExpressiveBottomSheet.STATE_COLLAPSED);
     }
 
     private void dockPlayerInternal(boolean dock, boolean animate) {
@@ -596,7 +648,7 @@ public class UIManager implements PlaybackControlListener {
             binding.expandedPlayer.toggleView.forcePauseState();
         }
         
-        if (binding.miniPlayer.getState() == ExpressiveSliderLayout.STATE_HIDDEN) hideComponents(false, bnvHidden, tabsHidden, "null (UIManager)");
+        if (binding.miniPlayer.getState() == ExpressiveBottomSheet.STATE_HIDDEN) hideComponents(false, bnvHidden, tabsHidden, "null (UIManager)");
     }
 
     // --------------- Fragments Viewpager Adapter ----------------- ]
@@ -994,13 +1046,13 @@ public class UIManager implements PlaybackControlListener {
         boolean isAnythingPlaying = (activity.getController() != null && (activity.getController().isPlaying() || activity.getController().getMediaItemCount() > 0))
                 || (CallbackInterface.service() != null && CallbackInterface.service().isAnythingPlaying());
 
-        if (viewModel.isDataSaved()) {
-            int savedState = viewModel.getLayoutState();
+        if (isDataSaved()) {
+            int savedState = getSavedLayoutState();
 
             ViewKt.doOnLayout(binding.bottomNavigation, v -> {
                 ViewKt.doOnLayout(binding.tabLayout, v2 -> {
                     binding.miniPlayer.setFloatingMargins(sideMargins, savedState >= 4 ? XUtils.getNavigationBarHeight(activity) : bottomMargin);
-                    setLayoutState(savedState, "restore state - viemodel");
+                    setLayoutState(savedState, "restore state - savedInstance");
                     updateColors();
 
                     return Unit.INSTANCE;
@@ -1032,7 +1084,7 @@ public class UIManager implements PlaybackControlListener {
                 }
             }
 
-            viewModel.markDataAsSaved(false);
+            markDataAsSaved(false);
         } else if (isAnythingPlaying) {
             ViewKt.doOnLayout(binding.bottomNavigation, v -> {
                 ViewKt.doOnLayout(binding.tabLayout, v2 -> {
@@ -1105,11 +1157,13 @@ public class UIManager implements PlaybackControlListener {
     }
 
     public void saveState() {
-        viewModel.setLastPosition(activity.getController().getCurrentMediaItemIndex());
+        if (activity.getController() != null) {
+            setSavedLastPosition(activity.getController().getCurrentMediaItemIndex());
+        }
         computeState();
-        viewModel.saveLayoutState(layoutState);
-        viewModel.setBNVAsHidden(bnvHidden);
-        viewModel.saveBNVPosition(activity.getBinding().bottomNavigation.getSelectedItemId());
+        saveLayoutState(layoutState);
+        setBnvHidden(bnvHidden);
+        setSavedBnvPosition(activity.getBinding().bottomNavigation.getSelectedItemId());
     }
 
     public void loadLyrics(String path) {

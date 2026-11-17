@@ -1,15 +1,4 @@
 package com.xapps.media.xmusic.ui.widget;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 /*
  * Copyright 2015 Hugo Gresse
@@ -41,7 +30,7 @@ import com.xapps.media.xmusic.R;
 
 import java.util.Random;
 
-public class VuMeterView extends View {
+public class PlayingIndicatorView extends View {
 
     public static final int STATE_PLAYING = 0;
     public static final int STATE_PAUSED = 1;
@@ -70,17 +59,17 @@ public class VuMeterView extends View {
 
     private int frame;
 
-    public VuMeterView(Context context) {
+    public PlayingIndicatorView(Context context) {
         super(context);
         init(null);
     }
 
-    public VuMeterView(Context context, AttributeSet attrs) {
+    public PlayingIndicatorView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(attrs);
     }
 
-    public VuMeterView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public PlayingIndicatorView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(attrs);
     }
@@ -88,21 +77,21 @@ public class VuMeterView extends View {
     private void init(AttributeSet attrs) {
         TypedArray a = getContext().obtainStyledAttributes(
                 attrs,
-                R.styleable.vumeter_VuMeterView
+                R.styleable.PlayingIndicatorView
         );
 
         color = a.getColor(
-                R.styleable.vumeter_VuMeterView_vumeter_backgroundColor,
+                R.styleable.PlayingIndicatorView_barColor,
                 Color.BLACK
         );
 
         blockCount = a.getInt(
-                R.styleable.vumeter_VuMeterView_vumeter_blockNumber,
+                R.styleable.PlayingIndicatorView_blockCount,
                 DEFAULT_BLOCKS
         );
 
         blockSpacing = a.getDimension(
-                R.styleable.vumeter_VuMeterView_vumeter_blockSpacing,
+                R.styleable.PlayingIndicatorView_blockSpacing,
                 DEFAULT_SPACING
         );
 

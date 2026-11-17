@@ -1,15 +1,4 @@
 package com.xapps.media.xmusic.ui.widget;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -43,7 +32,7 @@ import com.xapps.media.xmusic.utils.XUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExpressiveSliderLayout extends FrameLayout {
+public class ExpressiveBottomSheet extends FrameLayout {
 
     public interface SliderCallback {
         void onStateChanged(int state);
@@ -153,12 +142,12 @@ public class ExpressiveSliderLayout extends FrameLayout {
                 }
             };
 
-    public ExpressiveSliderLayout(@NonNull Context context) {
+    public ExpressiveBottomSheet(@NonNull Context context) {
         super(context);
         init();
     }
 
-    public ExpressiveSliderLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public ExpressiveBottomSheet(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init();
     }

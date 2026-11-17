@@ -20,7 +20,7 @@ import androidx.graphics.shapes.Shapes_androidKt;
 import com.google.android.material.shape.MaterialShapes;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 
-public class CustomLoadingIndicator extends View {
+public class ExpressiveLoadingIndicator extends View {
 
     private final Paint mShapePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -47,7 +47,6 @@ public class CustomLoadingIndicator extends View {
 
     @SuppressLint("RestrictedApi")
     private static final RoundedPolygon[] SHAPES = {
-            MaterialShapes.normalize(MaterialShapes.COOKIE_6, true, new RectF(-1f, -1f, 1f, 1f)),
             MaterialShapes.normalize(MaterialShapes.COOKIE_12, true, new RectF(-1f, -1f, 1f, 1f)),
             MaterialShapes.normalize(MaterialShapes.PILL, true, new RectF(-1f, -1f, 1f, 1f)),
             MaterialShapes.normalize(MaterialShapes.SOFT_BURST, true, new RectF(-1f, -1f, 1f, 1f)),
@@ -59,7 +58,7 @@ public class CustomLoadingIndicator extends View {
             MaterialShapes.normalize(MaterialShapes.CLOVER_4, true, new RectF(-1f, -1f, 1f, 1f))
     };
 
-    public CustomLoadingIndicator(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public ExpressiveLoadingIndicator(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         mShapePaint.setColor(MaterialColorUtils.colorPrimary);
         mBgPaint.setColor(MaterialColorUtils.colorPrimaryContainer);
@@ -68,14 +67,14 @@ public class CustomLoadingIndicator extends View {
     }
 
     private void initSprings() {
-        mPullRotationSpring = new SpringAnimation(this, new FloatPropertyCompat<CustomLoadingIndicator>("pullRotation") {
+        mPullRotationSpring = new SpringAnimation(this, new FloatPropertyCompat<ExpressiveLoadingIndicator>("pullRotation") {
             @Override
-            public float getValue(CustomLoadingIndicator indicator) {
+            public float getValue(ExpressiveLoadingIndicator indicator) {
                 return mRotationAngle;
             }
 
             @Override
-            public void setValue(CustomLoadingIndicator indicator, float value) {
+            public void setValue(ExpressiveLoadingIndicator indicator, float value) {
                 mRotationAngle = value;
                 invalidate();
             }
@@ -84,14 +83,14 @@ public class CustomLoadingIndicator extends View {
                 .setStiffness(480f)
                 .setDampingRatio(0.54f));
 
-        mCycleSpring = new SpringAnimation(this, new FloatPropertyCompat<CustomLoadingIndicator>("stepProgress") {
+        mCycleSpring = new SpringAnimation(this, new FloatPropertyCompat<ExpressiveLoadingIndicator>("stepProgress") {
             @Override
-            public float getValue(CustomLoadingIndicator indicator) {
+            public float getValue(ExpressiveLoadingIndicator indicator) {
                 return mStepProgress;
             }
 
             @Override
-            public void setValue(CustomLoadingIndicator indicator, float value) {
+            public void setValue(ExpressiveLoadingIndicator indicator, float value) {
                 mStepProgress = value;
                 float normalized = value / SPRING_SCALE;
                 float clampedMorph = Math.max(0f, Math.min(1f, normalized));

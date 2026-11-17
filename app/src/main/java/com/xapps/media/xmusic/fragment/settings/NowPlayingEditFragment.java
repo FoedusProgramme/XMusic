@@ -25,7 +25,7 @@ import com.xapps.media.xmusic.databinding.LayoutToggleCustomizeDialogBinding;
 import com.xapps.media.xmusic.utils.CoverArtThemeExtractor;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 import com.xapps.media.xmusic.utils.XUtils;
-import com.xapps.media.xmusic.ui.widget.NewPlayerToggle;
+import com.xapps.media.xmusic.ui.widget.ExpressivePlayPauseButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,10 +75,10 @@ public class NowPlayingEditFragment extends SubPrefsFragment {
             case "toggle_customize":
                 int oldStartShape =
                         DataManager.sp.getInt(
-                                "player_toggle_start_shape", NewPlayerToggle.SHAPE_SQUARE);
+                                "player_toggle_start_shape", ExpressivePlayPauseButton.SHAPE_SQUARE);
                 int oldEndShape =
                         DataManager.sp.getInt(
-                                "player_toggle_target_shape", NewPlayerToggle.SHAPE_COOKIE_12);
+                                "player_toggle_target_shape", ExpressivePlayPauseButton.SHAPE_COOKIE_12);
                 LayoutToggleCustomizeDialogBinding dbinding =
                         LayoutToggleCustomizeDialogBinding.inflate(getLayoutInflater());
                 MaterialAlertDialogBuilder builder =

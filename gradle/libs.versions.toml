@@ -1,5 +1,5 @@
 [versions]
-agp = "9.4.1"
+agp = "9.5.1"
 taglib = "1.0.6"
 glide = "5.0.9"
 material = "1.14.0"
@@ -18,6 +18,7 @@ jellyfinFfmpeg = "1.9.0+1"
 colorseekbar = "2.0.3"
 lottie = "6.7.1"
 aboutlibraries = "14.0.0"
+fastscroller = "1.0.2"
 
 [libraries]
 taglib = { group = "io.github.kyant0", name = "taglib", version.ref = "taglib" }
@@ -40,6 +41,7 @@ media3-ffmpeg-decoder = { group = "org.jellyfin.media3", name = "media3-ffmpeg-d
 colorseekbar = { group = "com.github.rtugeek", name = "colorseekbar", version.ref = "colorseekbar" }
 lottie = { group = "com.airbnb.android", name = "lottie", version.ref = "lottie" }
 aboutlibraries-core = { group = "com.mikepenz", name = "aboutlibraries-core", version.ref = "aboutlibraries" }
+fastscroller = {group = "com.github.grimmthejow", name = "AndroidFastScroll", version.ref = "fastscroller"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

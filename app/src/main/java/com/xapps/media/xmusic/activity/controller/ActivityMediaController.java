@@ -1,18 +1,7 @@
 package com.xapps.media.xmusic.activity.controller;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.content.Context;
-import android.os.Handler;
+
 import androidx.annotation.Nullable;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
@@ -24,10 +13,7 @@ import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.callback.CallbackInterface;
 import com.xapps.media.xmusic.data.RuntimeData;
 import com.xapps.media.xmusic.databinding.ActivityRootBinding;
-import com.xapps.media.xmusic.ui.behavior.BottomSheetBehavior;
-import com.xapps.media.xmusic.models.SquigglyProgress;
-import com.xapps.media.xmusic.utils.XUtils;
-import com.xapps.media.xmusic.ui.widget.ExpressiveSliderLayout;
+
 import java.util.function.Consumer;
 
 public class ActivityMediaController {
@@ -92,13 +78,13 @@ public class ActivityMediaController {
                     /*binding.currentDurationText.setText(XUtils.millisecondsToDuration(0));
                     binding.songSeekbar.setProgress(0, true);
                     binding.musicProgress.setProgressCompat(0, true);
-                    if (binding.expressiveBottomSheet.getState() == ExpressiveSliderLayout.STATE_HIDDEN) binding.expressiveBottomSheet.setState(ExpressiveSliderLayout.STATE_COLLAPSED);
+                    if (binding.expressiveBottomSheet.getState() == ExpressiveBottomSheet.STATE_HIDDEN) binding.expressiveBottomSheet.setState(ExpressiveBottomSheet.STATE_COLLAPSED);
                     //activity.syncPlayerUI(position);
                     //activity.saveUIState();
                     //activity.backgroundHandler.postDelayed(() -> {
                             //activity.seekbarFree = true;
                         //}, 150);
-                    if (binding.expressiveBottomSheet.getState() == ExpressiveSliderLayout.STATE_EXPANDED) {
+                    if (binding.expressiveBottomSheet.getState() == ExpressiveBottomSheet.STATE_EXPANDED) {
                         binding.miniPlayerBottomSheet.setProgress(1f);
                     } else {
                         binding.miniPlayerBottomSheet.setProgress(0f);
