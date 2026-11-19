@@ -51,17 +51,26 @@ public class LibDetailsFragment extends Fragment {
     }
 
     private void init() {
-		Bundle bundle = getArguments();
+        Bundle bundle = getArguments();
+        assert bundle != null;
         String name = bundle.getString("lib_name");
-		String license = bundle.getString("license_text");
-		binding.toolbar.setTitle(name);
-		binding.licenseText.setText(license);
-		binding.licenseText.setTypeface(Typeface.MONOSPACE);
-		ViewKt.doOnLayout(activity.getBinding().bottomNavigation, v -> {
-            binding.licenseText.setPadding(binding.licenseText.getPaddingRight(),  binding.licenseText.getPaddingTop(), binding.licenseText.getPaddingLeft(), binding.licenseText.getPaddingBottom() + activity.getBinding().bottomNavigation.getHeight()*2);
+        String license = bundle.getString("license_text");
+        binding.toolbar.setTitle(name);
+        binding.toolbar.setNavigationOnClickListener(v ->
+                requireActivity().getOnBackPressedDispatcher().onBackPressed()
+        );
+        binding.licenseText.setText(license);
+        binding.licenseText.setTypeface(Typeface.MONOSPACE);
+        ViewKt.doOnLayout(activity.getBinding().bottomNavigation, v -> {
+            binding.licenseText.setPadding(
+                    binding.licenseText.getPaddingRight(),
+                    binding.licenseText.getPaddingTop(),
+                    binding.licenseText.getPaddingLeft(),
+                    binding.licenseText.getPaddingBottom() + activity.getBinding().bottomNavigation.getHeight() * 2
+            );
             return Unit.INSTANCE;
         });
-		MenuItem item = binding.toolbar.getMenu().add("Website");
+        MenuItem item = binding.toolbar.getMenu().add("Website");
         Drawable icon = AppCompatResources.getDrawable(requireContext(), R.drawable.ic_earth);
 
         if (icon != null) {

@@ -34,25 +34,22 @@ import com.xapps.media.xmusic.utils.XUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class BasePrefsFragment extends BaseFragment {
 
-    private RootActivity activity;
-    private ItemsListAdapter adapter;
     private FragmentBasePrefsBinding binding;
     protected List<SettingsItem> provideItems() {
 		return Collections.emptyList();
-	};
+	}
 
     private void initialize() {
         binding.recyclerView.addItemDecoration(new SpacingDecoration(getActivity()));
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        adapter = new ItemsListAdapter(this, getActivity(), provideItems());
+        ItemsListAdapter adapter = new ItemsListAdapter(this, getActivity(), provideItems());
         binding.recyclerView.setAdapter(adapter);
         binding.toolbar.setTitle(getFragmentTitle());
-		binding.toolbar.setNavigationOnClickListener(v -> {
-            getActivity().getOnBackPressedDispatcher().onBackPressed();
-        });
+		binding.toolbar.setNavigationOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
     }
 
     protected String getFragmentTitle() {
@@ -74,7 +71,7 @@ public abstract class BasePrefsFragment extends BaseFragment {
         private final Drawable bottom;
         private final Drawable single;
         private final List<SettingsItem> data;
-        private BasePrefsFragment frag;
+        private final BasePrefsFragment frag;
 
         public ItemsListAdapter(BasePrefsFragment fragment, Context context, List<SettingsItem> data) {
             setHasStableIds(true);
@@ -109,13 +106,13 @@ public abstract class BasePrefsFragment extends BaseFragment {
 
                 Drawable bg;
                 if (!hasPrev && !hasNext) {
-                    bg = single.getConstantState().newDrawable().mutate();
+                    bg = Objects.requireNonNull(single.getConstantState()).newDrawable().mutate();
                 } else if (!hasPrev) {
-                    bg = top.getConstantState().newDrawable().mutate();
+                    bg = Objects.requireNonNull(top.getConstantState()).newDrawable().mutate();
                 } else if (!hasNext) {
-                    bg = bottom.getConstantState().newDrawable().mutate();
+                    bg = Objects.requireNonNull(bottom.getConstantState()).newDrawable().mutate();
                 } else {
-                    bg = middle.getConstantState().newDrawable().mutate();
+                    bg = Objects.requireNonNull(middle.getConstantState()).newDrawable().mutate();
                 }
 
                 holder.itemView.setBackground(bg);
@@ -190,9 +187,7 @@ public abstract class BasePrefsFragment extends BaseFragment {
         void bind(BasePrefsFragment host, SettingsItem item) {
             binding.title.setText(item.title);
             binding.description.setText(item.description);
-            binding.item.setOnClickListener(v -> {
-                host.onItemSelected(item);
-            });
+            binding.item.setOnClickListener(v -> host.onItemSelected(item));
         }
     }
     
@@ -209,12 +204,8 @@ public abstract class BasePrefsFragment extends BaseFragment {
             binding.prefSwitch.setChecked(DataManager.sp.getBoolean(item.id, false));
             binding.prefTitle.setText(item.title);
             binding.prefDescription.setText(item.description);
-            binding.prefItem.setOnClickListener(v -> {
-                binding.prefSwitch.setChecked(!binding.prefSwitch.isChecked());
-            });
-            binding.prefSwitch.setOnCheckedChangeListener((v, isChecked) -> {
-                host.onSwitchChanged(item, isChecked);
-            });
+            binding.prefItem.setOnClickListener(v -> binding.prefSwitch.setChecked(!binding.prefSwitch.isChecked()));
+            binding.prefSwitch.setOnCheckedChangeListener((v, isChecked) -> host.onSwitchChanged(item, isChecked));
         }
     }
     

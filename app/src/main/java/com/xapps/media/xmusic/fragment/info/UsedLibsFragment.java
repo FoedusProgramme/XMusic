@@ -398,5 +398,3 @@ public class UsedLibsFragment extends BaseFragment {
         }
     }
 }
-
-

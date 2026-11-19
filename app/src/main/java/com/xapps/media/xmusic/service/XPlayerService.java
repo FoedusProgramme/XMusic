@@ -112,82 +112,80 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
     }
 
     private void setupPlayerListeners() {
-        playerHandler.post(() -> {
-            player.addListener(new Player.Listener() {
-                @Override
-                public void onPlaybackStateChanged(int state) {
-                    ActivityCallback activityCallback = CallbackInterface.activity();
-                    if (activityCallback != null) activityCallback.onPlaybackStateChanged(player.isPlaying());
+        playerHandler.post(() -> player.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int state) {
+                ActivityCallback activityCallback = CallbackInterface.activity();
+                if (activityCallback != null) activityCallback.onPlaybackStateChanged(player.isPlaying());
 
-                    if (state == Player.STATE_READY) {
-                        startUpdates();
-                        playerHandler.postDelayed(CallbackInterface.activity()::onPlayerReady, 500);
-                    }
-
-                    if (state == Player.STATE_IDLE || state == Player.STATE_ENDED) {
-                        isIdle = (state == Player.STATE_IDLE);
-                        saveResumeState();
-                        stopPeriodicSave();
-                    }
-
-                    if (activityCallback != null) CallbackInterface.activity().updateState();
+                if (state == Player.STATE_READY) {
+                    startUpdates();
+                    if (playerManager.getPreviousPlayerState() == Player.STATE_IDLE) playerHandler.postDelayed(CallbackInterface.activity()::onPlayerReady, 500);
                 }
 
-                @Override
-                public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
-                    if (mediaItem == null || mediaItem.localConfiguration == null) {
-                        statsAnalyzer.stopAnalysis();
-                    } else {
-                        if (!RuntimeData.songs.isEmpty() && player.getCurrentMediaItemIndex() < RuntimeData.songs.size()) {
-                            statsAnalyzer.startAnalysis(RuntimeData.songs.get(player.getCurrentMediaItemIndex()));
-                        }
-                    }
-                    if (CallbackInterface.activity() != null) CallbackInterface.activity().onSongChanged(mediaItem == null? -1 :player.getCurrentMediaItemIndex());
-                    if (player.getPlaybackState() != Player.STATE_IDLE || mediaItem != null) {
-                        genColors(player.getCurrentMediaItemIndex());
-                    }
-                    if (player.getMediaItemCount() > 0) saveResumeState();
+                if (state == Player.STATE_IDLE || state == Player.STATE_ENDED) {
+                    isIdle = (state == Player.STATE_IDLE);
+                    saveResumeState();
+                    stopPeriodicSave();
                 }
 
-                @Override
-                public void onIsPlayingChanged(boolean playing) {
-                    currentPosition = player.getCurrentMediaItemIndex();
-                    isPlaying = playing;
-                    ActivityCallback activityCallback = CallbackInterface.activity();
-                    if (activityCallback != null) activityCallback.onPlaybackStateChanged(player.isPlaying());
+                if (activityCallback != null) CallbackInterface.activity().updateState();
+            }
 
-                    if (playing) {
-                        statsAnalyzer.resumeAnalysis();
-                        startPeriodicSave();
-                    } else {
-                        statsAnalyzer.pauseAnalysis();
-                        stopPeriodicSave();
-                        saveResumeState();
+            @Override
+            public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
+                if (mediaItem == null || mediaItem.localConfiguration == null) {
+                    statsAnalyzer.stopAnalysis();
+                } else {
+                    if (!RuntimeData.songs.isEmpty() && player.getCurrentMediaItemIndex() < RuntimeData.songs.size()) {
+                        statsAnalyzer.startAnalysis(RuntimeData.songs.get(player.getCurrentMediaItemIndex()));
                     }
                 }
-
-                @Override
-                public void onPlayerError(PlaybackException error) {
-                    android.util.Log.e("XMusicError", "Player Exception Caught", error);
-                    Throwable cause = error.getCause();
-                    if (cause != null) {
-                        android.util.Log.e("XMusicError", "Underlying Cause", cause);
-                    }
+                if (CallbackInterface.activity() != null) CallbackInterface.activity().onSongChanged(mediaItem == null? -1 :player.getCurrentMediaItemIndex());
+                if (player.getPlaybackState() != Player.STATE_IDLE || mediaItem != null) {
+                    genColors(player.getCurrentMediaItemIndex());
                 }
+                if (player.getMediaItemCount() > 0) saveResumeState();
+            }
 
-                @Override
-                public void onRepeatModeChanged(int repeatMode) {
-                    sessionManager.rebuildCustomLayout(repeatMode);
-                    if (CallbackInterface.activity() != null) CallbackInterface.activity().onNotificationButtonsUsed(repeatMode);
-                }
+            @Override
+            public void onIsPlayingChanged(boolean playing) {
+                currentPosition = player.getCurrentMediaItemIndex();
+                isPlaying = playing;
+                ActivityCallback activityCallback = CallbackInterface.activity();
+                if (activityCallback != null) activityCallback.onPlaybackStateChanged(player.isPlaying());
 
-                @Override
-                public void onShuffleModeEnabledChanged(boolean shuffleEnabled) {
-                    sessionManager.rebuildCustomLayout(shuffleEnabled);
-                    if (CallbackInterface.activity() != null) CallbackInterface.activity().onNotificationButtonsUsed(shuffleEnabled);
+                if (playing) {
+                    statsAnalyzer.resumeAnalysis();
+                    startPeriodicSave();
+                } else {
+                    statsAnalyzer.pauseAnalysis();
+                    stopPeriodicSave();
+                    saveResumeState();
                 }
-            });
-        });
+            }
+
+            @Override
+            public void onPlayerError(@NonNull PlaybackException error) {
+                android.util.Log.e("XMusicError", "Player Exception Caught", error);
+                Throwable cause = error.getCause();
+                if (cause != null) {
+                    android.util.Log.e("XMusicError", "Underlying Cause", cause);
+                }
+            }
+
+            @Override
+            public void onRepeatModeChanged(int repeatMode) {
+                sessionManager.rebuildCustomLayout(repeatMode);
+                if (CallbackInterface.activity() != null) CallbackInterface.activity().onNotificationButtonsUsed(repeatMode);
+            }
+
+            @Override
+            public void onShuffleModeEnabledChanged(boolean shuffleEnabled) {
+                sessionManager.rebuildCustomLayout(shuffleEnabled);
+                if (CallbackInterface.activity() != null) CallbackInterface.activity().onNotificationButtonsUsed(shuffleEnabled);
+            }
+        }));
     }
 
     private void genColors(int index) {
