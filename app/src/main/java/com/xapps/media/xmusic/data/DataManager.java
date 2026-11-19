@@ -275,4 +275,8 @@ public class DataManager {
     public static boolean isSpeedTempoLocked() {
         return sp.getBoolean("speed_tempo_locked", false);
     }
+
+    public static boolean isExpressiveSeekbarEnabled() {
+        return sp.getBoolean("expressive_seekbar", false);
+    }
 }

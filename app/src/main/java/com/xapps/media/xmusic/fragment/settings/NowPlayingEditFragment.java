@@ -60,6 +60,14 @@ public class NowPlayingEditFragment extends SubPrefsFragment {
 
         items.add(
                 new SettingsItem(
+                        SettingsItem.TYPE_SWITCH,
+                        "expressive_seekbar",
+                        "Enable Expressive seekbar",
+                        "Switch to the newer design of seekbar for the player screen",
+                        null));
+
+        items.add(
+                new SettingsItem(
                         SettingsItem.TYPE_NAV,
                         "lyrics_customize",
                         "Customize Lyrics",
@@ -162,8 +170,9 @@ public class NowPlayingEditFragment extends SubPrefsFragment {
             case "stable_colors":
                 CallbackInterface.service().regenColors(-1);
                 break;
-            case "enable_lyrics_gradient":
+            case "enable_lyrics_gradient", "expressive_seekbar":
                 activity.loadSettings();
+                break;
         }
     }
 
