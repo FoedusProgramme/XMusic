@@ -493,8 +493,11 @@ public class LogicManager {
             }
         });
 
-
         bs.show();
+        if (DataManager.isBlurOn() && XUtils.areBlursOrDynamicColorsSupported()) XUtils.animateBlur(activity.getBinding().Coordinator, true, 300);
+        bs.setOnDismissListener(dialog -> {
+            if (DataManager.isBlurOn() && XUtils.areBlursOrDynamicColorsSupported()) XUtils.animateBlur(activity.getBinding().Coordinator, false, 50);
+        });
     }
 
     private void handleShuffleButtonClick() {
