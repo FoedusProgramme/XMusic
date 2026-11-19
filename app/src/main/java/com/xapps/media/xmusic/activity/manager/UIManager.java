@@ -1180,7 +1180,7 @@ public class UIManager implements PlaybackControlListener {
         }
         LyricsExtractor.extract(path, lyrics -> {
             if (lyrics != null && !lyrics.isEmpty()) {
-                LyricsParser.parse(lyrics, result -> {
+                LRCParser.parse(lyrics, result -> {
                     binding.lyricsView.post(() -> {
                         binding.lyricsView.setLyrics(result.lines(), lyrics.hashCode());
                         binding.lyricsView.setListener(UIManager.this);

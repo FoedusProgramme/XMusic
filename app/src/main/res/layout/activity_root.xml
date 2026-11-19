@@ -149,7 +149,7 @@
                     android:textSize="24sp" />
             </FrameLayout>
 
-            <com.xapps.media.xmusic.ui.lyrics.XLyricsContainerView
+            <com.xapps.media.xmusic.ui.lyrics.XLyricsView
                 android:id="@+id/lyrics_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

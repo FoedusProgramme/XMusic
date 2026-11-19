@@ -109,7 +109,7 @@ public class TtmlParser {
             }
             if (text != null && !text.isEmpty()) {
                 String prefix = vocalType == 2 ? "v2: " : "";
-                LyricLine line = LyricsParser.processContent(prefix + text, pStart, 0);
+                LyricLine line = LRCParser.processContent(prefix + text, pStart, 0);
                 if (line != null) {
                     line.endTime = pEnd;
                     results.add(line);

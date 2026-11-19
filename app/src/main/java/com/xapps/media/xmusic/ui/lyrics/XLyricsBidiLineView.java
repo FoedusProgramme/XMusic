@@ -225,7 +225,7 @@ public class XLyricsBidiLineView extends XLyricsLineView {
         paintCopy.setFontFeatureSettings("'liga' 1, 'clig' 1");
         paintCopy.setTextAlign(Paint.Align.LEFT);
 
-        boolean startsRtl = LyricItemDelegate.isStartingRtl(getLyricLine().line);
+        boolean startsRtl = XLyricsItemDelegate.isStartingRtl(getLyricLine().line);
         bidiCache.staticLayout = StaticLayout.Builder.obtain(getLyricLine().line, 0, getLyricLine().line.length(), paintCopy, width)
                 .setAlignment(alignment)
                 .setTextDirection(startsRtl ? TextDirectionHeuristics.RTL : TextDirectionHeuristics.LTR)
@@ -276,7 +276,7 @@ public class XLyricsBidiLineView extends XLyricsLineView {
             return;
         }
 
-        boolean startsRtl = LyricItemDelegate.isStartingRtl(getLyricLine().line);
+        boolean startsRtl = XLyricsItemDelegate.isStartingRtl(getLyricLine().line);
         staticLayout = StaticLayout.Builder.obtain(getLyricLine().line, 0, getLyricLine().line.length(), textPaint, width)
                 .setAlignment(alignment)
                 .setTextDirection(startsRtl ? TextDirectionHeuristics.RTL : TextDirectionHeuristics.LTR)
