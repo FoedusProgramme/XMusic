@@ -1208,12 +1208,12 @@ public class UIManager implements PlaybackControlListener {
         if (isOledTheme) binding.gradientView.setVisibility(View.GONE);
         isBlurOn = DataManager.isBlurOn();
         if (XUtils.areBlursOrDynamicColorsSupported() && !isBlurOn) binding.Coordinator.setRenderEffect(null);
+        binding.expandedPlayer.songSeekbar.setStyle(DataManager.isExpressiveSeekbarEnabled()? XSeekbar.STYLE_EXPRESSIVE : XSeekbar.STYLE_MATERIAL);
         updateFontConfig();
     }
 
     public void updateLyrics() {
         binding.lyricsView.setStaticScroll(DataManager.getStaticScrollState());
-        binding.lyricsView.setUserStaticScroll(DataManager.getUserStaticScrollState());
         binding.lyricsView.setEnableSparkles(DataManager.getUseSparklesState());
         binding.lyricsView.setLyricAnticipation(DataManager.getLyricsAnticipationState());
         binding.gradientView.setVisibility((DataManager.sp.getBoolean("enable_lyrics_gradient", false) && !isOledTheme )? View.VISIBLE : View.GONE);

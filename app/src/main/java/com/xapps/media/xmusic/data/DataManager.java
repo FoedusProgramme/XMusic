@@ -44,14 +44,6 @@ public class DataManager {
         return isInitialized;
     }
 
-    public static void setDataInitialized() {
-        sp.edit().putBoolean("isDataInitialized", true).apply();
-    }
-
-    public static boolean isDataLoaded() {
-        return sp.getBoolean("isDataInitialized", false);
-    }
-
     public static void setDynamicColorsEnabled(boolean b) {
         sp.edit().putBoolean("isDynamicColorsOn", b).apply();
     }
@@ -190,25 +182,8 @@ public class DataManager {
         return sp.getBoolean("blur_effect", false);
     }
 
-    public static String getFontConfig() {
-		return sp.getString("font_config", "'wdth' " + 100 + ", " +
-                "'wght' " + 500 + ", " +
-                "'opsz' " + 18 + ", " +
-                "'GRAD' " + 0 + ", " +
-                "'ROND' " + 0 + ", " +
-                "'slnt' " + 0);
-	}
-
-    public static void setFontConfig(String config) {
-		sp.edit().putString("font_config", config).apply();
-	}
-
     public static boolean getStaticScrollState() {
         return !sp.getBoolean("lyrics_elastic_scroll", false);
-    }
-
-    public static boolean getUserStaticScrollState() {
-        return !sp.getBoolean("lyrics_elastic_manual_scroll", false);
     }
 
     public static boolean getUseSparklesState() {

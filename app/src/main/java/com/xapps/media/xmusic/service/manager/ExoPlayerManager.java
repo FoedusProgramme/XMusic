@@ -91,7 +91,6 @@ public final class ExoPlayerManager {
                 player = null;
             }
         });
-        //playerHandler.postDelayed(() -> playerThread.quitSafely(), 500);
         context.unregisterReceiver(noisyReceiver);
     }
     
@@ -130,6 +129,7 @@ public final class ExoPlayerManager {
                         .setArtworkUri(artworkUri)
                         .build();
 
+                assert song.path != null;
                 items.add(
                     new MediaItem.Builder()
                         .setMediaId(song.path)

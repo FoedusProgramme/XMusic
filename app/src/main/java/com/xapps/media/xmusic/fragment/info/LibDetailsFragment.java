@@ -70,18 +70,18 @@ public class LibDetailsFragment extends Fragment {
             item.setIcon(icon);
         }
         item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		binding.toolbar.setOnMenuItemClickListener(itm -> {
-			Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(bundle.getString("website", "https://google.com")));
-			startActivity(i);
-			return true;
-		});
+        binding.toolbar.setOnMenuItemClickListener(itm -> {
+            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(bundle.getString("website", "https://google.com")));
+            startActivity(i);
+            return true;
+        });
     }
 
     public static LibDetailsFragment newInstance(String name, String text, String w) {
         Bundle args = new Bundle();
         args.putString("lib_name", name);
         args.putString("license_text", text);
-		args.putString("website", w);
+        args.putString("website", w);
         LibDetailsFragment fragment = new LibDetailsFragment();
         fragment.setArguments(args);
         return fragment;

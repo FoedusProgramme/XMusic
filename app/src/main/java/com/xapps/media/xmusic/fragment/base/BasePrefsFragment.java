@@ -63,7 +63,6 @@ public abstract class BasePrefsFragment extends BaseFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentBasePrefsBinding.inflate(inflater, container, false);
-        activity = (RootActivity) getActivity();
         initialize();
         return binding.getRoot();
     }
@@ -224,14 +223,7 @@ public abstract class BasePrefsFragment extends BaseFragment {
     }
     
     protected void onSwitchChanged(SettingsItem item, boolean value) {
-        switch (item.id) {
-            case "stable_colors" :
-                DataManager.setStableColors(value);
-            break;
-            default :
-			    DataManager.sp.edit().putBoolean(item.id, value).apply();
-            break;
-        }
+        DataManager.sp.edit().putBoolean(item.id, value).apply();
     }
 
     public static class SpacingDecoration extends ItemDecoration {

@@ -54,62 +54,17 @@ public class ActivityMediaController {
 	public void setupListener(RootActivity activity) {
 		controller.addListener(new Player.Listener() {
             @Override
-            public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {   
-                if (controller.getPlaybackState() == Player.STATE_BUFFERING || controller.getPlaybackState() == Player.STATE_READY) {
-                    if (RuntimeData.songs != null && !RuntimeData.songs.isEmpty()) {
-                        int index = controller.getCurrentMediaItemIndex();
-                        if (index >= 0 && index < RuntimeData.songs.size()) {
-                            String songPath = RuntimeData.songs.get(index).path;
-                            //activity.loadLyrics(songPath);
-                        }
-                    }
-                }
+            public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                 if (mediaItem != null) {
-                    //activity.floatBnv(true);
 					ActivityRootBinding binding = activity.getBinding();
-                    int position = controller.getCurrentMediaItemIndex();
-                    
-                    //activity.updateAdapters(position, controller.isPlaying());
-                    //activity.progressDrawable.setAnimate(true);
                     if (!binding.expandedPlayer.toggleView.isAnimating() && controller.isPlaying()) binding.expandedPlayer.toggleView.startAnimation();
                     if (binding.expandedPlayer.toggleView.isAnimating() && !(controller.getPlaybackState() == Player.STATE_READY || controller.getPlaybackState() == Player.STATE_BUFFERING)) binding.expandedPlayer.toggleView.stopAnimation();
-                    //PlayerService.currentPosition = position;
-                    //activity.seekbarFree = false;
-                    /*binding.currentDurationText.setText(XUtils.millisecondsToDuration(0));
-                    binding.songSeekbar.setProgress(0, true);
-                    binding.musicProgress.setProgressCompat(0, true);
-                    if (binding.expressiveBottomSheet.getState() == ExpressiveBottomSheet.STATE_HIDDEN) binding.expressiveBottomSheet.setState(ExpressiveBottomSheet.STATE_COLLAPSED);
-                    //activity.syncPlayerUI(position);
-                    //activity.saveUIState();
-                    //activity.backgroundHandler.postDelayed(() -> {
-                            //activity.seekbarFree = true;
-                        //}, 150);
-                    if (binding.expressiveBottomSheet.getState() == ExpressiveBottomSheet.STATE_EXPANDED) {
-                        binding.miniPlayerBottomSheet.setProgress(1f);
-                    } else {
-                        binding.miniPlayerBottomSheet.setProgress(0f);
-                    }
-                    if (RuntimeData.songs.size() == 1) {
-                        binding.previousButton.setActive(false);
-                        binding.nextButton.setActive(false);
-                    } else {
-                        if (position == 0 && !(controller.getShuffleModeEnabled() || controller.getRepeatMode() == Player.REPEAT_MODE_ALL)) {
-                            binding.previousButton.setActive(false);
-                            binding.nextButton.setActive(true);
-                        } else if (position == RuntimeData.songs.size() - 1 && !(controller.getShuffleModeEnabled() || controller.getRepeatMode() == Player.REPEAT_MODE_ALL)) {
-                            binding.previousButton.setActive(true);
-                            binding.nextButton.setActive(false);
-                        } else {
-                            binding.previousButton.setActive(true);
-                            binding.nextButton.setActive(true);
-                        }
-                    }*/
+
                 }
-				
             }
             
             @Override
-            public void onPositionDiscontinuity(Player.PositionInfo positionInfo, Player.PositionInfo positionInfo2, int i) {
+            public void onPositionDiscontinuity(@NonNull Player.PositionInfo positionInfo, @NonNull Player.PositionInfo positionInfo2, int i) {
                 activity.onProgressChanged(controller.getCurrentPosition());
             }            
             

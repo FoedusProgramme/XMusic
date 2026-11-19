@@ -221,20 +221,11 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
     }
 
     private Bitmap loadBitmapFromPath(Uri uri) {
-        InputStream in = null;
-        try {
-            in = getContentResolver().openInputStream(uri);
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
             return BitmapFactory.decodeStream(in);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("XPlayerService:loadBitmapFromPath", e.toString());
             return null;
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException ignored) {
-                }
-            }
         }
     }
 
@@ -248,7 +239,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
                      ObjectOutputStream oos = new ObjectOutputStream(fos)) {
                      oos.writeObject(state);
                 } catch (Exception e) {
-                    Log.e("RESUME_STATE-SAVE", "SAVE FAILED", e);
+                    Log.e("XPlayerService:saveResumeState", "FAILED", e);
                 }
             });
         });
