@@ -48,6 +48,8 @@ public final class ExoPlayerManager {
     private final Context context;
     private final Uri fallbackUri;
 
+    private int previousPlayerState, playerState;
+
     @OptIn(markerClass = UnstableApi.class)
     @ExperimentalApi
     public ExoPlayerManager(Context context) {
@@ -72,6 +74,16 @@ public final class ExoPlayerManager {
                 .experimentalSetDynamicSchedulingEnabled(false)
                 .setAudioAttributes(attrs, true)
                 .build();
+
+        playerHandler.post(() -> player.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int state) {
+                if (state == Player.STATE_READY || state == Player.STATE_IDLE) {
+                    previousPlayerState = playerState;
+                    playerState = state;
+                }
+            }
+        }));
                 
         context.registerReceiver(noisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
     }
@@ -144,6 +156,10 @@ public final class ExoPlayerManager {
     
     public List<MediaItem> getMediaItems() {
         return mediaItems;
+    }
+
+    public int getPreviousPlayerState() {
+        return previousPlayerState;
     }
 
 }

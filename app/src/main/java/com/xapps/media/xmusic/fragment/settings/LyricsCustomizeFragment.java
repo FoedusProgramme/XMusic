@@ -212,7 +212,7 @@ public class LyricsCustomizeFragment extends BasePrefsFragment {
     @Override
     protected void onSwitchChanged(SettingsItem item, boolean value) {
         switch (item.id) {
-            case "lyrics_elastic_scroll", "lyrics_elastic_manual_scroll", "lyrics_sparkles", "lyrics_anticipation", "enable_lyrics_gradient", "lyrics_blur", "lyrics_keep_screen_awake", "rounded_font", "use_system_font" -> {
+            case "lyrics_elastic_scroll", "lyrics_sparkles", "lyrics_anticipation", "enable_lyrics_gradient", "lyrics_blur", "lyrics_keep_screen_awake", "rounded_font", "use_system_font" -> {
                 super.onSwitchChanged(item, value);
                 activity.updateLyrics();
             }

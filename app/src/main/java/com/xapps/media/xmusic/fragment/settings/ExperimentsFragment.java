@@ -33,7 +33,7 @@ public class ExperimentsFragment extends SubPrefsFragment {
         items.add(new SettingsItem(SettingsItem.TYPE_NAV, "crash_app", "Crash the app", "Click to instantly crash XMusic", null));
         items.add(new SettingsItem(SettingsItem.TYPE_NAV, "export_logs", "Export app logs", "This collect all XMusic logs and allow to share them as a file", null));
         items.add(new SettingsItem(SettingsItem.TYPE_NAV, "show_bs", "Collapse Bottom sheet", "This will set miniplayer State to STATE_COLLAPSED", null));
-        // items.add(new SettingsItem(SettingsItem.TYPE_NAV, "test_frag", "Open test fragment", "Test some new components under testing", new TestFragment()));
+        items.add(new SettingsItem(SettingsItem.TYPE_NAV, "lyrics_performance", "Debug Lyrics", "View performance stats of the lyrics for debugging", null));
 
         return items;
     }
@@ -50,8 +50,8 @@ public class ExperimentsFragment extends SubPrefsFragment {
             case "show_bs" :
                 activity.getBinding().miniPlayer.setState(ExpressiveBottomSheet.STATE_COLLAPSED);
                 break;
-            case "test_frag" :
-                openFragment(item.destinationFragment);
+            case "lyrics_performance" :
+                activity.getBinding().lyricsView.setDebugMode(true);
                 break;
         }
     }

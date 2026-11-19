@@ -84,7 +84,7 @@ public class XPlayerService extends MediaLibraryService implements ServiceCallba
 
     @Override
     public MediaLibraryService.MediaLibrarySession onGetSession(
-            MediaSession.ControllerInfo controllerInfo) {
+            @NonNull MediaSession.ControllerInfo controllerInfo) {
         return sessionManager.getSession();
     }
 

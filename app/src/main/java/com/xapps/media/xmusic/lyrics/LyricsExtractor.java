@@ -58,6 +58,7 @@ public final class LyricsExtractor {
         String base = strip(audio.getName());  
         File[] files = new File[]{  
                 new File(dir, base + ".ttml"),  
+                new File(dir, base + ".esl"),  
                 new File(dir, base + ".elrc"),  
                 new File(dir, base + ".lrc"),  
                 new File(dir, base + ".txt")  
@@ -106,6 +107,7 @@ public final class LyricsExtractor {
         return s.contains("<tt")  
                 || s.contains("<p ")  
                 || s.contains("<span")  
+                || ESLParser.isESLyric(s)
                 || s.matches("(?s).*\\[\\d+:\\d+\\.\\d+].*\\[\\d+:\\d+\\.\\d+].*");  
     }  
 
