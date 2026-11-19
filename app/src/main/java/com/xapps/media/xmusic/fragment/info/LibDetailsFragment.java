@@ -1,8 +1,8 @@
 package com.xapps.media.xmusic.fragment.info;
+
 import com.xapps.media.xmusic.fragment.base.*;
 import com.xapps.media.xmusic.fragment.main.*;
 import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
 import com.xapps.media.xmusic.ui.widget.*;
 import com.xapps.media.xmusic.ui.lyrics.*;
 import com.xapps.media.xmusic.ui.scroll.*;
@@ -12,44 +12,31 @@ import com.xapps.media.xmusic.callback.*;
 import com.xapps.media.xmusic.models.*;
 
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.Outline;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewOutlineProvider;
-import android.view.ViewTreeObserver;
-import androidx.activity.BackEventCompat;
-import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.ViewKt;
 import androidx.fragment.app.Fragment;
-import androidx.transition.Transition;
-import com.google.android.material.shape.ShapeAppearanceModel;
-import com.google.android.material.transition.MaterialContainerTransform;
 import com.xapps.media.xmusic.R;
 import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.databinding.FragmentLibDetailsBinding;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
-import com.xapps.media.xmusic.utils.XUtils;
 import kotlin.Unit;
 
-public class LibDetailsFragment extends BaseFragment {
+public class LibDetailsFragment extends Fragment {
 
     private FragmentLibDetailsBinding binding;
     private RootActivity activity;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

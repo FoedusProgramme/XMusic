@@ -1,5 +1,4 @@
 package com.xapps.media.xmusic.fragment.base;
-import com.xapps.media.xmusic.fragment.base.*;
 import com.xapps.media.xmusic.fragment.main.*;
 import com.xapps.media.xmusic.fragment.settings.*;
 import com.xapps.media.xmusic.fragment.info.*;
@@ -13,27 +12,21 @@ import com.xapps.media.xmusic.models.*;
 
 import android.content.Context;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.RecyclerView.Adapter;
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration;
 import androidx.recyclerview.widget.RecyclerView.State;
 
-import com.google.android.material.materialswitch.MaterialSwitch;
 import com.xapps.media.xmusic.R;
-import com.xapps.media.xmusic.activity.RootActivity;
 import com.xapps.media.xmusic.models.SettingsItem;
 import com.xapps.media.xmusic.data.DataManager;
 import com.xapps.media.xmusic.databinding.*;

@@ -1,15 +1,4 @@
 package com.xapps.media.xmusic.service;
-import com.xapps.media.xmusic.fragment.base.*;
-import com.xapps.media.xmusic.fragment.main.*;
-import com.xapps.media.xmusic.fragment.settings.*;
-import com.xapps.media.xmusic.fragment.info.*;
-import com.xapps.media.xmusic.ui.widget.*;
-import com.xapps.media.xmusic.ui.lyrics.*;
-import com.xapps.media.xmusic.ui.scroll.*;
-import com.xapps.media.xmusic.ui.behavior.*;
-import com.xapps.media.xmusic.lyrics.*;
-import com.xapps.media.xmusic.callback.*;
-import com.xapps.media.xmusic.models.*;
 
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +8,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.media3.common.MediaItem;
@@ -26,7 +16,6 @@ import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.ExperimentalApi;
 import androidx.media3.common.util.UnstableApi;
-import androidx.media3.session.DefaultMediaNotificationProvider;
 import androidx.media3.session.MediaLibraryService;
 import androidx.media3.session.MediaSession;
 
@@ -47,7 +36,6 @@ import com.xapps.media.xmusic.utils.Log;
 import com.xapps.media.xmusic.utils.MaterialColorUtils;
 
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;

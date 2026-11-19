@@ -1,4 +1,4 @@
-package com.xapps.media.xmusic.lyric;
+package com.xapps.media.xmusic.lyrics;
 import com.xapps.media.xmusic.fragment.base.*;
 import com.xapps.media.xmusic.fragment.main.*;
 import com.xapps.media.xmusic.fragment.settings.*;
