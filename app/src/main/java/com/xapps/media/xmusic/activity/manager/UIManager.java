@@ -1168,8 +1168,14 @@ public class UIManager implements PlaybackControlListener {
 
     public void loadLyrics(String path) {
         if (path == null || path.isEmpty()) {
-            binding.lyricsView.setVisibility(View.GONE);
-            binding.lyricsPlaceholder.setVisibility(View.VISIBLE);
+            binding.lyricsView.post(() -> {
+                binding.lyricsView.setLyrics(null, 0);
+                MaterialFadeThrough mft = new MaterialFadeThrough();
+                mft.setDuration(300);
+                TransitionManager.beginDelayedTransition(binding.containerRoot);
+                binding.lyricsView.setVisibility(View.GONE);
+                binding.lyricsPlaceholder.setVisibility(View.VISIBLE);
+            });
             return;
         }
         LyricsExtractor.extract(path, lyrics -> {
@@ -1187,11 +1193,14 @@ public class UIManager implements PlaybackControlListener {
                     });
                 });
             } else {
-                MaterialFadeThrough mft = new MaterialFadeThrough();
-                mft.setDuration(300);
-                TransitionManager.beginDelayedTransition(binding.containerRoot);
-                binding.lyricsView.setVisibility(View.GONE);
-                binding.lyricsPlaceholder.setVisibility(View.VISIBLE);
+                binding.lyricsView.post(() -> {
+                    binding.lyricsView.setLyrics(null, 0);
+                    MaterialFadeThrough mft = new MaterialFadeThrough();
+                    mft.setDuration(300);
+                    TransitionManager.beginDelayedTransition(binding.containerRoot);
+                    binding.lyricsView.setVisibility(View.GONE);
+                    binding.lyricsPlaceholder.setVisibility(View.VISIBLE);
+                });
             }
         });
     }

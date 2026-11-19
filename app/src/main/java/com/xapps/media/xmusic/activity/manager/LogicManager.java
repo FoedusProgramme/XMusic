@@ -254,6 +254,7 @@ public class LogicManager {
                 binding.lyricsContainer.animate().alpha(1f).translationY(0f).setDuration(300L).withStartAction(() -> {
                     if (binding.lyricsContainer.getParent() == null) binding.miniPlayer.addView(binding.lyricsContainer);
                     binding.lyricsContainer.setVisibility(View.VISIBLE);
+                    binding.lyricsView.recoverScroll();
                 }).start();
             } else {
                 if (DataManager.getKeepScreenAwakeState()) activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
