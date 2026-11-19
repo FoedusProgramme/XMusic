@@ -39,8 +39,8 @@ private void init() {
     setMarqueeRepeatLimit(-1);  
     setSingleLine(true);  
     setSelected(true);  
-    setFocusable(true);  
-    setFocusableInTouchMode(true);  
+    setFocusable(false);
+    setFocusableInTouchMode(false);
 
     setIncludeFontPadding(false);  
 

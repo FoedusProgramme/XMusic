@@ -268,7 +268,13 @@ public class LogicManager {
         });
 
         binding.expandedPlayer.speedButton.setOnClickListener(v -> showSpeedDialog());
-        binding.collapsedPlayer.getRoot().setOnClickListener(v -> binding.miniPlayer.setState(ExpressiveBottomSheet.STATE_EXPANDED));
+
+        View.OnClickListener expansionListener = v -> binding.miniPlayer.setState(ExpressiveBottomSheet.STATE_EXPANDED);
+        binding.collapsedPlayer.getRoot().setOnClickListener(expansionListener);
+        binding.collapsedPlayer.title.setOnClickListener(expansionListener);
+        binding.collapsedPlayer.subtitle.setOnClickListener(expansionListener);
+        binding.collapsedPlayer.cover.setOnClickListener(expansionListener);
+
     }
 
     public void applySavedPlaybackParameters() {
